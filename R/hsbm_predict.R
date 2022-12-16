@@ -5,8 +5,6 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
     }
 
-    cat("\tpy object begin: ", format(object.size(py), units = "MB"), "\n")
-
     reticulate::py_run_string(import_modules())
     reticulate::py_run_string(add_taxa_vertex_prop())
     reticulate::py_run_string(create_graph())
@@ -15,10 +13,6 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
     reticulate::py_run_string(get_groups())
 
     hsbm_output <- hsbm_input
-    cat("\thsbm_output begin: ", format(
-                                     object.size(hsbm_output),
-                                     units = "MB"),
-        "\n")
 
     predictions <- list()
     predictions$probs <- list()
@@ -42,8 +36,6 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
 
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
 
-        cat("\tpy object: ", format(object.size(py), units = "MB"), "\n")
-        cat("\thsbm_output: ", format(object.size(hsbm_output), units = "MB"), "\n")
     }
 
     attr(hsbm_output, "class") <- "hsbm.predict"
