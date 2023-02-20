@@ -20,6 +20,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     p_cols <- stringr::str_detect(colnames(folds_res_all), "p\\.")
     folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
     folds_res_all$p <- rowMeans(folds_res_all[, p_cols])
+    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd)
+    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x) - min(x))
     edge_type_cols <- stringr::str_detect(colnames(folds_res_all),
                                  "edge_type\\.")
 
@@ -40,7 +42,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     folds_select <- dplyr::select(folds_res_all, v1, v2,
                                   v1_names = v1_names.x,
                                   v2_names = v2_names.x,
-                                  p, edge_type)
+                                  p, sd, range, edge_type)
     if(input_names){
         v1_row <- folds_select$v1 + 1
         v2_col <- folds_select$v2 - n_v1 + 1
