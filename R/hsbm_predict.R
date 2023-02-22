@@ -1,5 +1,6 @@
+#' @param elist_i A number that specifies the index of the edge list (fold) from an `hsbm.input` to run. If NULL all edge lists are run.
 #' @export
-hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
+hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, verbose = TRUE){
     hsbm_name <- as.list(match.call())$hsbm_input
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
@@ -17,7 +18,12 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
     predictions <- list()
     predictions$probs <- list()
     predictions$groups <- list()
-    for(i in 1:length(hsbm_input$edgelist)){
+    if(is.null(elist_i)){
+        elist_predict <- 1:length(hsbm_input$edgelist)
+    }else{
+        elist_predict <- elist_i
+    }
+    for(i in elist_predict){
         if(verbose){
             cat("Computing predictions for fold ", i, "\n")
         }
@@ -32,7 +38,7 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
         hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
         hsbm_output$predictions$groups[[i]] <- py$groups_df
 
-        #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}_bat.pkl"))
+        #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
 
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
 

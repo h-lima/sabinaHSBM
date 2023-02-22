@@ -13,6 +13,8 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
                        colSums(adj_mat) != 0]
     if(!(is.matrix(adj_mat))) stop("Too many zero columns or rows in adj_mat.")
 
+    if(is.null(colnames(adj_mat))) colnames(adj_mat) <- paste0("col", 1:ncol(adj_mat))
+    if(is.null(rownames(adj_mat))) rownames(adj_mat) <- paste0("row", 1:nrow(adj_mat))
 
     if(!is.null(fold_id)){
         folds <- as.matrix(folds[which(folds[, 'gr'] == fold_id), ])
