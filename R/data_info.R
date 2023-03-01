@@ -24,3 +24,37 @@ summary.hsbm.predict <- function(hsbm_predict){
 
     return(summary_mat)
 }
+
+#' @export 								
+summary.hsbm.reconstructed <- function(hsbm_new){
+    matrix1 <- as.matrix(hsbm_new$data)
+    matrix2 <- as.matrix(hsbm_new$new_mat)
+
+   # Number of observed links
+   obs_links <- sum(matrix1 == 1)
+   # Number of unobserved links
+   unobs_links <- sum(matrix1 == 0)
+   # Number of predicted links
+   pred_links <- sum(matrix2 == 1)
+   # Number of links kept the same
+   kept_links <- sum(matrix1 == matrix2 & matrix1 == 1)
+   # Number of lost links in matrix2
+   spurious_links <- sum(matrix1 == 1 & matrix2 == 0)
+   # Number of new links in matrix2
+   missing_links <- sum(matrix1 == 0 & matrix2 == 1)
+
+   summary_mat <- data.frame(obs_links = obs_links,
+                       unobs_links = unobs_links,
+                       pred_links = pred_links,
+                       kept_links = kept_links,
+                       spurious_links = spurious_links,
+                       missing_links = missing_links)
+  
+  # Results per folds
+  cat("Results per folds:\n")
+  print(hsbm_new$tb, row.names = FALSE)
+
+  # Observed matrix vs reconstructed matrix
+  cat("\nObserved matrix vs reconstructed matrix:\n")
+  print(summary_mat, row.names = FALSE) 
+}
