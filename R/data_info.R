@@ -26,16 +26,16 @@ summary.hsbm.predict <- function(hsbm_predict){
 }
 
 #' @export 								
-summary.hsbm.reconstructed <- function(hsbm_new){
+summary.hsbm.reconstructed <- function(hsbm_new, folds_results = TRUE){
     matrix1 <- as.matrix(hsbm_new$data)
     matrix2 <- as.matrix(hsbm_new$new_mat)
 
    # Number of observed links
-   obs_links <- sum(matrix1 == 1)
+   obs_links <- sum(matrix1)
    # Number of unobserved links
-   unobs_links <- sum(matrix1 == 0)
+   unobs_links <- length(matrix1) - obs_links
    # Number of predicted links
-   pred_links <- sum(matrix2 == 1)
+   pred_links <- sum(matrix2)
    # Number of links kept the same
    kept_links <- sum(matrix1 == matrix2 & matrix1 == 1)
    # Number of lost links in matrix2
@@ -51,10 +51,13 @@ summary.hsbm.reconstructed <- function(hsbm_new){
                        missing_links = missing_links)
   
   # Results per folds
-  cat("Results per folds:\n")
-  print(hsbm_new$tb, row.names = FALSE)
+  if (folds_results) {
+    cat("Results per folds:\n")
+    cat(paste(capture.output(print(hsbm_new$tb, row.names = FALSE)), collapse = "\n"))
+    cat("\n")
+  }
 
   # Observed matrix vs reconstructed matrix
   cat("\nObserved matrix vs reconstructed matrix:\n")
-  print(summary_mat, row.names = FALSE) 
+  return(summary_mat)
 }
