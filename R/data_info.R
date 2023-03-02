@@ -26,7 +26,7 @@ summary.hsbm.predict <- function(hsbm_predict){
 }
 
 #' @export 								
-summary.hsbm.reconstructed <- function(hsbm_new, folds_results = TRUE){
+summary.hsbm.reconstructed <- function(hsbm_new){
     matrix1 <- as.matrix(hsbm_new$data)
     matrix2 <- as.matrix(hsbm_new$new_mat)
 
@@ -49,15 +49,5 @@ summary.hsbm.reconstructed <- function(hsbm_new, folds_results = TRUE){
                        kept_links = kept_links,
                        spurious_links = spurious_links,
                        missing_links = missing_links)
-  
-  # Results per folds
-  if (folds_results) {
-    cat("Results per folds:\n")
-    cat(paste(capture.output(print(hsbm_new$tb, row.names = FALSE)), collapse = "\n"))
-    cat("\n")
-  }
-
-  # Observed matrix vs reconstructed matrix
-  cat("\nObserved matrix vs reconstructed matrix:\n")
   return(summary_mat)
 }
