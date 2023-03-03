@@ -78,6 +78,7 @@ top_links <- function(hsbm_output, n = 10){
 hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE){
 
     hsbm_reconstructed <- list()
+    hsbm_reconstructed$data <- hsbm_inpt$data
     hsbm_reconstructed$reconstructed_mats <- list()
     hsbm_reconstructed$reconstructed_stats <- list()
     n_folds <- length(hsbm_out$predictions$probs)
@@ -97,6 +98,9 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE){
     hsbm_reconstructed$tb <- tb_all
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
                                           thresh = mean(tb_all$thresh))
+    
+    attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
+    
     return(hsbm_reconstructed)
 }
 
