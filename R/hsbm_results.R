@@ -65,7 +65,7 @@ top_links <- function(hsbm_output, n = 10){
     res_averaged <-  hsbm_output$predictions$res_averaged
     reconstructed <- dplyr::filter(res_averaged, edge_type == "reconstructed")
 
-    cols <- c("v1_names", "v2_names", "p")
+    cols <- c("v1_names", "v2_names", "p", "sd")
     reconstructed <- reconstructed[order(reconstructed$p, decreasing = TRUE), ][1:n, cols]
     row.names(reconstructed) <- NULL
 
