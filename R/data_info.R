@@ -48,6 +48,9 @@ summary.hsbm.reconstructed <- function(hsbm_new){
                        pred_links = pred_links,
                        kept_links = kept_links,
                        spurious_links = spurious_links,
-                       missing_links = missing_links)
+                       missing_links = missing_links, 
+                       mean_auc = mean(hsbm_new$tb$auc),
+                       mean_prec = mean(hsbm_new$tb$precision))
+
   return(summary_mat)
 }
