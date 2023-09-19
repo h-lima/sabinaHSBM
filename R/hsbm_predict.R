@@ -1,6 +1,7 @@
 #' @param elist_i A number that specifies the index of the edge list (fold) from an `hsbm.input` to run. If NULL all edge lists are run.
 #' @export
-hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, verbose = TRUE){
+hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, method = "binary_classifier",
+                         verbose = TRUE){
     hsbm_name <- as.list(match.call())$hsbm_input
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
@@ -12,6 +13,7 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, verbose = T
     reticulate::py_run_string(get_missing_edges())
     reticulate::py_run_string(hsbm_link_prediction())
     reticulate::py_run_string(get_groups())
+    reticulate::py_run_string(get_predicted_network())
 
     hsbm_output <- hsbm_input
 
@@ -32,6 +34,7 @@ hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, verbose = T
         reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
         reticulate::py_run_string("g = create_graph(elist)")
         reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
+                                                    "method = r.{hsbm_name}['method'], ",
                                                     "force_niter = r.{hsbm_name}['iter'])"))
         reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
 

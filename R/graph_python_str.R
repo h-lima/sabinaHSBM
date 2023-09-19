@@ -81,7 +81,7 @@ return('def hsbm_predict(g, elist, wait = 1000,
                  niter = 10, force_niter = 10000,
                  n_default = 1, x_default = 0, alpha = 1, beta = 1,
                  all_missing = None,
-                 method = "binary-classifier"):
+                 method = "binary_classifier"):
 
     N = g.num_vertices()
     E = g.num_edges()
@@ -103,7 +103,7 @@ return('def hsbm_predict(g, elist, wait = 1000,
     entropy = state.entropy()
     state_min_dl = state.copy()
 
-    if method == "binary-classifier":
+    if method == "binary_classifier":
         if all_missing == None:
             all_missing = get_missing_edges(df = elist, g = g)
 
@@ -115,7 +115,9 @@ return('def hsbm_predict(g, elist, wait = 1000,
             if s.entropy() < entropy:
                 entropy = s.entropy()
                 state_min_dl = s.copy()
-    else:
+        print("using binary_classifier")
+    elif method == "full_reconstruction":
+        print("Computing full reconstruction")
         # Collecting marginal for network reconstruction
         u = None
         i = 0
@@ -134,7 +136,7 @@ return('def hsbm_predict(g, elist, wait = 1000,
                      callback = collect_marginals)
 
     print("\tGather data")
-    if method == "binary-classifier":
+    if method == "binary_classifier":
         v1s = list()
         v2s = list()
         edge_type = list()
@@ -164,11 +166,12 @@ return('def hsbm_predict(g, elist, wait = 1000,
                     "state": state,
                     "state_min_dl": state_min_dl,
                     "pred_probs": df}
-    else:
+    elif method == "full_reconstruction":
         res_dict = {"graph": g,
                     "state": state,
                     "state_min_dl": state_min_dl,
                     "pred_graph": u}
+        res_dict["pred_probs"] = get_predicted_network(res_dict)
 
     return(res_dict)')
 }
@@ -198,4 +201,72 @@ get_groups <- function(){
     df = pd.DataFrame(data = levels, columns = col_names)
 
     return(df)')
+}
+
+
+get_predicted_network <- function(){
+    return('
+def not_estimated_edges(g, u):
+    missing = []
+    for e in g.edges():
+        if not u.edge(e.source(), e.target()):
+            missing.append((int(e.source()),
+                            int(e.target())))
+    return(missing)
+
+def get_predicted_network(res_dict):
+    u = res_dict["pred_graph"]
+    g = res_dict["graph"]
+    not_estimated = not_estimated_edges(g, u)
+    if len(not_estimated) > 0:
+        print(f"\tA total of {len(not_estimated)} defined edges not estimated")
+        #print("\t\t", not_estimated)
+
+    gmpd_dict = {"v1": [], "v2": [], "p": [],
+                 "v1_names": [], "v2_names": [],
+                 "edge_type": [], "n": [], "x": []}
+    col_names = ["v1", "v2", "p", "v1_names", "v2_names",
+                 "edge_type", "n", "x"]
+
+    # Data for estimated edges
+    eprob = u.ep.eprob
+    for e in u.edges():
+        s = e.source()
+        t = e.target()
+        gmpd_dict["v1"].append(int(s))
+        gmpd_dict["v2"].append(int(t))
+        gmpd_dict["p"].append(eprob[e])
+        if not g.edge(s, t):
+            # New not defined edge
+            gmpd_dict["v1_names"].append(g.vp.taxa[s])
+            gmpd_dict["v2_names"].append(g.vp.taxa[t])
+            gmpd_dict["edge_type"].append("reconstructed")
+            gmpd_dict["n"].append(0)
+            gmpd_dict["x"].append(0)
+        else:
+            gmpd_dict["v1_names"].append(g.ep.v1_names[g.edge(s, t)])
+            gmpd_dict["v2_names"].append(g.ep.v2_names[g.edge(s, t)])
+            gmpd_dict["edge_type"].append(g.ep.edge_type[g.edge(s, t)])
+            gmpd_dict["n"].append(g.ep.n[g.edge(s, t)])
+            gmpd_dict["x"].append(g.ep.x[g.edge(s, t)])
+
+    # Not estimated edges
+    for e in g.edges():
+        s = e.source()
+        t = e.target()
+        if not u.edge(s, t):
+            gmpd_dict["v1"].append(int(s))
+            gmpd_dict["v2"].append(int(t))
+            gmpd_dict["p"].append(0)
+            gmpd_dict["v1_names"].append(g.ep.v1_names[g.edge(s, t)])
+            gmpd_dict["v2_names"].append(g.ep.v2_names[g.edge(s, t)])
+            gmpd_dict["edge_type"].append(g.ep.edge_type[g.edge(s, t)])
+            gmpd_dict["n"].append(g.ep.n[g.edge(s, t)])
+            gmpd_dict["x"].append(g.ep.x[g.edge(s, t)])
+
+    predicted_df = pd.DataFrame(data = gmpd_dict, columns = col_names)
+
+    #prediction_summary(predicted_df, type_model)
+
+    return(predicted_df)')
 }

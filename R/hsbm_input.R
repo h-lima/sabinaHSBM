@@ -1,5 +1,5 @@
 #' @export
-hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary-classifier", iter = 10000,
+hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classifier", iter = 10000,
                        add_n_x = TRUE){
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
