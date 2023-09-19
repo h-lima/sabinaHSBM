@@ -75,7 +75,7 @@ top_links <- function(hsbm_output, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE){
+hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE){
 
     hsbm_reconstructed <- list()
     hsbm_reconstructed$data <- hsbm_out$data
@@ -83,7 +83,8 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE){
     hsbm_reconstructed$reconstructed_stats <- list()
     n_folds <- length(hsbm_out$predictions$probs)
     for(i in 1:n_folds){
-        reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all)
+        reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
+                                               rm_documented)
         hsbm_reconstructed$reconstructed_mats[[i]] <- reconstruction_i$new_mat
         hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
     }
@@ -105,7 +106,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE){
 }
 
 
-get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE){
+get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documented = FALSE){
     df <- hsbm_out$predictions$probs[[fold_id]]
     com <- hsbm_out$data
     folds <- as.data.frame(hsbm_out$folds)
@@ -126,15 +127,28 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE){
     }else{
         com_i <- com
     }
+    if(rm_documented){
+        com_fit[com_train == 1] <- -1
+        com_i[com_train == 1] <- -1
+    }
+    com_fit_long <- reshape2::melt(com_fit)$value
+    com_i_long <- reshape2::melt(com_i)$value
+    if(rm_documented){
+        com_fit_long <- com_fit_long[com_fit_long != -1]
+        com_i_long <- com_i_long[com_i_long != -1]
+    }
 
-    pred <- ROCR::prediction(predictions = reshape2::melt(com_fit)$value,
-                             labels = reshape2::melt(com_i)$value)
+    pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
     perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
     df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
     thresh <- df[which.max(df$tpr - df$fpr), "cut"]
     if(thresh == 1){
         thresh <- df[which.max(df$tpr - df$fpr) + 1, "cut"]
+    }
+    if(rm_documented){
+        com_fit[com_train == 1] <- 1
+        com_i[com_train == 1] <- 1
     }
     com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
 
@@ -158,30 +172,32 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE){
 
 get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
 
-   com= 1*(com>0)
-   Z1 = (com - com_train)==1
-   if(pred_all) Z1 = com==1
-   Z1 = com==1
-   m = sum(1*(Z1))
-   Z2 = com==0
-   n = sum(1*Z2)
-   TP = sum(com_fit_bin[Z1])
-   FN = m - TP
-   FP = sum(com_fit_bin[Z2])
-   TN = n - FP
+    com= 1*(com>0)
+    if(pred_all){
+        Z1 = com==1
+    }else{
+        Z1 = (com - com_train)==1
+    }
+    m = sum(1*(Z1))
+    Z2 = com==0
+    n = sum(1*Z2)
+    TP = sum(com_fit_bin[Z1])
+    FN = m - TP
+    FP = sum(com_fit_bin[Z2])
+    TN = n - FP
 
-  precision <- TP/(TP + FP)
-  recall <- TP/(TP + FN)
+    precision <- TP/(TP + FP)
+    recall <- TP/(TP + FN)
 
-  return(precision)
+    return(precision)
 }
 
 
 avg_mat <- function(reconstructed_mats_list, thresh){
 
-  mat_avg <- Reduce("+", reconstructed_mats_list)/length(reconstructed_mats_list)
-  mat_avg_bin <- 1*(mat_avg > thresh)
-  return(mat_avg_bin)
+    mat_avg <- Reduce("+", reconstructed_mats_list)/length(reconstructed_mats_list)
+    mat_avg_bin <- 1*(mat_avg > thresh)
+    return(mat_avg_bin)
 }
 
 # First column is v1 and second is v2
