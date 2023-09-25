@@ -92,9 +92,10 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
     colnames(tb_all) <- c("folds", "auc", "thresh",
+                            "aucpr",
                             "n_heldout", "pred_held_ones",
                             "n_ones", "pred_tot_ones", "total_pred_ones",
-                            "precision")
+                            "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
@@ -139,6 +140,7 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     }
 
     pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
+    aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
     perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
     df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
@@ -162,12 +164,18 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
 
     return(list(new_mat = com_fit_bin,
                 stats = c(auc, thresh,
-                            n_heldout,
-                            pred_held_ones,
-                            documented_ones,
-                            pred_tot_ones,
-                            total_pred_ones,
-                            precision)))
+                          aucpr,
+                          n_heldout,
+                          pred_held_ones,
+                          documented_ones,
+                          pred_tot_ones,
+                          total_pred_ones,
+                          precision$precision,
+                          precision$sens,
+                          precision$spec,
+                          precision$ACC,
+                          precision$ERR,
+                          precision$tss)))
 }
 
 get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
@@ -187,9 +195,13 @@ get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
     TN = n - FP
 
     precision <- TP/(TP + FP)
-    recall <- TP/(TP + FN)
+    sens <- TP/(TP + FN)
+    spec <- TN/(TN + FP) 
+    ACC <- (TP + TN) / (TP + TN + FN + FP)
+    ERR <- (FP + FN) / (TP + TN + FN + FP)
+    tss <- (TP/(TP+FN))+(TN/(TN+FP))-1
 
-    return(precision)
+    return(list(precision = precision, sens = sens, spec= spec, ACC = ACC, ERR = ERR, tss = tss))
 }
 
 
