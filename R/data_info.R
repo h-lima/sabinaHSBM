@@ -52,11 +52,11 @@ summary.hsbm.reconstructed <- function(hsbm_new){
                        mean_auc = mean(hsbm_new$tb$auc),
                        mean_aucpr = mean(hsbm_new$tb$aucpr),
                        mean_prec = mean(hsbm_new$tb$precision),
-		               mean_sens = mean(hsbm_new$tb$sens),
-		               mean_spec = mean(hsbm_new$tb$spec),
-		               mean_ACC = mean(hsbm_new$tb$ACC),
-		               mean_ERR = mean(hsbm_new$tb$ERR),
-		               mean_tss = mean(hsbm_new$tb$tss))
+		       mean_sens = mean(hsbm_new$tb$sens),
+		       mean_spec = mean(hsbm_new$tb$spec),
+		       mean_ACC = mean(hsbm_new$tb$ACC),
+		       mean_ERR = mean(hsbm_new$tb$ERR),
+		       mean_tss = mean(hsbm_new$tb$tss))
 
   return(summary_mat)
 }
