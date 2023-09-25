@@ -164,18 +164,18 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
 
     return(list(new_mat = com_fit_bin,
                 stats = c(auc, thresh,
-                            aucpr,
-                            n_heldout,
-                            pred_held_ones,
-                            documented_ones,
-                            pred_tot_ones,
-                            total_pred_ones,
-                            precision$precision,
-                            precision$sens,
-                            precision$spec,
-                            precision$ACC,
-                            precision$ERR,
-                            precision$tss)))
+                          aucpr,
+                          n_heldout,
+                          pred_held_ones,
+                          documented_ones,
+                          pred_tot_ones,
+                          total_pred_ones,
+                          precision$precision,
+                          precision$sens,
+                          precision$spec,
+                          precision$ACC,
+                          precision$ERR,
+                          precision$tss)))
 }
 
 get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
@@ -201,7 +201,7 @@ get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
     ERR <- (FP + FN) / (TP + TN + FN + FP)
     tss <- (TP/(TP+FN))+(TN/(TN+FP))-1
 
-  return(list(precision = precision, sens = sens, spec= spec, ACC = ACC, ERR = ERR, tss = tss))
+    return(list(precision = precision, sens = sens, spec= spec, ACC = ACC, ERR = ERR, tss = tss))
 }
 
 
