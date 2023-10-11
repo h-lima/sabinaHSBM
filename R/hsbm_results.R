@@ -84,15 +84,15 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     n_folds <- length(hsbm_out$predictions$probs)
     for(i in 1:n_folds){
         reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
-                                               rm_documented)
+                                               rm_documented, threshold = threshold)
         hsbm_reconstructed$reconstructed_mats[[i]] <- reconstruction_i$new_mat
         hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
     }
 
     tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
-    colnames(tb_all) <- c("folds", "auc", "thresh",
-                            "aucpr",
+    colnames(tb_all) <- c("folds", "auc",
+                            "aucpr", "yPRC", "thresh",    #yPRC is the baseline of Precision-Recall Curve
                             "n_heldout", "pred_held_ones",
                             "n_ones", "pred_tot_ones", "total_pred_ones",
                             "precision", "sens", "spec", "ACC", "ERR","tss")
