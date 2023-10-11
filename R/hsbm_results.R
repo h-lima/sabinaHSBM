@@ -100,6 +100,8 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     hsbm_reconstructed$tb <- tb_all
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
                                           thresh = mean(tb_all$thresh))
+
+    hsbm_reconstructed$threshold <- threshold
     
     attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
     
