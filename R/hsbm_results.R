@@ -107,7 +107,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
 }
 
 
-get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documented = FALSE){
+get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documented = FALSE, threshold = threshold){
     df <- hsbm_out$predictions$probs[[fold_id]]
     com <- hsbm_out$data
     folds <- as.data.frame(hsbm_out$folds)
@@ -128,6 +128,7 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     }else{
         com_i <- com
     }
+    yPRC <- sum(com_train)/length(com_train)
     if(rm_documented){
         com_fit[com_train == 1] <- -1
         com_i[com_train == 1] <- -1
@@ -142,11 +143,46 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
     aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
+    f <- ROCR::performance(pred, "f")
     perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
+    perf2 <- ROCR::performance(pred, "prec", "rec")
+    #threshold on ROC
     df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
-    thresh <- df[which.max(df$tpr - df$fpr), "cut"]
-    if(thresh == 1){
-        thresh <- df[which.max(df$tpr - df$fpr) + 1, "cut"]
+    roc_youden <- df[which.max(df$tpr - df$fpr), "cut"]
+    roc_closest_topleft <- df[which.min((1-df$tpr)^2 + (df$fpr)^2), "cut"] #The optimal threshold is the point closest to the top-left part of the plot with perfect sensitivity or specificity
+    roc_equal_sens_spec <- df[which.min(abs(df$tpr - (1-df$fpr))), "cut"]
+    roc_no_omission <- max(pred@cutoffs[[1]][pred@fn[[1]] == 0])
+    #if(thresh == 1){
+    #    thresh <- df[which.max(df$tpr - df$fpr) + 1, "cut"]
+    #}
+    #threshold on PRC
+    df2 <- data.frame(cut = perf2@alpha.values[[1]], Recall = perf2@x.values[[1]], Precision = perf2@y.values[[1]])
+    prc_min_rec_prec <- df2[which.min(df2$Recall + df2$Precision), "cut"]
+    prc_equal_rec_prec <- df2[which.min(abs(df2$Recall - df2$Precision)), "cut"] 
+    prc_closest_topright <- df2[which.min((1-df2$Recall)^2 + (1-df2$Precision)^2), "cut"] #The optimal threshold is the point closest to the top-right part of the plot with perfect Precision or Recall
+    df3 <- data.frame(Cutoff = f@x.values[[1]], PrecisionRecallFmeasure = f@y.values[[1]])
+    prc_max_F1 <- df3[which.max(df3$PrecisionRecallFmeasure), "Cutoff"]
+    THRESH<-c(roc_youden,roc_closest_topleft, roc_equal_sens_spec, roc_no_omission,
+              prc_min_rec_prec, prc_equal_rec_prec, prc_closest_topright,
+              prc_max_F1) 
+    if (threshold == "roc_youden") {
+        thresh<-THRESH[1]
+    } else if (threshold == "roc_closest_topleft") {
+        thresh<-THRESH[2]
+    } else if (threshold == "roc_equal_sens_spec") {
+        thresh<-THRESH[3]
+    } else if (threshold == "roc_no_omission") {
+        thresh<-THRESH[4]
+    } else if (threshold == "prc_min_rec_prec") {
+        thresh<-THRESH[5]
+    } else if (threshold == "prc_equal_rec_prec") {
+        thresh<-THRESH[6]
+    } else if (threshold == "prc_closest_topright") {
+        thresh<-THRESH[7]
+    } else if (threshold == "prc_max_F1") {
+        thresh<-THRESH[8]
+    } else {
+        print("Invalid threshold option")
     }
     if(rm_documented){
         com_fit[com_train == 1] <- 1
@@ -163,8 +199,10 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     precision <- get_precision(com_i, com_train, com_fit_bin, pred_all = pred_all)
 
     return(list(new_mat = com_fit_bin,
-                stats = c(auc, thresh,
+                stats = c(auc, 
                           aucpr,
+                          yPRC,
+                          thresh,
                           n_heldout,
                           pred_held_ones,
                           documented_ones,
