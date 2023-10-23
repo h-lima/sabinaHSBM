@@ -18,10 +18,9 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
                                 dplyr::full_join(..., by = c("v1", "v2")),
                              folds_res_list)
     p_cols <- stringr::str_detect(colnames(folds_res_all), "p\\.")
-    folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
-    folds_res_all$p <- rowMeans(folds_res_all[, p_cols])
-    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd)
-    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x) - min(x))
+    folds_res_all$p <- rowMeans(folds_res_all[, p_cols], na.rm=T)
+    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd, na.rm=T)
+    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x, na.rm=T) - min(x, na.rm=T))
     edge_type_cols <- stringr::str_detect(colnames(folds_res_all),
                                  "edge_type\\.")
 
@@ -50,7 +49,6 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
         folds_select$v2_names <- colnames(com)[v2_col]
     }
 
-
     hsbm_output$predictions$res_folds <- folds_res_list
     hsbm_output$predictions$res_averaged <- folds_select
 
@@ -75,7 +73,7 @@ top_links <- function(hsbm_output, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE){
+hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE, threshold = "prc_closest_topright"){
 
     hsbm_reconstructed <- list()
     hsbm_reconstructed$data <- hsbm_out$data
@@ -101,8 +99,9 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
                                           thresh = mean(tb_all$thresh))
 
-    hsbm_reconstructed$threshold <- threshold
-    
+    hsbm_reconstructed$sel_threshold <- threshold
+    hsbm_reconstructed$threshold_vals <- data.frame(setNames(as.list(THRESH), THRESH_names), stringsAsFactors = FALSE)
+
     attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
     
     return(hsbm_reconstructed)
@@ -130,11 +129,11 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     }else{
         com_i <- com
     }
-    yPRC <- sum(com_train)/length(com_train)
     if(rm_documented){
         com_fit[com_train == 1] <- -1
         com_i[com_train == 1] <- -1
     }
+    yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
     com_fit_long <- reshape2::melt(com_fit)$value
     com_i_long <- reshape2::melt(com_i)$value
     if(rm_documented){
@@ -164,28 +163,49 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     prc_closest_topright <- df2[which.min((1-df2$Recall)^2 + (1-df2$Precision)^2), "cut"] #The optimal threshold is the point closest to the top-right part of the plot with perfect Precision or Recall
     df3 <- data.frame(Cutoff = f@x.values[[1]], PrecisionRecallFmeasure = f@y.values[[1]])
     prc_max_F1 <- df3[which.max(df3$PrecisionRecallFmeasure), "Cutoff"]
-    THRESH<-c(roc_youden,roc_closest_topleft, roc_equal_sens_spec, roc_no_omission,
-              prc_min_rec_prec, prc_equal_rec_prec, prc_closest_topright,
-              prc_max_F1) 
-    if (threshold == "roc_youden") {
-        thresh<-THRESH[1]
-    } else if (threshold == "roc_closest_topleft") {
-        thresh<-THRESH[2]
-    } else if (threshold == "roc_equal_sens_spec") {
-        thresh<-THRESH[3]
-    } else if (threshold == "roc_no_omission") {
-        thresh<-THRESH[4]
-    } else if (threshold == "prc_min_rec_prec") {
-        thresh<-THRESH[5]
-    } else if (threshold == "prc_equal_rec_prec") {
-        thresh<-THRESH[6]
-    } else if (threshold == "prc_closest_topright") {
-        thresh<-THRESH[7]
-    } else if (threshold == "prc_max_F1") {
-        thresh<-THRESH[8]
+    THRESH<-c(roc_youden,
+              roc_closest_topleft, 
+			  roc_equal_sens_spec, 
+			  roc_no_omission,
+			  prc_min_rec_prec, 
+			  prc_equal_rec_prec, 
+			  prc_closest_topright,
+			  prc_max_F1)
+     THRESH_names<-c("roc_youden",
+			  "roc_closest_topleft", 
+			  "roc_equal_sens_spec", 
+			  "roc_no_omission",
+			  "prc_min_rec_prec", 
+			  "prc_equal_rec_prec", 
+			  "prc_closest_topright",
+			  "prc_max_F1")
+    if (threshold %in% THRESH_names) {	
+        if (threshold == "roc_youden") {
+            thresh<-THRESH[1]
+        } else if (threshold == "roc_closest_topleft") {
+            thresh<-THRESH[2]
+        } else if (threshold == "roc_equal_sens_spec") {
+            thresh<-THRESH[3]
+        } else if (threshold == "roc_no_omission") {
+            thresh<-THRESH[4]
+        } else if (threshold == "prc_min_rec_prec") {
+            thresh<-THRESH[5]
+        } else if (threshold == "prc_equal_rec_prec") {
+            thresh<-THRESH[6]
+        } else if (threshold == "prc_closest_topright") {
+            thresh<-THRESH[7]
+        } else if (threshold == "prc_max_F1") {
+            thresh<-THRESH[8]
+        }
+    } else if (is.numeric(threshold)) {
+            if (threshold >= 0 && threshold <= 1) {
+                thresh <- threshold
+            } else {
+                stop("Threshold must be a numeric value between 0 and 1")
+           }
     } else {
-        print("Invalid threshold option")
-    }
+        stop("Invalid threshold option")
+    }	
     if(rm_documented){
         com_fit[com_train == 1] <- 1
         com_i[com_train == 1] <- 1
