@@ -100,8 +100,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
                                           thresh = mean(tb_all$thresh))
 
     hsbm_reconstructed$sel_threshold <- threshold
-    hsbm_reconstructed$threshold_vals <- data.frame(setNames(as.list(THRESH), THRESH_names), stringsAsFactors = FALSE)
-
+    
     attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
     
     return(hsbm_reconstructed)
