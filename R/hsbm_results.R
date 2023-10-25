@@ -107,7 +107,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
 }
 
 
-get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documented = FALSE, threshold = threshold){
+get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, rm_documented = FALSE){
     df <- hsbm_out$predictions$probs[[fold_id]]
     com <- hsbm_out$data
     folds <- as.data.frame(hsbm_out$folds)
