@@ -131,8 +131,10 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
     if(rm_documented){
         com_fit[com_train == 1] <- -1
         com_i[com_train == 1] <- -1
+        yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
+    }else{
+	yPRC <- sum(com_i)/length(com_i) 
     }
-    yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
     com_fit_long <- reshape2::melt(com_fit)$value
     com_i_long <- reshape2::melt(com_i)$value
     if(rm_documented){
