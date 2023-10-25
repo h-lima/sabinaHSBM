@@ -89,11 +89,12 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
 
     tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
+    #yPRC is the baseline of Precision-Recall Curve
     colnames(tb_all) <- c("folds", "auc",
-                            "aucpr", "yPRC", "thresh",    #yPRC is the baseline of Precision-Recall Curve
-                            "n_heldout", "pred_held_ones",
-                            "n_ones", "pred_tot_ones", "total_pred_ones",
-                            "precision", "sens", "spec", "ACC", "ERR","tss")
+                          "aucpr", "yPRC", "thresh",    
+                          "n_heldout", "pred_held_ones",
+                          "n_ones", "pred_tot_ones", "total_pred_ones",
+                          "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
