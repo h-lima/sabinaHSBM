@@ -51,6 +51,7 @@ summary.hsbm.reconstructed <- function(hsbm_new){
                        missing_links = missing_links, 
                        mean_auc = mean(hsbm_new$tb$auc),
                        mean_aucpr = mean(hsbm_new$tb$aucpr),
+		       mean_yPRC = mean(hsbm_new$tb$yPRC),    
                        mean_prec = mean(hsbm_new$tb$precision),
 		       mean_sens = mean(hsbm_new$tb$sens),
 		       mean_spec = mean(hsbm_new$tb$spec),

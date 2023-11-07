@@ -50,7 +50,6 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
         folds_select$v2_names <- colnames(com)[v2_col]
     }
 
-
     hsbm_output$predictions$res_folds <- folds_res_list
     hsbm_output$predictions$res_averaged <- folds_select
 
@@ -75,7 +74,7 @@ top_links <- function(hsbm_output, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE){
+hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE, threshold = "prc_closest_topright"){
 
     hsbm_reconstructed <- list()
     hsbm_reconstructed$data <- hsbm_out$data
@@ -84,22 +83,25 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     n_folds <- length(hsbm_out$predictions$probs)
     for(i in 1:n_folds){
         reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
-                                               rm_documented)
+                                               rm_documented, threshold = threshold)
         hsbm_reconstructed$reconstructed_mats[[i]] <- reconstruction_i$new_mat
         hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
     }
 
     tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
-    colnames(tb_all) <- c("folds", "auc", "thresh",
-                            "aucpr",
-                            "n_heldout", "pred_held_ones",
-                            "n_ones", "pred_tot_ones", "total_pred_ones",
-                            "precision", "sens", "spec", "ACC", "ERR","tss")
+    #yPRC is the baseline of Precision-Recall Curve
+    colnames(tb_all) <- c("folds", "auc",
+                          "aucpr", "yPRC", "thresh",    
+                          "n_heldout", "pred_held_ones",
+                          "n_ones", "pred_tot_ones", "total_pred_ones",
+                          "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
     hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
                                           thresh = mean(tb_all$thresh))
+
+    hsbm_reconstructed$threshold <- threshold
     
     attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
     
@@ -107,7 +109,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
 }
 
 
-get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documented = FALSE){
+get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, rm_documented = FALSE){
     df <- hsbm_out$predictions$probs[[fold_id]]
     com <- hsbm_out$data
     folds <- as.data.frame(hsbm_out$folds)
@@ -131,6 +133,9 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     if(rm_documented){
         com_fit[com_train == 1] <- -1
         com_i[com_train == 1] <- -1
+        yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
+    }else{
+	yPRC <- sum(com_i)/length(com_i) 
     }
     com_fit_long <- reshape2::melt(com_fit)$value
     com_i_long <- reshape2::melt(com_i)$value
@@ -142,16 +147,12 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
     aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
+    f <- ROCR::performance(pred, "f")
     perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
-    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
-    thresh <- df[which.max(df$tpr - df$fpr), "cut"]
-    if(thresh == 1){
-        thresh <- df[which.max(df$tpr - df$fpr) + 1, "cut"]
-    }
-    if(rm_documented){
-        com_fit[com_train == 1] <- 1
-        com_i[com_train == 1] <- 1
-    }
+    perf2 <- ROCR::performance(pred, "prec", "rec")
+
+    thresh <-sel_thresh(threshold, perf, perf2, f)
+	
     com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
 
     n_heldout <- nrow(row_col)
@@ -163,8 +164,10 @@ get_reconstruction <- function(hsbm_out, fold_id, pred_all = FALSE, rm_documente
     precision <- get_precision(com_i, com_train, com_fit_bin, pred_all = pred_all)
 
     return(list(new_mat = com_fit_bin,
-                stats = c(auc, thresh,
+                stats = c(auc, 
                           aucpr,
+                          yPRC,
+                          thresh,
                           n_heldout,
                           pred_held_ones,
                           documented_ones,
@@ -237,4 +240,61 @@ tidy_hsbm_results <- function(gt_df, n_v1 = 447){
                        )
 
     return(gt_df)
+}
+
+
+
+sel_thresh<- function(threshold, perf, perf2, f) {
+	 THRESH_names<-c("roc_youden",
+			  "roc_closest_topleft", 
+			  "roc_equal_sens_spec", 
+			  "roc_no_omission", 
+			  "prc_min_rec_prec", 
+			  "prc_equal_rec_prec", 
+			  "prc_closest_topright",
+			  "prc_max_F1")
+  if (threshold %in% THRESH_names) {
+	  if (threshold == "roc_youden") {
+	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
+	    roc_youden <- df[which.max(df$tpr - df$fpr), "cut"] 
+	    thresh<-roc_youden
+	  } else if (threshold == "roc_closest_topleft") {
+	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
+	    roc_closest_topleft <- df[which.min((1-df$tpr)^2 + (df$fpr)^2), "cut"]
+	    thresh<-roc_closest_topleft 
+	  } else if (threshold == "roc_equal_sens_spec") {
+	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
+ 	    roc_equal_sens_spec <- df[which.min(abs(df$tpr - (1-df$fpr))), "cut"]
+	    thresh<-roc_equal_sens_spec
+	  } else if (threshold == "roc_no_omission") {
+	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
+ 	    roc_no_omission <- max(pred@cutoffs[[1]][pred@fn[[1]] == 0])
+	    thresh<-roc_no_omission
+	  } else if (threshold == "prc_min_rec_prec") {
+	    df2 <- data.frame(cut = perf2@alpha.values[[1]], Recall = perf2@x.values[[1]], Precision = perf2@y.values[[1]])
+ 	    prc_min_rec_prec <- df2[which.min(df2$Recall + df2$Precision), "cut"]
+	    thresh<-prc_min_rec_prec
+	  } else if (threshold == "prc_equal_rec_prec") {
+	    df2 <- data.frame(cut = perf2@alpha.values[[1]], Recall = perf2@x.values[[1]], Precision = perf2@y.values[[1]])
+ 	    prc_equal_rec_prec <- df2[which.min(abs(df2$Recall - df2$Precision)), "cut"]
+	    thresh<-prc_equal_rec_prec
+	  } else if (threshold == "prc_closest_topright") {
+	    df2 <- data.frame(cut = perf2@alpha.values[[1]], Recall = perf2@x.values[[1]], Precision = perf2@y.values[[1]])
+	    prc_closest_topright <- df2[which.min((1-df2$Recall)^2 + (1-df2$Precision)^2), "cut"]
+	    thresh<-prc_closest_topright
+	  } else if (threshold == "prc_max_F1") {
+	    df3 <- data.frame(Cutoff = f@x.values[[1]], PrecisionRecallFmeasure = f@y.values[[1]])
+	    prc_max_F1 <- df3[which.max(df3$PrecisionRecallFmeasure), "Cutoff"]
+	    thresh<-prc_max_F1
+	  } 
+  } else if (is.numeric(threshold)) {
+        if (threshold >= 0 && threshold <= 1) {
+          thresh <- threshold
+        } else {
+          stop("Threshold must be a numeric value between 0 and 1")
+        }
+  } else {
+    stop("Invalid threshold option")
+  }	
+return(thresh)
 }
