@@ -162,6 +162,14 @@ return('def hsbm_predict(g, elist, wait = 1000,
                           "v1_names": v1_names,
                           "v2_names": v2_names,
                           "edge_type": edge_type})
+        # Add documented edges to df
+        doc_df = elist
+        doc_df = doc_df.drop(columns = ["n", "x"])
+        doc_df = doc_df.rename(columns = {"row_names": "v1_names", "col_names": "v2_names"})
+        doc_df = doc_df[doc_df["edge_type"] == "documented"]
+        doc_df["p"] = 1
+        df = pd.concat([df, doc_df[list(df.columns)]])
+
         res_dict = {"graph": g,
                     "state": state,
                     "state_min_dl": state_min_dl,
