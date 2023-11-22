@@ -153,6 +153,11 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
 
     thresh <-sel_thresh(threshold, perf, perf2, f)
 	
+    if(rm_documented){
+        com_fit[com_train == 1] <- 1
+        com_i[com_train == 1] <- 1
+    }
+	
     com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
 
     n_heldout <- nrow(row_col)
