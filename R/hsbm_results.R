@@ -74,15 +74,15 @@ top_links <- function(hsbm_output, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE, threshold = "prc_closest_topright"){
+hsbm.reconstructed <- function(hsbm_result, pred_all = FALSE, rm_documented = FALSE, threshold = "prc_closest_topright", new_matrix = "average_thresholded_matrix"){
 
     hsbm_reconstructed <- list()
-    hsbm_reconstructed$data <- hsbm_out$data
+    hsbm_reconstructed$data <- hsbm_result$data
     hsbm_reconstructed$reconstructed_mats <- list()
     hsbm_reconstructed$reconstructed_stats <- list()
-    n_folds <- length(hsbm_out$predictions$probs)
+    n_folds <- length(hsbm_result$predictions$probs)
     for(i in 1:n_folds){
-        reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
+        reconstruction_i <- get_reconstruction(hsbm_result, fold_id = i, pred_all = pred_all,
                                                rm_documented, threshold = threshold)
         hsbm_reconstructed$reconstructed_mats[[i]] <- reconstruction_i$new_mat
         hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
@@ -98,8 +98,15 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
-    hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
-                                          thresh = mean(tb_all$thresh))
+    if (new_matrix == "ensemble_binary_matrix") {
+	hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
+					      thresh = mean(tb_all$thresh))		 
+    } else if (new_matrix == "average_thresholded_matrix") {
+        hsbm_reconstructed$new_mat <- avg_mat2(hsbm_result$predictions$res_averaged, 
+					      thresh = mean(tb_all$thresh))
+    } else {
+        stop("Invalid value for new_matrix. It must be 'ensemble_binary_matrix' or 'average_thresholded_matrix'")
+    }
 
     hsbm_reconstructed$threshold <- threshold
     
@@ -216,9 +223,20 @@ get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
 avg_mat <- function(reconstructed_mats_list, thresh){
 
     mat_avg <- Reduce("+", reconstructed_mats_list)/length(reconstructed_mats_list)
-    mat_avg_bin <- 1*(mat_avg > thresh)
+    mat_avg_bin <- 1*(mat_avg >= 0.1)  # predicted missing link at least in 1 fold
     return(mat_avg_bin)
 }
+
+avg_mat2 <- function(averaged_matrix, thresh) {
+  averaged_matrix <- hsbm_result$predictions$res_averaged	
+  mat_avg <- reshape2::dcast(setDT(averaged_matrix), v1_names ~ v2_names, value.var = "p")
+  row.names(mat_avg) <- mat_avg$v1_names
+  mat_avg$v1_names <- NULL
+  mat_avg <- mat_avg[rownames(hsbm_res$data), colnames(hsbm_res$data)]
+  mat_avg_bin <- 1 * (mat_avg >= thresh)
+  mat_avg_bin <- mat_avg_bin[rownames(hsbm_res$data), colnames(hsbm_res$data)]
+  return(mat_avg_bin)
+}				 
 
 # First column is v1 and second is v2
 tidy_hsbm_results <- function(gt_df, n_v1 = 447){
