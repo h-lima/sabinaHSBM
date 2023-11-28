@@ -232,9 +232,9 @@ avg_mat2 <- function(averaged_matrix, thresh) {
   mat_avg <- reshape2::dcast(setDT(averaged_matrix), v1_names ~ v2_names, value.var = "p")
   row.names(mat_avg) <- mat_avg$v1_names
   mat_avg$v1_names <- NULL
-  mat_avg <- mat_avg[rownames(hsbm_res$data), colnames(hsbm_res$data)]
+  mat_avg <- mat_avg[rownames(hsbm_result$data), colnames(hsbm_result$data)]
   mat_avg_bin <- 1 * (mat_avg >= thresh)
-  mat_avg_bin <- mat_avg_bin[rownames(hsbm_res$data), colnames(hsbm_res$data)]
+  mat_avg_bin <- mat_avg_bin[rownames(hsbm_result$data), colnames(hsbm_result$data)]
   return(mat_avg_bin)
 }				 
 
