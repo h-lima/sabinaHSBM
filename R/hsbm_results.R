@@ -228,7 +228,6 @@ avg_mat <- function(reconstructed_mats_list, thresh){
 }
 
 avg_mat2 <- function(averaged_matrix, thresh) {
-  averaged_matrix <- hsbm_result$predictions$res_averaged	
   mat_avg <- reshape2::dcast(setDT(averaged_matrix), v1_names ~ v2_names, value.var = "p")
   row.names(mat_avg) <- mat_avg$v1_names
   mat_avg$v1_names <- NULL
