@@ -35,13 +35,13 @@ summary.hsbm.reconstructed <- function(hsbm_new){
    # Number of unobserved links
    unobs_links <- length(matrix1) - obs_links
    # Number of predicted links
-   pred_links <- sum(matrix2)
+   pred_links <- sum(matrix2, na.rm=T)
    # Number of links kept the same
-   kept_links <- sum(matrix1 == matrix2 & matrix1 == 1)
+   kept_links <- sum(matrix1 == matrix2 & matrix1 == 1, na.rm=T)
    # Number of lost links in matrix2
-   spurious_links <- sum(matrix1 == 1 & matrix2 == 0)
+   spurious_links <- sum(matrix1 == 1 & matrix2 == 0, na.rm=T)
    # Number of new links in matrix2
-   missing_links <- sum(matrix1 == 0 & matrix2 == 1)
+   missing_links <- sum(matrix1 == 0 & matrix2 == 1, na.rm=T)
 
    summary_mat <- data.frame(obs_links = obs_links,
                        unobs_links = unobs_links,
