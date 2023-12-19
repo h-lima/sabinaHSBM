@@ -1,6 +1,6 @@
 #' Code from HPprediction package
 #' @export
-create_cv_folds <-function(Z, n= 10, min.per.col = 1,
+create_cv_folds <-function(Z, n= 10,
                            missing.pattern=c('random','prop.to.col.sums')){
 
     # TODO error number columns must match with bat data
@@ -15,13 +15,7 @@ create_cv_folds <-function(Z, n= 10, min.per.col = 1,
         pairs = which(Z==1, arr.ind=T)
         colnames(pairs)<-c('row', 'col')
 
-        if(length(which(colSums(Z)<min.per.col))>0){
-            aux = which(pairs[,'col'] %in% which(colSums(Z)<min.per.col))
-            if(length(aux))
-                pairs = pairs[-aux,]
-        }
-
-        colm = pmax(colSums(Z) -min.per.col , 0)
+        colm = pmax(colSums(Z), 0)
         size = floor(sum(colm)/n)
         gr = rep(size, n)
         if(sum(colm) %% size!=0)
