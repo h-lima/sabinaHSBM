@@ -19,9 +19,9 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
                              folds_res_list)
     p_cols <- stringr::str_detect(colnames(folds_res_all), "p\\.")
     folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
-    folds_res_all$p <- rowMeans(folds_res_all[, p_cols])
+    folds_res_all$p <- rowMeans(folds_res_all[, p_cols], na.rm=T)
     folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd)
-    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x) - min(x))
+    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x, na.rm=T) - min(x, na.rm=T))
     edge_type_cols <- stringr::str_detect(colnames(folds_res_all),
                                  "edge_type\\.")
 
@@ -98,12 +98,18 @@ hsbm.reconstructed <- function(hsbm_result, pred_all = FALSE, rm_documented = FA
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
+    res_averaged <- hsbm_result$predictions$res_averaged
+    row_order <- rownames(hsbm_result$data)
+    col_order <- colnames(hsbm_result$data)
+    
     if (new_matrix == "ensemble_binary_matrix") {
 	hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
-					      thresh = mean(tb_all$thresh))		 
+					      thresh = 0.1)		 
     } else if (new_matrix == "average_thresholded_matrix") {
         hsbm_reconstructed$new_mat <- avg_mat2(hsbm_result$predictions$res_averaged, 
-					      thresh = mean(tb_all$thresh))
+					      thresh = mean(tb_all$thresh),
+					      row_order = row_order, 
+					      col_order = col_order)
     } else {
         stop("Invalid value for new_matrix. It must be 'ensemble_binary_matrix' or 'average_thresholded_matrix'")
     }
@@ -223,17 +229,17 @@ get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
 avg_mat <- function(reconstructed_mats_list, thresh){
 
     mat_avg <- Reduce("+", reconstructed_mats_list)/length(reconstructed_mats_list)
-    mat_avg_bin <- 1*(mat_avg >= 0.1)  # predicted missing link at least in 1 fold
+    mat_avg_bin <- 1*(mat_avg >= thresh)  # predicted missing link at least in 1 fold when thresh=0.1
     return(mat_avg_bin)
 }
 
-avg_mat2 <- function(averaged_matrix, thresh) {
+avg_mat2 <- function(averaged_matrix, thresh, row_order, col_order) {
   mat_avg <- reshape2::dcast(setDT(averaged_matrix), v1_names ~ v2_names, value.var = "p")
   row.names(mat_avg) <- mat_avg$v1_names
   mat_avg$v1_names <- NULL
-  mat_avg <- mat_avg[rownames(hsbm_result$data), colnames(hsbm_result$data)]
+  mat_avg <- mat_avg[row_order, col_order]
   mat_avg_bin <- 1 * (mat_avg >= thresh)
-  mat_avg_bin <- mat_avg_bin[rownames(hsbm_result$data), colnames(hsbm_result$data)]
+  mat_avg_bin <- mat_avg_bin[row_order, col_order]
   return(mat_avg_bin)
 }				 
 
