@@ -31,7 +31,7 @@ summary.hsbm.reconstructed <- function(hsbm_new){
     matrix2 <- as.matrix(hsbm_new$new_mat)
 
    # Number of observed links
-   obs_links <- sum(matrix1)
+   obs_links <- sum(matrix1, na.rm=T)
    # Number of unobserved links
    unobs_links <- length(matrix1) - obs_links
    # Number of predicted links
