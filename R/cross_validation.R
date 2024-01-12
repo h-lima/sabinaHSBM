@@ -1,19 +1,22 @@
 #' Code adapted from HPprediction package
 #' @export
-create_cv_folds <-function(Z, n= 10, min_per_col = 2){
+create_cv_folds <-function(Z, n= 10, min_per_col = 2, min_per_row = 2){
 
     # TODO error number columns must match with bat data
 
-    # Remove empty columns and rows
-    Z <- Z[rowSums(Z) != 0,
-            colSums(Z) != 0]
-    if(!(is.matrix(Z))) stop("Too many zero columns or rows in adj_mat.")
+    if(!(is.matrix(Z))) stop("Z argument must be of type matrix")
     ## n-fold cross validation
     if(max(range(Z))>1) Z[Z>0]<-1
     pairs = which(Z==1, arr.ind=T)
     colnames(pairs)<-c('row', 'col')
 
     colm = colSums(Z)
+    min_rows <- which(rowSums(Z) < min_per_row)
+    # Discount min_rows elements
+    for(i in min_rows){
+        pairs <- pairs[-which(pairs[, 'row'] == i), ]
+        colm[which(Z[i, ] == 1)] <- colm[which(Z[i, ] == 1)] - 1
+    }
     # Place zero to ignore columns
     for(i in 1:length(colm)){
         if(colm[i] < min_per_col){
