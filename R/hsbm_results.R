@@ -21,7 +21,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
     folds_res_all$p <- rowMeans(folds_res_all[, p_cols])
     folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd)
-    folds_res_all$range <- apply(folds_res_all[, p_cols], 1, function(x) max(x) - min(x))
+    folds_res_all$range <- apply(folds_res_all[, p_cols], 1,
+                                 function(x) max(x) - min(x))
     edge_type_cols <- stringr::str_detect(colnames(folds_res_all),
                                  "edge_type\\.")
 
@@ -55,7 +56,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
 
     min_size_warning <- 0.5 * prod(dim(com))
     if((hsbm_output$method == "full_reconstruction") && (nrow(folds_select) < min_size_warning)) {
-        percentage <- 100 * nrow(folds_select)/(prod(dim(com)
+        percentage <- 100 * (nrow(folds_select) / prod(dim(com)))
         warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage))
     }
 
@@ -80,17 +81,27 @@ top_links <- function(hsbm_output, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE, threshold = "prc_closest_topright"){
+hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE,
+                               threshold = "prc_closest_topright",
+                               new_matrix_method = "average_thresholded",
+                               custom_threshold = NULL){
+
+    if(!(method %in% c("average_thresholded", "ensemble_binary"))){
+        stop("Invalid value for new_matrix_method.",
+             " It must be 'ensemble_binary or 'average_thresholded'")
+    }
 
     hsbm_reconstructed <- list()
     hsbm_reconstructed$data <- hsbm_out$data
-    hsbm_reconstructed$reconstructed_mats <- list()
+    hsbm_reconstructed$pred_mats <- list()
+    hsbm_reconstructed$reconstructed_bin_mats <- list()
     hsbm_reconstructed$reconstructed_stats <- list()
     n_folds <- length(hsbm_out$predictions$probs)
     for(i in 1:n_folds){
         reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
                                                rm_documented, threshold = threshold)
-        hsbm_reconstructed$reconstructed_mats[[i]] <- reconstruction_i$new_mat
+        hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
+        hsbm_reconstructed$reconstructed_bin_mats[[i]] <- reconstruction_i$new_bin_mat
         hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
     }
 
@@ -104,8 +115,15 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$tb <- tb_all
-    hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_mats,
-                                          thresh = mean(tb_all$thresh))
+    if(new_matrix_method == "ensemble_binary"){
+        if(is.null(custom_threshold)) thresh <- 0.1
+        hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_bin_mats,
+                                              thresh = thresh)
+    }else{
+        if(is.null(custom_threshold)) thresh <- mean(tb_all$thresh)
+        hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
+                                              thresh = thresh)
+    }
 
     hsbm_reconstructed$threshold <- threshold
     
@@ -141,7 +159,7 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
         com_i[com_train == 1] <- -1
         yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
     }else{
-	yPRC <- sum(com_i)/length(com_i) 
+        yPRC <- sum(com_i)/length(com_i)
     }
     com_fit_long <- reshape2::melt(com_fit)$value
     com_i_long <- reshape2::melt(com_i)$value
@@ -174,7 +192,8 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
 
     precision <- get_precision(com_i, com_train, com_fit_bin, pred_all = pred_all)
 
-    return(list(new_mat = com_fit_bin,
+    return(list(pred_mat = com_fit,
+                new_bin_mat = com_fit_bin,
                 stats = c(auc, 
                           aucpr,
                           yPRC,
@@ -219,11 +238,15 @@ get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
 }
 
 
-avg_mat <- function(reconstructed_mats_list, thresh){
+avg_mat <- function(reconstructed_mats_list, thresh, method = "average_thresholded"){
 
-    mat_avg <- Reduce("+", reconstructed_mats_list)/length(reconstructed_mats_list)
-    mat_avg_bin <- 1*(mat_avg > thresh)
+    mat_sum <- apply(simplify2array(reconstructed_mats_list), 1:2, sum, na.rm = TRUE)
+    mat_avg <- mat_sum/length(reconstructed_mats_list)
+
+    mat_avg_bin <- 1*(mat_avg >= thresh)
+
     return(mat_avg_bin)
+
 }
 
 # First column is v1 and second is v2
@@ -307,5 +330,5 @@ sel_thresh<- function(threshold, perf, perf2, f) {
   } else {
     stop("Invalid threshold option")
   }	
-return(thresh)
+  return(thresh)
 }
