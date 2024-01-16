@@ -53,9 +53,9 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     hsbm_output$predictions$res_folds <- folds_res_list
     hsbm_output$predictions$res_averaged <- folds_select
 
-    min_size_warning <- 0.5 * ncol(com) * nrow(com)
-    if(hsbm_output$method == "full_reconstruction" && nrow(folds_select) < min_size_warning) {
-        percentage <- 100 * nrow(folds_select)/(ncol(com)*nrow(com))
+    min_size_warning <- 0.5 * prod(dim(com))
+    if((hsbm_output$method == "full_reconstruction") && (nrow(folds_select) < min_size_warning)) {
+        percentage <- 100 * nrow(folds_select)/(prod(dim(com)
         warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage))
     }
 
