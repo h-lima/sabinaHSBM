@@ -33,8 +33,15 @@ create_cv_folds <-function(Z, n= 10, min_per_col = 2, min_per_row = 2,
 
     # Correct possible cases when distribution leads to zero dim sums
     held_res <- NULL
+    stop_while <- 0
     while(any(has_0_sum_folds(folds_lst$com, folds_lst$held_pairs, n, 'col')) ||
           any(has_0_sum_folds(folds_lst$com, folds_lst$held_pairs, n, 'row'))){
+
+        if(stop_while > 1000){
+            stop("Failed to redistribute 0 sum folds.",
+                 "Run create_cv_folds again and if persists file an issue in github.")
+        }
+
         fold_to_correct <- which(has_0_sum_folds(folds_lst$com, folds_lst$held_pairs, n, 'col'))[1]
         held_res <- distribute_zero_sum_folds(folds_lst$com, folds_lst$held_pairs,
                                               folds_lst$pairs_sums, pairs_dim = "col",
@@ -50,6 +57,8 @@ create_cv_folds <-function(Z, n= 10, min_per_col = 2, min_per_row = 2,
         }
 
         folds_lst$held_pairs <- held_res
+
+        stop_while <- stop_while + 1
 
     }
 
