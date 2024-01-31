@@ -12,9 +12,7 @@ create_cv_folds <-function(Z, n= 10, min_per_col = 2, min_per_row = 2,
 
     # Exclude pairs that cannot be removed
     pairs_dim <- 'col'
-    freq_count <- data.frame(table(pairs[, pairs_dim]))
-    min_val <- get(paste0("min_per_", pairs_dim))
-    has_mins <- sum(freq_count$Freq < min_val) > 0
+    has_mins <- TRUE
     while(has_mins){
         min_val <- get(paste0("min_per_", pairs_dim))
         pairs <- rm_pairs_rows(pairs, row_or_col = pairs_dim,
