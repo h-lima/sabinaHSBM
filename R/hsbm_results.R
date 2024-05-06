@@ -86,7 +86,7 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
                                new_matrix_method = "average_thresholded",
                                custom_threshold = NULL){
 
-    if(!(method %in% c("average_thresholded", "ensemble_binary"))){
+    if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
         stop("Invalid value for new_matrix_method.",
              " It must be 'ensemble_binary or 'average_thresholded'")
     }
