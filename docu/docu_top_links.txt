@@ -1,0 +1,25 @@
+#' @name top_links
+#'
+#' @title Extract Top Predicted Links
+#'
+#' @description
+#' This function extracts the top predicted links from the HSBM model output.
+#'
+#' @param hsbm_output An object of class \code{hsbm.predict} containing the results of the HSBM model predictions.
+#' @param n (\emph{optional, default} \code{10}) \cr
+#' An \code{integer} specifying the number of top links to extract.
+#'
+#' @return
+#' A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
+#'
+#' @seealso \code{\link{hsbm.predict}}
+#'
+#' @examples
+#' # Load example HSBM prediction results
+#' # Assuming `hsbm_output` is an object of class `hsbm.predict`
+#' data(myPred, package = "sabinaHSBM")
+#'
+#' top_10_links <- top_links(myPred, n = 10)
+#' print(top_10_links)
+#'
+#' @export

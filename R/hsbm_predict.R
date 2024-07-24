@@ -1,4 +1,47 @@
-#' @param elist_i A number that specifies the index of the edge list (fold) from an `hsbm.input` to run. If NULL all edge lists are run.
+#' @name hsbm.predict
+#'
+#' @title Generate edge/link predictions using Hierarchical Stochastic Block Model (HSBM).
+#'
+#' @description This function performs predictions based on the HSBM for a specified edge list (or all edge lists) from an `hsbm.input` object.
+#'
+#' @param hsbm_input An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
+#' @param add_n_x (\emph{optional, default} \code{TRUE}) \cr
+#' A \code{logical} value indicating whether to add the number of observations per row and column to the edge list.
+#' @param elist_i (\emph{optional, default} \code{NULL}) \cr
+#' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
+#' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
+#' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
+#' @param verbose (\emph{optional, default} \code{TRUE}) \cr
+#' A \code{logical} value indicating whether to print progress messages during prediction.
+#'
+#' @return
+#' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
+#' - \code{$data} The binary bipartite \code{matrix} of input data.
+#' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+#' - \code{$edgelist} A \code{list} of edge lists generated for each fold.
+#' - \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities (p) for the edges/links in the corresponding edge list, according to the HSBM model.
+#' - \code{$predictions$groups} A \code{list} where each element is a \code{data.frame} that contains the group assignments for each node in the network for the corresponding edge list.
+#'
+#' @details
+#' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
+#' - The \code{add_n_x} parameter controls whether the number of observations per row and column is included in the edge list used for predictions.
+#' - The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
+#' - The \code{method} parameter defines the prediction method to be used. Currently, both \code{"binary_classifier"} (see \url{https:// #@@@JMB info binary}) and \code{"full_reconstruction"} are supported.
+#' - The \code{verbose} parameter, when set to \code{TRUE}, enables the display of progress messages, which is useful for tracking the computation process.
+#'
+#' @seealso \code{\link{hsbm.input}}
+#'
+#' @examples
+#' # Load example data and prepare input
+#' data(dat, package = "sabinaHSBM")
+#' myInput <- hsbm.input(data = dat, 
+#'                       n_folds = 10, 
+#'                       method = "binary_classifier", 
+#'                       iter = 1000)
+#'
+#' # Generate predictions for the prepared input
+#' myPred <- hsbm.predict(hsbm_input = myInput)
+#'
 #' @export
 hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, method = "binary_classifier",
                          verbose = TRUE){
