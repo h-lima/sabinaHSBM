@@ -33,7 +33,6 @@
 #'
 #' # View the final averaged matrix
 #' averaged_matrix <- myResults$predictions$res_averaged
-
 #'
 #' @export
 get_hsbm_results <- function(hsbm_output, input_names = TRUE){
