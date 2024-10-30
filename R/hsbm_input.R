@@ -1,12 +1,75 @@
+#' @name hsbm.input
+#'
+#' @title Prepare input data for Hierarchical Stochastic Block Model (HSBM) analyses.
+#'
+#' @description This function prepares the input data necessary for running the \bold{Hierarchical Stochastic Block Model (HSBM)} analysis by creating cross-validation folds and corresponding edgelists.
+#'
+#' @param data A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/link.
+#' @param folds (\emph{optional, default} \code{NULL}) \cr
+#' An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.
+#' @param n_folds (\emph{optional, default} \code{5}) \cr
+#' A \code{numeric} value specifying the number of cross-validation folds to generate. 
+#' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
+#' A \code{character} string specifying the method used for the HSBM analysis. Options include \code{"binary_classifier"} or \code{"full_reconstruction"}.
+#' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
+#' @param min_per_col A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.
+#' @param min_per_row A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
+#'
+#' @return
+#' An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
+#' - \code{$data} The binary bipartite \code{matrix} of input data.
+#' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+#' - \code{$edgelist} A \code{list} of edge lists generated for each fold. Each edge list is a \code{data.frame} with the following columns:
+#'   - \code{v1} The index of the first type of node.
+#'   - \code{v2} The index of the second type of node.
+#'   - \code{value} The measurement value for the edge. It is 1 if there is a edge/link between the node pair, and 0 if the edge is held out for cross-validation.
+#'   - \code{row_names} Names of the nodes corresponding to the rows in the original bipartite matrix, representing the first type of nodes.
+#'   - \code{col_names} Names of the nodes corresponding to the columns in the original bipartite matrix, representing the second type of nodes.
+#'   - \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
+#'   - \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
+#'   - \code{x} The observed values for each node pair (i, j), where \( x_{ij} \in \{0, 1\} \) represents the reported matrix \( A \). Here, \( x_{ij} = 1 \) indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
+#' - \code{$method} The method used for the HSBM analysis, as specified by the user.
+#' - \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
+#' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
+#'
+#' @details
+#' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction between the nodes represented by rows and columns.
+#' - The \code{folds} parameter, if provided, should be a \code{matrix} containing pairs of indices (row, column) representing held-out edges/links during cross-validation.
+#'   It typically contains columns:
+#'   \describe{
+#'     \item{row}{Indices of rows where edges/links are held out.}
+#'     \item{col}{Indices of columns where edges/links are held out.}
+#'     \item{gr}{Group identifier indicating which cross-validation fold the edge/link pair belongs to.}
+#'   }
+#' - If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
+#' - The \code{method} parameter.... ###@JMB explicar cada method....
+#' - The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column.
+#'
+#' @examples
+#' # Load example data
+#' data(dat, package = "sabinaHSBM")  #@@@JMB pensar ejemplo para data directory
+#'
+#' # Prepare input data
+#' myInput <- hsbm.input(data = dat, 
+#'                       n_folds = 10, 
+#'                       method = "binary_classifier", 
+#'                       iter = 1000)
+#'
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classifier", iter = 10000,
-                       add_n_x = TRUE, min_per_col = 2, min_per_row = 2){
+                       min_per_col = 2, min_per_row = 2){
+
+    if (!(is.matrix(data))) {
+      stop("'data' must be an object of class 'matrix'.")
+    }
+
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
 
     if(is.null(folds)){
         folds <- create_cv_folds(Z = data, n = n_folds,
-                                 min_per_col = min_per_col, min_per_row = min_per_row)
+                                 min_per_col = min_per_col, 
+                                 min_per_row = min_per_row)
     }
 
     edgelists <- list()

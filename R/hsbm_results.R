@@ -1,3 +1,39 @@
+#' @name get_hsbm_results
+#'
+#' @title Extract and summarize results from HSBM predictions.
+#'
+#' @description This function processes the output from an HSBM prediction to generate and summarize the results. It combines predictions across all cross-validation folds, computes the average probability, standard deviation, range of probabilities, and edge_type for each edge/link across the folds.
+#'
+#' @param hsbm_output An object of class \code{hsbm.predict} containing the predictions made by the HSBM model.
+#' @param input_names (\emph{optional, default} \code{TRUE}) \cr
+#' A \code{logical} value indicating whether to include the names of the nodes in the output. If \code{TRUE}, node names are extracted from the original data and added to the results.
+
+#'
+#' @return
+#' An object of class \code{hsbm.predict} with additional elements:
+#' - \code{$predictions$res_folds} A \code{list} where each element is a \code{data.frame} containing the results of the predictions for each fold, including predicted probabilities and edge types.  						#@@@JMB No recuerdo si qué diferencia había con $predictions$probs. Parece idéntico
+#' - \code{$predictions$res_averaged} A \code{data.frame} summarizing the averaged results across all folds. 
+#'   - \code{v1} The index of the first type of node.
+#'   - \code{v2} The index of the second type of node.
+#'   - \code{v1_names} Names of the first type of nodes.
+#'   - \code{v2_names} Names of the first type of nodes.
+#'   - \code{p} The average predicted probabilities for each edge.
+#'   - \code{sd} The standard deviation of predictions for each edge.
+#'   - \code{range} The range of predicted probabilities for each edge.
+#'   - \code{edge_type} Type of edge, which can be 'reconstructed' whether ......; or 'documented' whether.....	#@@@JMB pendiente de terminar
+#'
+#' @seealso \code{\link{hsbm.predict}}
+#'
+#' @examples
+#' # Load example HSBM prediction results
+#' data(myPred, package = "sabinaHSBM")  #@@@JMB poner todo el ejemplo o guardar los outputs en data?
+#'
+#' # Extract and summarize the results
+#' myResults <- get_hsbm_results(hsbm_output = myPred)
+#'
+#' # View the final averaged matrix
+#' averaged_matrix <- myResults$predictions$res_averaged
+#'
 #' @export
 get_hsbm_results <- function(hsbm_output, input_names = TRUE){
 
