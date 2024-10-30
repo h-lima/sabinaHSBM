@@ -1,6 +1,5 @@
 #' @export
-hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
-                       add_n_x = FALSE){
+hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
     col_names <- c("row_names", "col_names", "value")
 
     if(!(is.matrix(adj_mat))) stop("adj_mat argument must be of type 'matrix'.")
@@ -36,12 +35,10 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
 
     long_mat <- rbind(long_mat, folds)
 
-    if(add_n_x){
-        long_mat$n <- 1
-        long_mat$x <- 1
-        long_mat[long_mat$edge_type == "held_out", ]$n <- 1
-        long_mat[long_mat$edge_type == "held_out", ]$x <- 0
-    }
+    long_mat$n <- 1
+    long_mat$x <- 1
+    long_mat[long_mat$edge_type == "held_out", ]$n <- 1
+    long_mat[long_mat$edge_type == "held_out", ]$x <- 0
 
     long_mat$v1 <- as.numeric(factor(long_mat[[col_names[1]]])) - 1
     long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
@@ -50,11 +47,7 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
         long_mat <- add_spurious_edges(long_mat, nrow(adj_mat))
     }
 
-    if(add_n_x){
-        return(dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], edge_type, n, x))
-    }else{
-        return(dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], edge_type))
-    }
+    return(dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], edge_type, n, x))
 }
 
 add_spurious_edges <- function(long_mat, n_row, col_names, add_n_x = TRUE){

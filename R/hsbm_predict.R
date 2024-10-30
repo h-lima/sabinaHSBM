@@ -76,7 +76,8 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
         reticulate::py_run_string("g = create_graph(elist)")
         reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
                                                     "method = r.{hsbm_name}['method'], ",
-                                                    "force_niter = r.{hsbm_name}['iter'])"))
+                                                    "force_niter = r.{hsbm_name}['iter'])",
+                                                    "wait = r.{hsbm_name}['wait'])"))
         reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
 
         hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
