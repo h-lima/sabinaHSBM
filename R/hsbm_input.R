@@ -12,7 +12,6 @@
 #' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
 #' A \code{character} string specifying the method used for the HSBM analysis. Options include \code{"binary_classifier"} or \code{"full_reconstruction"}.
 #' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
-#' @param add_n_x A \code{logical} value indicating whether to add the number of observations per row and column to the edgelist. Default is \code{TRUE}.
 #' @param min_per_col A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.
 #' @param min_per_row A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
 #'
@@ -31,10 +30,10 @@
 #'   - \code{x} The observed values for each node pair (i, j), where \( x_{ij} \in \{0, 1\} \) represents the reported matrix \( A \). Here, \( x_{ij} = 1 \) indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
 #' - \code{$method} The method used for the HSBM analysis, as specified by the user.
 #' - \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
-#' - \code{$wait} #@@@JMB falta
+#' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 #'
 #' @details
-#' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence or intensity of interaction between the nodes represented by rows and columns.
+#' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction between the nodes represented by rows and columns.
 #' - The \code{folds} parameter, if provided, should be a \code{matrix} containing pairs of indices (row, column) representing held-out edges/links during cross-validation.
 #'   It typically contains columns:
 #'   \describe{
@@ -44,7 +43,7 @@
 #'   }
 #' - If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
 #' - The \code{method} parameter.... ###@JMB explicar cada method....
-#' - The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column if \code{add_n_x} is \code{TRUE}.
+#' - The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column.
 #'
 #' @examples
 #' # Load example data
@@ -58,7 +57,7 @@
 #'
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classifier", iter = 10000,
-                       add_n_x = TRUE, min_per_col = 2, min_per_row = 2){
+                       min_per_col = 2, min_per_row = 2){
 
     if (!(is.matrix(data))) {
       stop("'data' must be an object of class 'matrix'.")
@@ -69,7 +68,8 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classif
 
     if(is.null(folds)){
         folds <- create_cv_folds(Z = data, n = n_folds,
-                                 min_per_col = min_per_col, min_per_row = min_per_row)
+                                 min_per_col = min_per_col, 
+                                 min_per_row = min_per_row)
     }
 
     edgelists <- list()

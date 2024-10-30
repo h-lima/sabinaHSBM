@@ -34,7 +34,6 @@
 #' @export
 plot_interaction_matrix <- function(adj_mat, col = "red4", order_mat = TRUE,
                                     y_title = "Rows", x_title = "Columns"){
-    # Create S3 object and plot with plot function?
 
     if(order_mat){
         adj_mat <- order_com(adj_mat)

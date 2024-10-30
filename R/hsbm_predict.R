@@ -5,7 +5,6 @@
 #' @description This function performs predictions based on the HSBM for a specified edge list (or all edge lists) from an `hsbm.input` object.
 #'
 #' @param hsbm_input An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
-#' @param add_n_x (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to add the number of observations per row and column to the edge list.
 #' @param elist_i (\emph{optional, default} \code{NULL}) \cr
 #' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
@@ -24,7 +23,6 @@
 #'
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
-#' - The \code{add_n_x} parameter controls whether the number of observations per row and column is included in the edge list used for predictions.
 #' - The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
 #' - The \code{method} parameter defines the prediction method to be used. Currently, both \code{"binary_classifier"} (see \url{https:// #@@@JMB info binary}) and \code{"full_reconstruction"} are supported.
 #' - The \code{verbose} parameter, when set to \code{TRUE}, enables the display of progress messages, which is useful for tracking the computation process.
@@ -43,7 +41,7 @@
 #' myPred <- hsbm.predict(hsbm_input = myInput)
 #'
 #' @export
-hsbm.predict <- function(hsbm_input, add_n_x = TRUE, elist_i = NULL, method = "binary_classifier",
+hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier",
                          verbose = TRUE){
     hsbm_name <- as.list(match.call())$hsbm_input
     if(!inherits(hsbm_input, "hsbm.input")){
