@@ -212,6 +212,26 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
     perf2 <- ROCR::performance(pred, "prec", "rec")
 
     thresh <-sel_thresh(threshold, perf, perf2, f)
+
+    perf_prec <- ROCR::performance(pred, measure = "prec")
+    perf_sens <- ROCR::performance(pred, measure = "sens")
+    perf_spec <- ROCR::performance(pred, measure = "spec")
+    perf_acc <- ROCR::performance(pred, measure = "acc")
+
+    cutoffs <- perf_prec@x.values[[1]]
+    precisions <- perf_prec@y.values[[1]]
+    sensitivities <- perf_sens@y.values[[1]]
+    specificities <- perf_spec@y.values[[1]]
+    accuracies <- perf_acc@y.values[[1]]
+
+    closest_index <- which.min(abs(cutoffs - thresh))
+
+    precision <- precisions[closest_index]
+    sens <- sensitivities[closest_index]
+    spec <- specificities[closest_index]
+    ACC <- accuracies[closest_index]
+    ERR <- 1 - ACC
+    tss <- sens + spec - 1
 	
     if(rm_documented){
         com_fit[com_train == 1] <- 1
@@ -226,8 +246,6 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
     pred_held_ones <- sum((com[row_col] + com_fit_bin[row_col]) == 2)/sum(com[row_col])
     total_pred_ones <- sum(com_fit_bin)
 
-    precision <- get_precision(com_i, com_train, com_fit_bin, pred_all = pred_all)
-
     return(list(pred_mat = com_fit,
                 new_bin_mat = com_fit_bin,
                 stats = c(auc, 
@@ -239,38 +257,13 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
                           documented_ones,
                           pred_tot_ones,
                           total_pred_ones,
-                          precision$precision,
-                          precision$sens,
-                          precision$spec,
-                          precision$ACC,
-                          precision$ERR,
-                          precision$tss)))
-}
+                          precision,
+                          sens,
+                          spec,
+                          ACC,
+                          ERR,
+                          tss)))
 
-get_precision <- function(com, com_train, com_fit_bin, pred_all = FALSE){
-
-    com= 1*(com>0)
-    if(pred_all){
-        Z1 = com==1
-    }else{
-        Z1 = (com - com_train)==1
-    }
-    m = sum(1*(Z1))
-    Z2 = com==0
-    n = sum(1*Z2)
-    TP = sum(com_fit_bin[Z1])
-    FN = m - TP
-    FP = sum(com_fit_bin[Z2])
-    TN = n - FP
-
-    precision <- TP/(TP + FP)
-    sens <- TP/(TP + FN)
-    spec <- TN/(TN + FP) 
-    ACC <- (TP + TN) / (TP + TN + FN + FP)
-    ERR <- (FP + FN) / (TP + TN + FN + FP)
-    tss <- (TP/(TP+FN))+(TN/(TN+FP))-1
-
-    return(list(precision = precision, sens = sens, spec= spec, ACC = ACC, ERR = ERR, tss = tss))
 }
 
 
