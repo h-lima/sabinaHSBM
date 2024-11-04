@@ -1,5 +1,6 @@
 import_modules <- function(){
-return('import numpy as np
+return('
+import numpy as np
 import pandas as pd
 import pickle
 import itertools
@@ -13,7 +14,8 @@ from graph_tool.all import *')
 
 add_taxa_vertex_prop <- function(){
 
-return('def add_taxa_vertex_prop(g):
+return('
+def add_taxa_vertex_prop(g):
     r_names = []
     for r in g.ep.v1_names:
         if r not in r_names:
@@ -38,7 +40,8 @@ return('def add_taxa_vertex_prop(g):
 }
 
 create_graph <- function(){
-return('def create_graph(df,
+return('
+def create_graph(df,
     eprop_types = ["double", "string", "string", "string","int", "int"],
     add_bipartite = True):
     g = Graph(directed = False)
@@ -59,7 +62,8 @@ return('def create_graph(df,
 
 
 get_missing_edges <- function(){
-return('def get_missing_edges(df, g):
+return('
+def get_missing_edges(df, g):
 
     edge_types = g.ep.edge_type.get_2d_array(range(1))[0]
     is_doc = [e_doc == "documented" for e_doc in edge_types]
@@ -77,11 +81,12 @@ return('def get_missing_edges(df, g):
 
 hsbm_link_prediction <- function(){
 
-return('def hsbm_predict(g, elist, wait = 1000,
+return('
+def hsbm_predict(g, elist, wait = 1000,
                  niter = 10, force_niter = 10000,
                  n_default = 1, x_default = 0, alpha = 1, beta = 1,
                  all_missing = None,
-                 method = "binary_classifier"):
+                 method = "binary_classifier", save_pickle = False):
 
     N = g.num_vertices()
     E = g.num_edges()
@@ -181,6 +186,8 @@ return('def hsbm_predict(g, elist, wait = 1000,
                     "pred_graph": u}
         res_dict["pred_probs"] = get_predicted_network(res_dict)
 
+    res_dict["min_dl"] = state_min_dl.entropy()
+
     return(res_dict)')
 }
 
@@ -277,4 +284,17 @@ def get_predicted_network(res_dict):
     #prediction_summary(predicted_df, type_model)
 
     return(predicted_df)')
+}
+
+save_pickle <- function(){
+return(
+'
+def save_pickle(res_dict, i):
+    pkl_file = f"hsbm_res_fold{i}.pkl"
+    with open(pkl_file, "wb") as pkl:
+        pickle.dump(res_dict, pkl)
+    print(f"\tPython pickle save as {pkl_file}")
+    return(0)
+')
+
 }
