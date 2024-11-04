@@ -22,7 +22,7 @@
 #' - \code{$edgelist} A \code{list} of edge lists generated for each fold.
 #' - \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities (p) for the edges/links in the corresponding edge list, according to the HSBM model.
 #' - \code{$predictions$groups} A \code{list} where each element is a \code{data.frame} that contains the group assignments for each node in the network for the corresponding edge list.
-#' - \code{$min_dl} Minimum value of description lenght for the model.
+#' - \code{$min_dl} A \code{numeric} value representing the minimum description length for the model.
 #'
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
