@@ -66,6 +66,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
     predictions <- list()
     predictions$probs <- list()
     predictions$groups <- list()
+    hsbm_output$min_dl <- list()
     if(is.null(elist_i)){
         elist_predict <- 1:length(hsbm_input$edgelist)
     }else{
@@ -91,7 +92,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
 
         hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
         hsbm_output$predictions$groups[[i]] <- py$groups_df
-        hsbm_output$min_dl <- py$res_dict$min_dl
+        hsbm_output$min_dl[[i]] <- py$res_dict$min_dl
 
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
 
