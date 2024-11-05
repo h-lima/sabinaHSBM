@@ -7,7 +7,8 @@
 #' @param hsbm_output An object of class \code{hsbm.predict} containing the predictions made by the HSBM model.
 #' @param input_names (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to include the names of the nodes in the output. If \code{TRUE}, node names are extracted from the original data and added to the results.
-
+#' @param na_treatment (\emph{optional, default} na_to_0) \cr
+#' na_to_0, treats na as no evidence of a link and assigns it a zero; keep_na puts NA if there is at least one NA; and ignore_na computes the average without taking NA values into account.
 #'
 #' @return
 #' An object of class \code{hsbm.predict} with additional elements:
@@ -35,7 +36,7 @@
 #' averaged_matrix <- myResults$predictions$res_averaged
 #'
 #' @export
-get_hsbm_results <- function(hsbm_output, input_names = TRUE){
+get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 
     if(!inherits(hsbm_output, "hsbm.predict")){
         stop("hsbm_output argument must be an hsbm.predict object.")
@@ -53,14 +54,24 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     folds_res_all <- Reduce(function(...)
                                 dplyr::full_join(..., by = c("v1", "v2")),
                              folds_res_list)
-    p_cols <- stringr::str_detect(colnames(folds_res_all), "p\\.")
-    folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
-    folds_res_all$p <- rowMeans(folds_res_all[, p_cols])
-    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, sd)
+    p_cols <- stringr::str_detect(colnames(folds_res_all), "^p\\.?")
+    nr_na <- apply(folds_res_all[, p_cols], 1, function(x) sum(is.na(x)))
+    if(na_treatment == "na_to_0"){
+        na_rm <- TRUE
+        folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
+    }else if(na_treatment == "ignore_na"){
+        na_rm <- TRUE
+    }else if(na_treatment == "keep_na"){
+        na_rm <- FALSE
+    }else{
+        stop("Unkown na_treatment argument.")
+    }
+    folds_res_all$p <- rowMeans(folds_res_all[, p_cols], na.rm = na_rm)
+    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, function(x) sd(x, na.rm = na_rm))
     folds_res_all$range <- apply(folds_res_all[, p_cols], 1,
-                                 function(x) max(x) - min(x))
-    edge_type_cols <- stringr::str_detect(colnames(folds_res_all),
-                                 "edge_type\\.")
+                                 function(x) max(x, na.rm = na_rm) - min(x, na.rm = na_rm))
+    folds_res_all$nr_na <- nr_na
+    edge_type_cols <- stringr::str_detect(colnames(folds_res_all), "edge_type\\.")
 
     et <- apply(folds_res_all[, edge_type_cols], 1,
                   function(x){
@@ -79,7 +90,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
     folds_select <- dplyr::select(folds_res_all, v1, v2,
                                   v1_names = v1_names.x,
                                   v2_names = v2_names.x,
-                                  p, sd, range, edge_type)
+                                  p, sd, range, edge_type, nr_na)
     if(input_names){
         v1_row <- folds_select$v1 + 1
         v2_col <- folds_select$v2 - n_v1 + 1
@@ -104,6 +115,10 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE){
 #' @export
 top_links <- function(hsbm_output, n = 10){
 
+    if(is.null(hsbm_output$predictions$res_averaged)){
+        stop("res_averaged dataframe was not found in hsbm_output.",
+             "Consider running get_hsbm_results function")
+    }
     res_averaged <-  hsbm_output$predictions$res_averaged
     reconstructed <- dplyr::filter(res_averaged, edge_type == "reconstructed")
 
