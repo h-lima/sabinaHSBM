@@ -6,19 +6,19 @@
 
 
 ## Overview
+The ***sabinaHSBM*** R package makes the **Hierarchical Stochastic Block Model (HSBM)** available for predicting and reconstructing links in bipartite binary networks, a powerful tool for researchers in fields such as ecology, sociology, and data science. Networks are essential in representing complex systems, from species associations to social connections, but real-world networks often contain missing or spurious links due to sampling limitations. Accurately identifying these gaps and correcting errors enhances our understanding and reliability of network analyses.
 
-The ***sabinaHSBM*** R package offers an advanced tool for predicting and reconstructing links in bipartite binary networks using the **Hierarchical Stochastic Block Model (HSBM)**. Networks are widely used across various fields to represent complex relationships and interactions—from ecological systems to social structures—capturing the underlying patterns and connections between entities or nodes. However, real-world networks are often incomplete and may contain errors due to sampling constraints, making reliable link prediction essential to enhance network accuracy and completeness.
+***sabinaHSBM*** addresses these challenges by implementing a powerful HSBM-based approach that uses both observed interactions and the inherent structural patterns within networks to identify unoberved or unrealized (*missing links*) and potentially erroneous links (*spurious links*). Among the various network reconstruction techniques, HSBM stands out for its effectiveness, providing a nonparametric network reconstruction based on Bayesian inference that assigns error probabilities to observed and unobserved links. This approach minimizes subjective decisions, enabling robust statistical inference and model selection.
 
-***sabinaHSBM*** addresses these challenges by implementing a powerful HSBM-based approach that uses both observed interactions and the inherent structural patterns within networks to identify missing (*missing links*) and potentially erroneous links (*spurious links*). Among the various network reconstruction techniques, HSBM stands out for its effectiveness, providing a nonparametric network reconstruction based on Bayesian inference that assigns error probabilities to observed and unobserved links. This approach minimizes subjective decisions, enabling robust statistical inference and model selection.
+With ***sabinaHSBM***, users can:
+- **Reconstruct complex networks** from partial or uncertain data.
+- **Estimate probabilities for missing or spurious links**, increasing network accuracy.
+- **Identify hierarchical groups** based on link patterns, uncovering insights into network structure.
+- **Visualize network partitions**, making patterns in large and complex networks more interpretable.
 
-Although HSBM is available as part of Python's `graph-tool` package, its adoption has been limited among R users across disciplines. ***sabinaHSBM*** bridges this gap, making HSBM accessible in R and providing a practical tool for researchers to:
+This package provides an R-native environment to explore and validate link predictions, making HSBM-based network reconstruction accessible across systems.
 
-- Reconstruct complex bipartite networks, even from incomplete or unreliable data.
-- Generate probability estimates for unobserved or potentially misrecorded links, enhancing network accuracy.
-- Identify groups within networks based on interaction patterns, uncovering insights into structural organization.
-- Visualize hierarchical partitions of reconstructed networks.
-
-The accessibility of ***sabinaHSBM*** for R users opens this advanced methodology to a wider community, empowering researchers across diverse fields to conduct accurate link predictions, address data quality issues, and gain a deeper understanding of complex network structures in their respective domains.
+Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto, 2014](https://doi.org/10.6084/m9.figshare.1164194)), which is Linux-only, we’ve made HSBM’s capabilities accessible to all R users by offering a pre-configured Docker container. This container includes all necessary dependencies, enabling seamless use on Windows and Mac as well, so researchers on any platform can leverage the power of ***sabinaHSBM*** without compatibility concerns.
 
 
 ## Key Features of ***sabinaHSBM***: #@@@JMB a esto hay que darle una vuelta para enfatizar las virtudes del paquete
@@ -33,12 +33,15 @@ The accessibility of ***sabinaHSBM*** for R users opens this advanced methodolog
 
 **Dependencies**: Requires R (>= 4.3.0)
 
-Install the released version of ***sabinaHSBM*** from [GitHub](https://github.com) using the following commands:
+To install ***sabinaHSBM*** directly from [GitHub](https://github.com), use the following commands:
 
 ```r
 library(remotes)
 remotes::install_github("h-lima/sabinaHSBM")
 ```
+
+**Note:** Since ***sabinaHSBM*** relies on the Linux-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows and Mac to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Docker_guide.md).
+
 
 ### Citing sabinaHSBM package
 
@@ -46,6 +49,7 @@ A research paper detailing the functions and methodologies of the ***sabinaHSBM*
 
 > Lima, H., ... (2024). sabinaHSBM: an R package for Hierarchical Stochastic Block Model-based link prediction and network reconstruction.  
 > Aquí doi -----
+
 
 ## Core Functions in *sabinaHSBM*
 
@@ -80,10 +84,8 @@ The input data for `hsbm.input` should be a **binary bipartite matrix** represen
 # Load the sabinaNSDM package
 library(sabinaNSDM)
 
-# Load your data
-dat <- read.csv("path/to/your_data.csv", row.names = 1)  # Load binary bipartite matrix with row names
-dat <- as.matrix(dat)  # Convert data to matrix format
-#data(dat, package = "sabinaHSBM")
+# Load the binary bipartite matrix
+data(dat, package = "sabinaHSBM")
 
 # Prepare input data
 myInput <- hsbm.input(
@@ -146,7 +148,7 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 ## Tutorials
-*Aquí poner enlaces a los tutoriales (uno con ejemplo de paralelización y otro con lo del docker para windows)* #@@@JMB
+*Aquí poner enlaces a los tutoriales (uno con ejemplo de paralelización)* #@@@JMB
 
 ## Contributions
 
