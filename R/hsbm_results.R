@@ -125,7 +125,7 @@ top_links <- function(hsbm_reconstructed, n = 10){
 
 
 #' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE,
+hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                na_treatment = "na_to_0",
                                threshold = "prc_closest_topright",
                                new_matrix_method = "average_thresholded",
@@ -149,9 +149,15 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
     hsbm_reconstructed$pred_mats <- list()
     hsbm_reconstructed$reconstructed_bin_mats <- list()
     hsbm_reconstructed$reconstructed_stats <- list()
+    hsbm_reconstructed$summary_df <- list()
+
+    res_df <- get_hsbm_results(hsbm_out, input_names = TRUE, na_treatment = na_treatment)
+    hsbm_reconstructed$summary_df$res_folds <- res_df$res_folds
+    hsbm_reconstructed$summary_df$res_averaged <- res_df$res_averaged
     n_folds <- length(hsbm_out$predictions$probs)
     for(i in 1:n_folds){
-        reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
+        reconstruction_i <- get_reconstruction(res_df$res_folds, fold_id = i,
+                                               com = hsbm_out$data, folds = hsbm_out$folds,
                                                rm_documented, na_treatment = na_treatment,
                                                threshold = threshold)
         hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
@@ -181,55 +187,34 @@ hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE
 
     hsbm_reconstructed$threshold <- threshold
 
-    res_df <- get_hsbm_results(hsbm_out, input_names = TRUE,
-                               na_treatment = na_treatment)
-    hsbm_reconstructed$summary_df <- list()
-    hsbm_reconstructed$summary_df$res_folds <- res_df$res_folds
-    hsbm_reconstructed$summary_df$res_averaged <- res_df$res_averaged
-    
     attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
     
     return(hsbm_reconstructed)
 }
 
 
-get_reconstruction <- function(hsbm_out, fold_id, threshold, na_treatment, pred_all = FALSE,
+get_reconstruction <- function(res_folds, fold_id, com, folds, threshold, na_treatment,
                                rm_documented = FALSE){
-    df <- hsbm_out$predictions$probs[[fold_id]]
-    com <- hsbm_out$data
-    folds <- as.data.frame(hsbm_out$folds)
-    gt_data <- tidy_hsbm_results(df, n_v1 = nrow(com))
-    rows <- as.numeric(gt_data$v1) + 1
-    cols <- as.numeric(gt_data$v2) - nrow(com) + 1
-    ps <- gt_data$p
+    df <- res_folds[[fold_id]]
+    rows <- as.numeric(df$v1) + 1
+    cols <- as.numeric(df$v2) - nrow(com) + 1
+    ps <- df$p
     com_train <- com
-    row_col <- as.matrix(dplyr::filter(folds, gr == fold_id)[, c('row', 'col')])
+    com_i <- com
+    row_col <- as.matrix(dplyr::filter(as.data.frame(folds), gr == fold_id)[, c('row', 'col')])
     com_train[row_col] <- 0
     com_fit <- com_train
     com_fit[cbind(rows, cols)] <- ps
-    if(!pred_all){
-        com_tmp <- com
-        com_tmp[] <- 0
-        com_tmp[row_col] <- 1
-        com_i <- com_tmp
-    }else{
-        com_i <- com
-    }
-    if(rm_documented){
-        com_fit[com_train == 1] <- -1
-        com_i[com_train == 1] <- -1
-        yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
-    }else{
-        yPRC <- sum(com_i)/length(com_i)
-    }
-    com_fit_long <- reshape2::melt(com_fit)$value
-    com_i_long <- reshape2::melt(com_i)$value
-    if(rm_documented){
-        com_fit_long <- com_fit_long[com_fit_long != -1]
-        com_i_long <- com_i_long[com_i_long != -1]
-    }
 
-    pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
+    if(rm_documented){
+        com_fit[com_train == 1] <- NA
+        com_i[com_train == 1] <- NA
+    }
+    com_fit_vec <- reshape2::melt(com_fit, na.rm = TRUE)$value
+    com_i_vec <- reshape2::melt(com_i, na.rm = TRUE)$value
+
+    yPRC <- sum(com_i_vec)/length(com_i_vec)
+    pred <- ROCR::prediction(predictions = com_fit_vec, labels = com_i_vec)
     aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
     f <- ROCR::performance(pred, "f")
@@ -261,6 +246,9 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, na_treatment, pred_
     # Get documented values back
     if(rm_documented & hsbm_out$method == "binary_classifier"){
         com_fit[com_train == 1] <- 1
+    }else if(rm_documented & hsbm_out$method == "full_reconstruction"){
+        com_fit[cbind(rows, cols)] <- ps
+        com_fit[com_train == 1] <- 1
     }
 
     if(na_treatment != "na_to_0"){
@@ -269,7 +257,6 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, na_treatment, pred_
     }
 
     com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
-
     n_heldout <- nrow(row_col)
     documented_ones <- sum(com)
     pred_tot_ones <- sum((com + com_fit_bin) == 2, na.rm = TRUE)/ sum(com)
@@ -394,4 +381,110 @@ sel_thresh<- function(threshold, perf, perf2, f) {
     stop("Invalid threshold option")
   }	
   return(thresh)
+}
+
+
+
+
+get_reconstruction_old <- function(hsbm_out, fold_id, threshold, na_treatment, pred_all = FALSE,
+                               rm_documented = FALSE){
+    df <- hsbm_out$predictions$probs[[fold_id]]
+    com <- hsbm_out$data
+    folds <- as.data.frame(hsbm_out$folds)
+    gt_data <- tidy_hsbm_results(df, n_v1 = nrow(com))
+    rows <- as.numeric(gt_data$v1) + 1
+    cols <- as.numeric(gt_data$v2) - nrow(com) + 1
+    ps <- gt_data$p
+    com_train <- com
+    row_col <- as.matrix(dplyr::filter(folds, gr == fold_id)[, c('row', 'col')])
+    com_train[row_col] <- 0
+    com_fit <- com_train
+    com_fit[cbind(rows, cols)] <- ps
+    if(!pred_all){
+        com_tmp <- com
+        com_tmp[] <- 0
+        com_tmp[row_col] <- 1
+        com_i <- com_tmp
+    }else{
+        com_i <- com
+    }
+    if(rm_documented){
+        com_fit[com_train == 1] <- -1
+        com_i[com_train == 1] <- -1
+        yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1])
+    }else{
+        yPRC <- sum(com_i)/length(com_i)
+    }
+    com_fit_long <- reshape2::melt(com_fit)$value
+    com_i_long <- reshape2::melt(com_i)$value
+    if(rm_documented){
+        com_fit_long <- com_fit_long[com_fit_long != -1]
+        com_i_long <- com_i_long[com_i_long != -1]
+    }
+
+    pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
+    aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
+    auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
+    f <- ROCR::performance(pred, "f")
+    perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
+    perf2 <- ROCR::performance(pred, "prec", "rec")
+
+    thresh <-sel_thresh(threshold, perf, perf2, f)
+
+    perf_prec <- ROCR::performance(pred, measure = "prec")
+    perf_sens <- ROCR::performance(pred, measure = "sens")
+    perf_spec <- ROCR::performance(pred, measure = "spec")
+    perf_acc <- ROCR::performance(pred, measure = "acc")
+
+    cutoffs <- perf_prec@x.values[[1]]
+    precisions <- perf_prec@y.values[[1]]
+    sensitivities <- perf_sens@y.values[[1]]
+    specificities <- perf_spec@y.values[[1]]
+    accuracies <- perf_acc@y.values[[1]]
+
+    closest_index <- which.min(abs(cutoffs - thresh))
+
+    precision <- precisions[closest_index]
+    sens <- sensitivities[closest_index]
+    spec <- specificities[closest_index]
+    ACC <- accuracies[closest_index]
+    ERR <- 1 - ACC
+    tss <- sens + spec - 1
+
+    # Get documented values back
+    if(rm_documented & hsbm_out$method == "binary_classifier"){
+        com_fit[com_train == 1] <- 1
+    }
+
+    if(na_treatment != "na_to_0"){
+        com_fit[] <- NA
+        com_fit[cbind(rows, cols)] <- ps
+    }
+
+    com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
+
+    n_heldout <- nrow(row_col)
+    documented_ones <- sum(com)
+    pred_tot_ones <- sum((com + com_fit_bin) == 2, na.rm = TRUE)/ sum(com)
+    pred_held_ones <- sum((com[row_col] + com_fit_bin[row_col]) == 2, na.rm = TRUE)/sum(com[row_col])
+    total_pred_ones <- sum(com_fit_bin, na.rm = TRUE)
+
+    return(list(pred_mat = com_fit,
+                new_bin_mat = com_fit_bin,
+                stats = c(auc,
+                          aucpr,
+                          yPRC,
+                          thresh,
+                          n_heldout,
+                          pred_held_ones,
+                          documented_ones,
+                          pred_tot_ones,
+                          total_pred_ones,
+                          precision,
+                          sens,
+                          spec,
+                          ACC,
+                          ERR,
+                          tss)))
+
 }
