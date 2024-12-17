@@ -98,7 +98,6 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
         }
 
         hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
-        print(hsbm_output$predictions$probs[[i]])
         if(save_blocks){
             hsbm_output$predictions$groups[[i]] <- py$groups_df
         }
