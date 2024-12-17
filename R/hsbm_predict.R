@@ -46,11 +46,12 @@
 #'
 #' @export
 hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier",
-                         verbose = TRUE, save_pickle = FALSE){
-    hsbm_name <- as.list(match.call())$hsbm_input
+                         verbose = TRUE, save_blocks = TRUE, save_pickle = FALSE){
+
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
     }
+    hsbm_name <- as.list(match.call())$hsbm_input
 
     reticulate::py_run_string(import_modules())
     reticulate::py_run_string(add_taxa_vertex_prop())
@@ -61,23 +62,29 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
     reticulate::py_run_string(get_predicted_network())
     reticulate::py_run_string(save_pickle())
 
-    hsbm_output <- hsbm_input
+    hsbm_output <- list()
+    hsbm_output$data <- hsbm_input$data
+    hsbm_output$folds <- hsbm_input$folds
+    hsbm_output$method <- hsbm_input$method
+    hsbm_output$iter <- hsbm_input$iter
+    hsbm_output$wait <- hsbm_input$wait
+    hsbm_output$min_dl <- list()
 
     predictions <- list()
     predictions$probs <- list()
     predictions$groups <- list()
-    hsbm_output$min_dl <- list()
     if(is.null(elist_i)){
-        elist_predict <- 1:length(hsbm_input$edgelist)
+        elist_predict <- 1:length(hsbm_input$edgelists)
     }else{
         elist_predict <- elist_i
     }
+
     for(i in elist_predict){
         if(verbose){
             cat("Computing predictions for fold ", i, "\n")
         }
         i_py <- i - 1
-        reticulate::py_run_string(stringr::str_glue("elists = r.{hsbm_name}['edgelist']"))
+        reticulate::py_run_string(stringr::str_glue("elists = r.{hsbm_name}['edgelists']"))
         reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
         reticulate::py_run_string("g = create_graph(elist)")
         reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
@@ -91,7 +98,10 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
         }
 
         hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
-        hsbm_output$predictions$groups[[i]] <- py$groups_df
+        print(hsbm_output$predictions$probs[[i]])
+        if(save_blocks){
+            hsbm_output$predictions$groups[[i]] <- py$groups_df
+        }
         hsbm_output$min_dl[[i]] <- py$res_dict$min_dl
 
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
@@ -104,53 +114,3 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
 }
 
 
-hsbm.predict2 <- function(hsbm_input, add_n_x = TRUE, verbose = TRUE){
-    hsbm_name <- as.list(match.call())$hsbm_input
-    if(!inherits(hsbm_input, "hsbm.input")){
-        stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
-    }
-
-    cat("\tpy object begin: ", format(object.size(py), units = "MB"), "\n")
-
-    reticulate::py_run_string(import_modules())
-    reticulate::py_run_string(add_taxa_vertex_prop())
-    reticulate::py_run_string(create_graph())
-    reticulate::py_run_string(get_missing_edges())
-    reticulate::py_run_string(hsbm_link_prediction())
-    reticulate::py_run_string(get_groups())
-
-    hsbm_output <- hsbm_input
-    cat("\thsbm_output begin: ", format(
-                                     object.size(hsbm_output),
-                                     units = "MB"),
-        "\n")
-    rm(hsbm_input); gc()
-
-    hsbm_output$predictions <- list()
-    hsbm_output$predictions$probs <- list()
-    hsbm_output$predictions$groups <- list()
-    for(i in 1:length(hsbm_output$edgelist)){
-        if(verbose){
-            cat("Computing predictions for fold ", i, "\n")
-        }
-        i_py <- i - 1
-        reticulate::py_run_string(stringr::str_glue("elists = r.{hsbm_name}['edgelist']"))
-        reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
-        reticulate::py_run_string("g = create_graph(elist)")
-        reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
-                                                    "force_niter = r.{hsbm_name}['iter'])"))
-        reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
-
-        hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
-        hsbm_output$predictions$groups[[i]] <- py$groups_df
-
-        reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
-
-        cat("\tpy object: ", format(object.size(py), units = "MB"), "\n")
-        cat("\thsbm_output: ", format(object.size(hsbm_output), units = "MB"), "\n")
-    }
-
-    attr(hsbm_output, "class") <- "hsbm.predict"
-
-    return(hsbm_output)
-}

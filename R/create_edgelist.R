@@ -1,4 +1,3 @@
-#' @export
 hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
     col_names <- c("row_names", "col_names", "value")
 
