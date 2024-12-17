@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import gc
+from scipy.special import logsumexp
 from graph_tool.all import *')
 
 }
@@ -112,11 +113,10 @@ def hsbm_predict(g, elist, wait = 1000,
         if all_missing == None:
             all_missing = get_missing_edges(df = elist, g = g)
 
-        marginal_sums = np.zeros(len(all_missing))
+        edges_prob = []
         def collect_marginals(s):
-            nonlocal entropy, marginal_sums, state_min_dl
-            edges_prob = s.get_edges_prob(all_missing)
-            marginal_sums  = np.add(marginal_sums, edges_prob)
+            nonlocal entropy, state_min_dl
+            edges_prob.append(s.get_edges_prob(all_missing))
             if s.entropy() < entropy:
                 entropy = s.entropy()
                 state_min_dl = s.copy()
@@ -142,8 +142,12 @@ def hsbm_predict(g, elist, wait = 1000,
 
     print("\tGather data")
     if method == "binary_classifier":
+        ps = []
+        for i in range(len(all_missing)):
+            ps.append(logsumexp([ep[i] for ep in edges_prob]) - np.log(len(edges_prob)))
+
         pred_dict = {"v1": [], "v2": [],
-                    "p": np.exp(marginal_sums/force_niter),
+                    "p": np.exp(ps),
                     "v1_names": [], "v2_names": [],
                     "edge_type": []}
         col_names = ["v1", "v2", "p", "v1_names", "v2_names",
