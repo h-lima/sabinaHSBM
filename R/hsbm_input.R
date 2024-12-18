@@ -76,7 +76,7 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classif
 
     }
 
-    value <- list(data = data, folds = folds, edgelist = edgelists,
+    value <- list(data = data, folds = folds, edgelists = edgelists,
                   method = method, iter = iter, wait = wait)
 
     attr(value, "class") <- "hsbm.input"

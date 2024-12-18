@@ -1,3 +1,86 @@
+#' @export
+hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
+                               na_treatment = "na_to_0",
+                               threshold = "prc_closest_topright",
+                               new_matrix_method = "average_thresholded",
+                               custom_threshold = NULL){
+
+    if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
+        stop("Invalid value for new_matrix_method.",
+             " It must be 'ensemble_binary or 'average_thresholded'")
+    }
+    if(na_treatment != "na_to_0" & hsbm_out$method == "binary_classifier"){
+        stop("na_treatment cannot be set for binary_classifier since there are no NAs.")
+    }
+    if(rm_documented & hsbm_out$method == "full_reconstruction"){
+        warning("Using rm_documented for full_reconstruction method.",
+                " full_reconstruction computes probabilities for documented so consider if your",
+                " choice is correct.")
+    }
+
+    hsbm_reconstructed <- list()
+    hsbm_reconstructed$data <- hsbm_out$data
+    hsbm_reconstructed$pred_mats <- list()
+    hsbm_reconstructed$reconstructed_stats <- list()
+    hsbm_reconstructed$reconstructed_df <- list()
+    binary_mats <- list()
+
+    hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out, input_names = TRUE,
+                                                             na_treatment = na_treatment)
+    n_folds <- length(hsbm_out$predictions$probs)
+    for(i in 1:n_folds){
+        reconstruction_i <- get_reconstruction(hsbm_reconstructed$reconstructed_df$res_folds,
+                                               fold_id = i,
+                                               com = hsbm_out$data,
+                                               folds = hsbm_out$folds,
+                                               rm_documented = rm_documented,
+                                               na_treatment = na_treatment,
+                                               threshold = threshold)
+        hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
+        hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
+        binary_mats[[i]] <- reconstruction_i$new_bin_mat
+    }
+
+    tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
+    tb_all <- data.frame(cbind(1:n_folds, tb_all))
+    #yPRC is the baseline of Precision-Recall Curve
+    colnames(tb_all) <- c("folds", "auc",
+                          "aucpr", "yPRC", "thresh",
+                          "n_heldout", "pred_held_ones",
+                          "n_ones", "pred_tot_ones", "total_pred_ones",
+                          "precision", "sens", "spec", "ACC", "ERR","tss")
+
+    hsbm_reconstructed$tb <- tb_all
+    if(new_matrix_method == "ensemble_binary"){
+        if(is.null(custom_threshold)) thresh <- 0.1
+        hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
+                                              thresh = thresh, na_treatment = na_treatment)
+    }else{
+        if(is.null(custom_threshold)) thresh <- mean(tb_all$thresh)
+        hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
+                                              thresh = thresh, na_treatment = na_treatment)
+    }
+
+    hsbm_reconstructed$threshold <- threshold
+
+    attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
+
+    return(hsbm_reconstructed)
+}
+
+#' @export
+top_links <- function(hsbm_reconstructed, n = 10){
+
+    res_averaged <-  hsbm_reconstructed$reconstructed_df$res_averaged
+    reconstructed <- dplyr::filter(res_averaged, edge_type == "reconstructed")
+
+    cols <- c("v1_names", "v2_names", "p", "sd")
+    reconstructed <- reconstructed[order(reconstructed$p, decreasing = TRUE), ][1:n, cols]
+    row.names(reconstructed) <- NULL
+
+    return(reconstructed)
+}
+
 #' @name get_hsbm_results
 #'
 #' @title Extract and summarize results from HSBM predictions.
@@ -35,8 +118,6 @@
 #'
 #' # View the final averaged matrix
 #' averaged_matrix <- myResults$predictions$res_averaged
-#'
-#' @export
 get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 
     if(!inherits(hsbm_output, "hsbm.predict")){
@@ -99,225 +180,39 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
         folds_select$v2_names <- colnames(com)[v2_col]
     }
 
-    hsbm_output$predictions$res_folds <- folds_res_list
-    hsbm_output$predictions$res_averaged <- folds_select
-
     min_size_warning <- 0.5 * prod(dim(com))
     if((hsbm_output$method == "full_reconstruction") && (nrow(folds_select) < min_size_warning)) {
         percentage <- 100 * (nrow(folds_select) / prod(dim(com)))
         warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage))
     }
 
-    return(hsbm_output)
+    return(list(res_folds = folds_res_list, res_averaged = folds_select))
 
 }
 
 
-#' @name top_links
-#'
-#' @title Extract Top Predicted Links
-#'
-#' @description
-#' This function extracts the top predicted links from the HSBM model output.
-#'
-#' @param hsbm_output An object of class \code{hsbm.predict} containing the results of the HSBM model predictions.
-#' @param n (\emph{optional, default} \code{10}) \cr
-#' An \code{integer} specifying the number of top links to extract.
-#'
-#' @return
-#' A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
-#'
-#' @seealso \code{\link{hsbm.predict}}
-#'
-#' @examples
-#' # Load example HSBM prediction results
-#' # Assuming `hsbm_output` is an object of class `hsbm.predict`
-#' data(myPred, package = "sabinaHSBM")
-#'
-#' top_10_links <- top_links(myPred, n = 10)
-#' print(top_10_links)
-#'
-#' @export
-top_links <- function(hsbm_output, n = 10){
-
-    if(is.null(hsbm_output$predictions$res_averaged)){
-        stop("res_averaged dataframe was not found in hsbm_output.",
-             "Consider running get_hsbm_results function")
-    }
-    res_averaged <-  hsbm_output$predictions$res_averaged
-    reconstructed <- dplyr::filter(res_averaged, edge_type == "reconstructed")
-
-    cols <- c("v1_names", "v2_names", "p", "sd")
-    reconstructed <- reconstructed[order(reconstructed$p, decreasing = TRUE), ][1:n, cols]
-    row.names(reconstructed) <- NULL
-
-    return(reconstructed)
-}
-
-
-
-#' @name hsbm.reconstructed
-#'
-#' @title Generate a reconstructed bipartite binary matrix from Hierarchical Stochastic Block Model (HSBM)
-#'
-#' @description This function generates a reconstructed bipartite binary matrix based on the HSBM model.
-#'
-#' @param hsbm_out An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.
-#' @param pred_all (\emph{optional, default} \code{FALSE}) \cr
-#' A \code{logical} value indicating whether to use all predictions for reconstruction.	#@@@JMB terminar de aclarar
-#' @param rm_documented (\emph{optional, default} \code{FALSE}) \cr
-#' A \code{logical} value indicating whether to remove documented entries (1s).	#@@@JMB terminar de aclarar
-#' @param threshold (\emph{optional, default} \code{"prc_closest_topright"}) \cr
-#' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.
-#' @param new_matrix_method (\emph{optional, default} \code{"average_thresholded"}) \cr
-#' A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}.
-#' @param custom_threshold (\emph{optional, default} \code{NULL}) \cr
-#' A \code{numeric} value specifying a custom threshold for binary classification. If \code{NULL}, the default threshold is used used based on the \code{new_matrix_method}.	#@@@JMB igual podemos llamar a esto ensemble_binary_threshold para que quede más claro. Yo no le entiendo muy bien así que revisa que esté la explicación correcta
-#'
-#' @return
-#' An object of class \code{hsbm.reconstructed} containing the reconstructed matrices and related statistics:
-#' - \code{$data} A \code{matrix} of the original input data.
-#' - \code{$pred_mats} A \code{list} of \code{matrix}, each containing predicted probabilities for edges/links from different cross-validation folds. 
-#' - \code{$reconstructed_bin_mats} A \code{list} of binary reconstructed matrices (0s or 1s) for each fold, based on the applied threshold.
-#' - \code{$reconstructed_stats} A list of reconstruction statistics for each fold.
-#' - \code{$tb} A \code{data.frame} with combined statistics for all folds. It includes the following columns:
-#'   - \code{folds}: The index of the cross-validation fold.
-#'   - \code{auc}: The Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve for the fold.
-#'   - \code{aucpr}: The Area Under the Curve (AUC) of the Precision-Recall Curve (PRC) for the fold.
-#'   - \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
-#'   - \code{thresh}: The binary classification threshold applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
-#'   - \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
-#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
-#'   - \code{n_ones}: The total number of positive edges/links in the original data.
-#'   - \code{pred_tot_ones}: The proportion of positive edges/links in the original data that were correctly predicted as positive by the model.
-#'   - \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.  		#@@@JMB estqo es así?
-#'   - \code{precision}: The precision of the model, calculated as the ratio of true positives to the sum of true positives and false positives.
-#'   - \code{sens}: The sensitivity (or recall) of the model.
-#'   - \code{spec}: The specificity of the model.
-#'   - \code{ACC}: The overall accuracy of the model.
-#'   - \code{ERR}: The error rate of the model.
-#'   - \code{tss}: The True Skill Statistic (TSS).
-#' - \code{$new_mat} A \code{matrix} representing the final reconstructed binary matrix using the specified \code{new_matrix_method} and \code{threshold}. 
-#' - \code{$threshold} A \code{character} string indicating the method used to determine the binary classification threshold.
-#'
-#' @details
-#' - The \code{pred_all} parameter indicates whether to use all predictions or a subset for the reconstruction.
-#' - The \code{rm_documented} parameter controls whether documented entries (1s) are removed from the reconstruction.  #@@@JMB terminar de aclarar
-#' - The \code{threshold} parameter defines the method for determining the binary classification threshold. Valid options are:
-#'   - \code{"roc_youden"}: Maximizes the Youden's J statistic (sensitivity + specificity - 1).
-#'   - \code{"roc_closest_topleft"}: Minimizes the distance to the top-left corner in the ROC space.
-#'   - \code{"roc_equal_sens_spec"}: Equalizes sensitivity and specificity.
-#'   - \code{"roc_no_omission"}: Maximizes the threshold with no false negatives.
-#'   - \code{"prc_min_rec_prec"}: Minimizes the sum of recall and precision.
-#'   - \code{"prc_equal_rec_prec"}: Equalizes recall and precision.
-#'   - \code{"prc_closest_topright"}: Minimizes the distance to the top-right corner in the PRC space.
-#'   - \code{"prc_max_F1"}: Maximizes the F1 score.
-#'   - Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
-#' - The \code{new_matrix_method} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
-#'   - \code{"average_thresholded"}: This method averages the predicted matrices and then applies a threshold to create a binary matrix. The threshold can be set using the \code{custom_threshold} parameter or defaults to the average threshold calculated from the folds.
-#'   - \code{"ensemble_binary"}: This method creates a binary matrix by taking an ensemble approach, where each entry is set to 1 if it exceeds the specified threshold in any of the prediction matrices. The threshold can be set using the \code{custom_threshold} parameter or defaults to a predefined value (e.g., 0.1).
-#'
-#'
-#' @seealso \code{\link{hsbm.predict}}
-#'
-#' @examples
-#' # Load example HSBM prediction results
-#' data(myPred, package = "sabinaHSBM")
-#' 
-#' myReconst <- hsbm.reconstructed(myPred)
-#' 
-#' # View the final reconstructed binary matrix
-#' reconstructed_matrix <- myReconst$new_mat
-#'
-#' @export
-hsbm.reconstructed <- function(hsbm_out, pred_all = FALSE, rm_documented = FALSE,
-                               threshold = "prc_closest_topright",
-                               new_matrix_method = "average_thresholded",
-                               custom_threshold = NULL){
-
-    if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
-        stop("Invalid value for new_matrix_method.",
-             " It must be 'ensemble_binary or 'average_thresholded'")
-    }
-
-    hsbm_reconstructed <- list()
-    hsbm_reconstructed$data <- hsbm_out$data
-    hsbm_reconstructed$pred_mats <- list()
-    hsbm_reconstructed$reconstructed_bin_mats <- list()
-    hsbm_reconstructed$reconstructed_stats <- list()
-    n_folds <- length(hsbm_out$predictions$probs)
-    for(i in 1:n_folds){
-        reconstruction_i <- get_reconstruction(hsbm_out, fold_id = i, pred_all = pred_all,
-                                               rm_documented, threshold = threshold)
-        hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
-        hsbm_reconstructed$reconstructed_bin_mats[[i]] <- reconstruction_i$new_bin_mat
-        hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
-    }
-
-    tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
-    tb_all <- data.frame(cbind(1:n_folds, tb_all))
-    #yPRC is the baseline of Precision-Recall Curve
-    colnames(tb_all) <- c("folds", "auc",
-                          "aucpr", "yPRC", "thresh",    
-                          "n_heldout", "pred_held_ones",
-                          "n_ones", "pred_tot_ones", "total_pred_ones",
-                          "precision", "sens", "spec", "ACC", "ERR","tss")
-
-    hsbm_reconstructed$tb <- tb_all
-    if(new_matrix_method == "ensemble_binary"){
-        if(is.null(custom_threshold)) thresh <- 0.1
-        hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$reconstructed_bin_mats,
-                                              thresh = thresh)
-    }else{
-        if(is.null(custom_threshold)) thresh <- mean(tb_all$thresh)
-        hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
-                                              thresh = thresh)
-    }
-
-    hsbm_reconstructed$threshold <- threshold
-    
-    attr(hsbm_reconstructed, "class") <- "hsbm.reconstructed"
-    
-    return(hsbm_reconstructed)
-}
-
-
-get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, rm_documented = FALSE){
-    df <- hsbm_out$predictions$probs[[fold_id]]
-    com <- hsbm_out$data
-    folds <- as.data.frame(hsbm_out$folds)
-    gt_data <- tidy_hsbm_results(df, n_v1 = nrow(com))
-    rows <- as.numeric(gt_data$v1) + 1
-    cols <- as.numeric(gt_data$v2) - nrow(com) + 1
-    ps <- gt_data$p
+get_reconstruction <- function(res_folds, fold_id, com, folds, threshold, na_treatment,
+                               rm_documented = FALSE){
+    df <- res_folds[[fold_id]]
+    rows <- as.numeric(df$v1) + 1
+    cols <- as.numeric(df$v2) - nrow(com) + 1
+    ps <- df$p
     com_train <- com
-    row_col <- as.matrix(dplyr::filter(folds, gr == fold_id)[, c('row', 'col')])
+    com_i <- com
+    row_col <- as.matrix(dplyr::filter(as.data.frame(folds), gr == fold_id)[, c('row', 'col')])
     com_train[row_col] <- 0
     com_fit <- com_train
     com_fit[cbind(rows, cols)] <- ps
-    if(!pred_all){
-        com_tmp <- com
-        com_tmp[] <- 0
-        com_tmp[row_col] <- 1
-        com_i <- com_tmp
-    }else{
-        com_i <- com
-    }
-    if(rm_documented){
-        com_fit[com_train == 1] <- -1
-        com_i[com_train == 1] <- -1
-        yPRC <- sum(com_i[com_i != -1])/length(com_i[com_i != -1]) 
-    }else{
-        yPRC <- sum(com_i)/length(com_i)
-    }
-    com_fit_long <- reshape2::melt(com_fit)$value
-    com_i_long <- reshape2::melt(com_i)$value
-    if(rm_documented){
-        com_fit_long <- com_fit_long[com_fit_long != -1]
-        com_i_long <- com_i_long[com_i_long != -1]
-    }
 
-    pred <- ROCR::prediction(predictions = com_fit_long, labels = com_i_long)
+    if(rm_documented){
+        com_fit[com_train == 1] <- NA
+        com_i[com_train == 1] <- NA
+    }
+    com_fit_vec <- reshape2::melt(com_fit, na.rm = TRUE)$value
+    com_i_vec <- reshape2::melt(com_i, na.rm = TRUE)$value
+
+    yPRC <- sum(com_i_vec)/length(com_i_vec)
+    pred <- ROCR::prediction(predictions = com_fit_vec, labels = com_i_vec)
     aucpr <- as.numeric(ROCR::performance(pred, 'aucpr')@y.values)
     auc <- as.numeric(ROCR::performance(pred, 'auc')@y.values)
     f <- ROCR::performance(pred, "f")
@@ -345,19 +240,26 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
     ACC <- accuracies[closest_index]
     ERR <- 1 - ACC
     tss <- sens + spec - 1
-	
-    if(rm_documented){
-        com_fit[com_train == 1] <- 1
-        com_i[com_train == 1] <- 1
-    }
-	
-    com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
 
+    # Get documented values back
+    if(rm_documented & hsbm_out$method == "binary_classifier"){
+        com_fit[com_train == 1] <- 1
+    }else if(rm_documented & hsbm_out$method == "full_reconstruction"){
+        com_fit[cbind(rows, cols)] <- ps
+        com_fit[com_train == 1] <- 1
+    }
+
+    if(na_treatment != "na_to_0"){
+        com_fit[] <- NA
+        com_fit[cbind(rows, cols)] <- ps
+    }
+
+    com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
     n_heldout <- nrow(row_col)
     documented_ones <- sum(com)
-    pred_tot_ones <- sum((com + com_fit_bin) == 2)/ sum(com)
-    pred_held_ones <- sum((com[row_col] + com_fit_bin[row_col]) == 2)/sum(com[row_col])
-    total_pred_ones <- sum(com_fit_bin)
+    pred_tot_ones <- sum((com + com_fit_bin) == 2, na.rm = TRUE)/ sum(com)
+    pred_held_ones <- sum((com[row_col] + com_fit_bin[row_col]) == 2, na.rm = TRUE)/sum(com[row_col])
+    total_pred_ones <- sum(com_fit_bin, na.rm = TRUE)
 
     return(list(pred_mat = com_fit,
                 new_bin_mat = com_fit_bin,
@@ -380,10 +282,14 @@ get_reconstruction <- function(hsbm_out, fold_id, threshold, pred_all = FALSE, r
 }
 
 
-avg_mat <- function(reconstructed_mats_list, thresh, method = "average_thresholded"){
+avg_mat <- function(reconstructed_mats_list, thresh, na_treatment, method = "average_thresholded"){
 
-    mat_sum <- apply(simplify2array(reconstructed_mats_list), 1:2, sum, na.rm = TRUE)
-    mat_avg <- mat_sum/length(reconstructed_mats_list)
+    if(na_treatment == "keep_na"){
+        na_rm <- FALSE
+    }else{
+        na_rm <- TRUE
+    }
+    mat_avg <- apply(simplify2array(reconstructed_mats_list), 1:2, mean, na.rm = na_rm)
 
     mat_avg_bin <- 1*(mat_avg >= thresh)
 
@@ -417,8 +323,6 @@ tidy_hsbm_results <- function(gt_df, n_v1 = 447){
 
     return(gt_df)
 }
-
-
 
 sel_thresh<- function(threshold, perf, perf2, f) {
 	 THRESH_names<-c("roc_youden",
@@ -474,3 +378,4 @@ sel_thresh<- function(threshold, perf, perf2, f) {
   }	
   return(thresh)
 }
+
