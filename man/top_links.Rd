@@ -4,10 +4,10 @@
 \alias{top_links}
 \title{Extract Top Predicted Links}
 \usage{
-top_links(hsbm_output, n = 10)
+top_links(hsbm_reconstructed, n = 10)
 }
 \arguments{
-\item{hsbm_output}{An object of class \code{hsbm.predict} containing the results of the HSBM model predictions.}
+\item{hsbm_reconstructed}{An object of class \code{hsbm.reconstructed} containing the results of the HSBM model reconstruction.}
 
 \item{n}{(\emph{optional, default} \code{10}) \cr
 An \code{integer} specifying the number of top links to extract.}
@@ -16,17 +16,17 @@ An \code{integer} specifying the number of top links to extract.}
 A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
 }
 \description{
-This function extracts the top predicted links from the HSBM model output.
+Extracts the top predicted links from the HSBM model output, allowing for prioritization of likely true links.
 }
 \examples{
 # Load example HSBM prediction results
-# Assuming `hsbm_output` is an object of class `hsbm.predict`
-data(myPred, package = "sabinaHSBM")
+# Assuming `hsbm_reconstructed` is an object of class `hsbm.reconstructed`
+data(myReconst, package = "sabinaHSBM")
 
 top_10_links <- top_links(myPred, n = 10)
 print(top_10_links)
 
 }
 \seealso{
-\code{\link{hsbm.predict}}
+\code{\link{hsbm.predict}}, \code{\link{hsbm.reconstructed}}
 }

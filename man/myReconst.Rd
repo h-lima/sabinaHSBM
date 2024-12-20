@@ -3,26 +3,26 @@
 \docType{data}
 \name{myReconst}
 \alias{myReconst}
-\title{An \code{R} object of class \code{hsbm.reconstructed}, resulting from the application of the \code{hsbm.reconstructed()} function.}
+\title{Example HSBM reconstructed object}
 \format{
 A \code{list} with the following components:
 \describe{
 \item{data}{A \code{matrix} representing the binary bipartite input data.}
-\item{pred_mats}{A \code{list} of matrices where ...........#@JMB temrinar....}
-\item{reconstructed_bin_mats}{A \code{list} of binary matrices representing the reconstructed data for each fold based on the applied threshold.}
-\item{reconstructed_stats}{A \code{list} of numeric vectors where each vector contains various statistics for the reconstructed data of each fold.}
-\item{tb}{A \code{data.frame} with 10 rows and 16 columns summarizing performance metrics across folds.}
-\item{new_mat}{A \code{numeric} matrix representing the final reconstructed binary matrix.}
-\item{threshold}{A \code{character} string indicating the thresholding method used for reconstruction.}
+\item{pred_mats}{A \code{list} of matrices containing predicted probabilities for links in each cross-validation fold.}
+\item{reconstructed_bin_mats}{A \code{list} of binary matrices representing reconstructed data for each fold.}
+\item{reconstructed_stats}{A \code{list} of numeric vectors summarizing performance metrics for each fold.}
+\item{tb}{A \code{data.frame} summarizing performance metrics across folds.}
+\item{new_mat}{A \code{matrix} representing the final reconstructed binary matrix.}
+\item{threshold}{A \code{character} string indicating the thresholding method used.}
 }
 }
 \source{
-Data is of own creation.
+Generated using the \code{hsbm.reconstructed()} function in the \code{sabinaHSBM} package.
 }
 \usage{
-myReconst
+data(myReconst)
 }
 \description{
-An \code{R} object of class \code{hsbm.reconstructed}, resulting from the application of the \code{hsbm.reconstructed()} function.
+An example of an object of class \code{hsbm.reconstructed}, precomputed using the \code{hsbm.reconstructed()} function. This object is included to facilitate the demonstration of functionality in examples and vignettes without requiring computational overhead.
 }
 \keyword{datasets}

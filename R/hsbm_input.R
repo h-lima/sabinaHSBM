@@ -4,7 +4,7 @@
 #'
 #' @description This function prepares the input data necessary for running the \bold{Hierarchical Stochastic Block Model (HSBM)} analysis by creating cross-validation folds and corresponding edgelists.
 #'
-#' @param data A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/link.
+#' @param data A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/no link.
 #' @param folds (\emph{optional, default} \code{NULL}) \cr
 #' An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.
 #' @param n_folds (\emph{optional, default} \code{5}) \cr
@@ -20,8 +20,8 @@
 #' - \code{$data} The binary bipartite \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
 #' - \code{$edgelist} A \code{list} of edge lists generated for each fold. Each edge list is a \code{data.frame} with the following columns:
-#'   - \code{v1} The index of the first type of node.
-#'   - \code{v2} The index of the second type of node.
+#'   - \code{v1} The index of the first (in rows) type of nodes.
+#'   - \code{v2} The index of the second (in columns) type of nodes.
 #'   - \code{value} The measurement value for the edge. It is 1 if there is a edge/link between the node pair, and 0 if the edge is held out for cross-validation.
 #'   - \code{row_names} Names of the nodes corresponding to the rows in the original bipartite matrix, representing the first type of nodes.
 #'   - \code{col_names} Names of the nodes corresponding to the columns in the original bipartite matrix, representing the second type of nodes.
@@ -33,7 +33,7 @@
 #' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 #'
 #' @details
-#' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction between the nodes represented by rows and columns.
+#' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction/link between the nodes represented by rows and columns.
 #' - The \code{folds} parameter, if provided, should be a \code{matrix} containing pairs of indices (row, column) representing held-out edges/links during cross-validation.
 #'   It typically contains columns:
 #'   \describe{
@@ -42,18 +42,32 @@
 #'     \item{gr}{Group identifier indicating which cross-validation fold the edge/link pair belongs to.}
 #'   }
 #' - If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
-#' - The \code{method} parameter.... ###@JMB explicar cada method....
+#' - The \code{method} parameter determines the approach for link prediction:
+#'   \describe{
+#'     \item{\code{"binary_classifier"}}{
+#'       Focuses on predicting probabilities for currently unobserved links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved interactions/links might be real.
+#'     }
+#'     \item{\code{"full_reconstruction"}}{
+#'       Estimates probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved links likely to exist) but also detects spurious links (observed links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
+#'     }
+#'   }
 #' - The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column.
 #'
 #' @examples
 #' # Load example data
-#' data(dat, package = "sabinaHSBM")  #@@@JMB pensar ejemplo para data directory
+#' data(dat, package = "sabinaHSBM")
 #'
 #' # Prepare input data
 #' myInput <- hsbm.input(data = dat, 
 #'                       n_folds = 10, 
 #'                       method = "binary_classifier", 
 #'                       iter = 1000)
+#'
+#' # Summary of dataset
+#' summary(myInput)
+#'
+#' # Plot Reconstructed matrix 
+#' plot_interaction_matrix(myInput$data, order_mat = FALSE)
 #'
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classifier", 

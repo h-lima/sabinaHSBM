@@ -9,12 +9,12 @@ hsbm.predict(
   elist_i = NULL,
   method = "binary_classifier",
   verbose = TRUE,
+  save_blocks = TRUE,
   save_pickle = FALSE
 )
 }
 \arguments{
-\item{hsbm_input}{An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
-A \code{logical} value indicating whether to add the number of observations per row and column to the edge list.}
+\item{hsbm_input}{An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.}
 
 \item{elist_i}{(\emph{optional, default} \code{NULL}) \cr
 A \code{numeric} value specifying the index of the edge list (fold) from an \code{hsbm.input}to run predictions on. If \code{NULL}, predictions are run for all edge lists.}
@@ -25,17 +25,32 @@ A \code{character} string specifying the method used for the HSBM prediction. Op
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to print progress messages during prediction.}
 
+\item{save_blocks}{(\emph{optional, default} \code{TRUE}) \cr
+A \code{logical} value indicating whether to save group assignments (blocks) for nodes in the network during the prediction process.}
+
 \item{save_pickle}{(\emph{optional, default} \code{FALSE}) \cr
-If set to \code{TRUE} it saves pickle objects for each fold with the results from the model ran in \code{graph tool} module.}
+A \code{logical} value indicating whether to save the model results as Python pickle files for each fold.}
 }
 \value{
 An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
 \itemize{
 \item \code{$data} The binary bipartite \code{matrix} of input data.
 \item \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
-\item \code{$edgelist} A \code{list} of edge lists generated for each fold.
-\item \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities (p) for the edges/links in the corresponding edge list, according to the HSBM model.
-\item \code{$predictions$groups} A \code{list} where each element is a \code{data.frame} that contains the group assignments for each node in the network for the corresponding edge list.
+\item \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
+\itemize{
+\item \code{v1}: The index of the first type of node (rows in the original matrix).
+\item \code{v2}: The index of the second type of node (columns in the original matrix).
+\item \code{p}: Predicted probabilities of link between the nodes \code{v1} and \code{v2}.
+\item \code{v1_names}: Names of the nodes corresponding to \code{v1}, derived from the row names of the original input matrix.
+\item \code{v2_names}: Names of the nodes corresponding to \code{v2}, derived from the column names of the original input matrix.
+\item \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data or \code{"reconstructed"} for undomented edges/links.
+}
+\item \code{$predictions$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
+\itemize{
+\item \code{nodes}: Indices of the nodes in the network.
+\item \code{G1, G2, G3, ...}: Group assignments for each node across different hierarchical levels, where each column represents a specific level of the hierarchy and the values indicate the group to which the node belongs.
+\item \code{taxa}: Names of the nodes, derived from the row and column names of the input matrix.   #@@JMB la columna taxa puede llamrse de una forma más genérica????
+}
 \item \code{$min_dl} A \code{list} of minimum description length values for each fold.
 }
 }
@@ -46,21 +61,37 @@ This function performs predictions based on the HSBM for a specified edge list (
 \itemize{
 \item The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
 \item The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
-\item The \code{method} parameter defines the prediction method to be used. Currently, both \code{"binary_classifier"} (see \url{https:// #@@JMB info binary}) and \code{"full_reconstruction"} are supported.
-\item The \code{verbose} parameter, when set to \code{TRUE}, enables the display of progress messages, which is useful for tracking the computation process.
-\item The \code{save_pickle} parameter, when \code{TRUE} saves the model results as a python pickle file. The files are saved in the working directory as hsbm_res_foldi.pkl where i stands for the index of the fold. The pickle object is a dictionary with 5 elements. enum.....
+\item The \code{method} parameter defines the prediction method to be used. Options are:
+\describe{
+\item{\code{"binary_classifier"}}{Focuses on predicting probabilities for unobserved links (\code{0s}). Use this to identify missing links in partially incomplete networks.}
+\item{\code{"full_reconstruction"}}{Estimates probabilities for all links (\code{0s} and \code{1s}), enabling the identification of both missing and spurious links in incomplete or error-prone networks.}
+}
+\item The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
+\item The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index. The pickle object is a dictionary with 5 elements. enum..... #@@
 }
 }
 \examples{
-# Load example data and prepare input
+## Not run:
+# Example workflow to generate `myInput`:
 data(dat, package = "sabinaHSBM")
+
+# Prepare input for HSBM
 myInput <- hsbm.input(data = dat, 
                       n_folds = 10, 
                       method = "binary_classifier", 
                       iter = 1000)
+## End(Not run)
 
-# Generate predictions for the prepared input
+# Load example HSBM predicted results
+data(myInput, package = "sabinaHSBM")
+
 myPred <- hsbm.predict(hsbm_input = myInput)
+
+# View link probabilities of fold 1
+myPred$predictions$probs[[1]]
+
+# View groups of fold 1
+myPred$predictions$groups[[1]]
 
 }
 \seealso{
