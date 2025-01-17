@@ -33,6 +33,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                                fold_id = i,
                                                com = hsbm_out$data,
                                                folds = hsbm_out$folds,
+                                               method = hsbm_out$method,
                                                rm_documented = rm_documented,
                                                na_treatment = na_treatment,
                                                threshold = threshold)
@@ -190,8 +191,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
 }
 
 
-get_reconstruction <- function(res_folds, fold_id, com, folds, threshold, na_treatment,
-                               rm_documented = FALSE){
+get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold, 
+                               na_treatment, rm_documented = FALSE){
     df <- res_folds[[fold_id]]
     rows <- as.numeric(df$v1) + 1
     cols <- as.numeric(df$v2) - nrow(com) + 1
@@ -241,9 +242,9 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, threshold, na_tre
     tss <- sens + spec - 1
 
     # Get documented values back
-    if(rm_documented & hsbm_out$method == "binary_classifier"){
+    if(rm_documented & method == "binary_classifier"){
         com_fit[com_train == 1] <- 1
-    }else if(rm_documented & hsbm_out$method == "full_reconstruction"){
+    }else if(rm_documented & method == "full_reconstruction"){
         com_fit[cbind(rows, cols)] <- ps
         com_fit[com_train == 1] <- 1
     }

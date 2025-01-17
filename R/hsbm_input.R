@@ -58,8 +58,13 @@
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classifier", 
                        iter = 10000, wait = 1000,
-                       min_per_col = 2, min_per_row = 2){
-    
+                       min_per_col = 2, min_per_row = 2, 
+                       add_spurious = FALSE){
+    if(!(method %in% c("binary_classifier", "full_reconstruction"))){
+        stop("Unknown method. Method should be binary_classifier or",
+             " full_reconstruction")
+    }
+
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
 
@@ -72,7 +77,8 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5, method = "binary_classif
     edgelists <- list()
 
     for(i in 1:n_folds){
-        edgelists[[i]] <- hsbm_edgelist(data, folds, fold_id = i)
+        edgelists[[i]] <- hsbm_edgelist(data, folds, fold_id = i, 
+                                        add_spurious = add_spurious)
 
     }
 

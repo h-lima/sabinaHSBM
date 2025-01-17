@@ -43,7 +43,7 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
     long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
 
     if(add_spurious){
-        long_mat <- add_spurious_edges(long_mat, nrow(adj_mat))
+        long_mat <- add_spurious_edges(long_mat, nrow(adj_mat), col_names[1:2])
     }
 
     return(dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], edge_type, n, x))

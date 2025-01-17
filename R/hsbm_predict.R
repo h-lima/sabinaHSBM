@@ -45,7 +45,7 @@
 #' myPred <- hsbm.predict(hsbm_input = myInput)
 #'
 #' @export
-hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier",
+hsbm.predict <- function(hsbm_input, elist_i = NULL, 
                          verbose = TRUE, save_blocks = TRUE, save_pickle = FALSE){
 
     if(!inherits(hsbm_input, "hsbm.input")){
@@ -97,11 +97,11 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL, method = "binary_classifier
             reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
         }
 
-        hsbm_output$predictions$probs[[i]] <- py$res_dict$pred_probs
+        hsbm_output$predictions$probs[[i]] <- reticulate::py$res_dict$pred_probs
         if(save_blocks){
-            hsbm_output$predictions$groups[[i]] <- py$groups_df
+            hsbm_output$predictions$groups[[i]] <- reticulate::py$groups_df
         }
-        hsbm_output$min_dl[[i]] <- py$res_dict$min_dl
+        hsbm_output$min_dl[[i]] <- reticulate::py$res_dict$min_dl
 
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
 

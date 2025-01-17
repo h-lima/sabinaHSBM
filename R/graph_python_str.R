@@ -115,7 +115,7 @@ def hsbm_predict(g, elist, wait = 1000,
 
         edges_prob = []
         def collect_marginals(s):
-            nonlocal entropy, state_min_dl
+            nonlocal entropy, state_min_dl, edges_prob
             edges_prob.append(s.get_edges_prob(all_missing))
             if s.entropy() < entropy:
                 entropy = s.entropy()
