@@ -83,6 +83,9 @@ add_spurious_edges <- function(long_mat, n_row, col_names, add_n_x = TRUE){
     }
 
     long_mat <- rbind(long_mat, spurious_mat)
+    long_mat <- dplyr::mutate_if(long_mat, is.factor, as.character)
+    long_mat <- dplyr::mutate_at(long_mat, c("v1", "v2", "value", "n", "x"),
+                                 as.numeric)
 
     return(long_mat)
 
