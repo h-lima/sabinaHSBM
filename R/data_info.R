@@ -102,8 +102,10 @@ summary.hsbm.reconstructed <- function(object, ...){
                        pred_links = pred_links,
                        kept_links = kept_links,
                        spurious_links = spurious_links,
-                       missing_links = missing_links, 
-                       mean_auc = mean(object$tb$auc),
+                       missing_links = missing_links)
+
+ 
+   summary_eval <- data.frame(mean_auc = mean(object$tb$auc),
                        mean_aucpr = mean(object$tb$aucpr),
 		       mean_yPRC = mean(object$tb$yPRC),    
                        mean_prec = mean(object$tb$precision),
@@ -113,5 +115,8 @@ summary.hsbm.reconstructed <- function(object, ...){
 		       mean_ERR = mean(object$tb$ERR),
 		       mean_tss = mean(object$tb$tss))
 
-  return(summary_mat)
+  return(list(
+        `Reconstructed Network Metrics` = summary_mat,
+        `Evaluation Metrics` = summary_eval
+    ))
 }
