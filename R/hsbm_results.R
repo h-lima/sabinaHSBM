@@ -91,8 +91,8 @@ top_links <- function(hsbm_reconstructed, n = 10){
 #' @param hsbm_output An object of class \code{hsbm.predict} containing the predictions made by the HSBM model.
 #' @param input_names (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to include the names of the nodes in the output. If \code{TRUE}, node names are extracted from the original data and added to the results.
-#' @param na_treatment (\emph{optional, default} na_to_0) \cr
-#' na_to_0, treats na as no evidence of a link and assigns it a zero; keep_na puts NA if there is at least one NA; and ignore_na computes the average without taking NA values into account.
+#' @param na_treatment (\emph{optional, default} \code{"na_to_0"}) \cr
+#' A \code{character} string specifying how to handle \code{NA} values in links derived from HSBM predictions. Options include \code{"na_to_0"}, which interprets \code{NA} values as no evidence of a existing link and assigns them a value of zero; \code{"keep_na"}, which retains \code{NA} if there is at least one \code{NA} among the predictions of folds, maintaining uncertainty; and \code{"ignore_na"}, which computes the average of predictions while ignoring \code{NA} values. This parameter provides flexibility in managing \code{NA} values within the final (averaged) predicted network.
 #'
 #' @return
 #' An object of class \code{hsbm.predict} with additional elements:
@@ -105,13 +105,14 @@ top_links <- function(hsbm_reconstructed, n = 10){
 #'   - \code{p} The average predicted probabilities for each edge.
 #'   - \code{sd} The standard deviation of predictions for each edge.
 #'   - \code{range} The range of predicted probabilities for each edge.
-#'   - \code{edge_type} Type of edge, which can be 'reconstructed' whether ......; or 'documented' whether.....	#@@@JMB pendiente de terminar
+#'   - \code{edge_type} Assigned type of edge after edge prediction: 'reconstructed' for undocumented edge (0s), and 'documented' for observed links (1s).
+#'   - \code{nr_na} The number of folds in which each edge was \code{NA} (i.e., no prediction was made).
 #'
 #' @seealso \code{\link{hsbm.predict}}
 #'
 #' @examples
 #' # Load example HSBM prediction results
-#' data(myPred, package = "sabinaHSBM")  #@@@JMB poner todo el ejemplo o guardar los outputs en data?
+#' data(myPred, package = "sabinaHSBM")
 #'
 #' # Extract and summarize the results
 #' myResults <- get_hsbm_results(hsbm_output = myPred)
