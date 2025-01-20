@@ -6,8 +6,8 @@
 \usage{
 hsbm.reconstructed(
   hsbm_out,
-  pred_all = FALSE,
   rm_documented = FALSE,
+  na_treatment = "na_to_0",
   threshold = "prc_closest_topright",
   new_matrix_method = "average_thresholded",
   custom_threshold = NULL
@@ -16,35 +16,59 @@ hsbm.reconstructed(
 \arguments{
 \item{hsbm_out}{An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.}
 
-\item{pred_all}{(\emph{optional, default} \code{FALSE}) \cr
-A \code{logical} value indicating whether to use all predictions for reconstruction.    #@@JMB terminar de aclarar}
-
 \item{rm_documented}{(\emph{optional, default} \code{FALSE}) \cr
 A \code{logical} value indicating whether to remove documented entries (1s).    #@@JMB terminar de aclarar}
+
+\item{na_treatment}{(\emph{optional, default} \code{"na_to_0"}) \cr
+A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.}
 
 \item{threshold}{(\emph{optional, default} \code{"prc_closest_topright"}) \cr
 A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.}
 
 \item{new_matrix_method}{(\emph{optional, default} \code{"average_thresholded"}) \cr
-A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}.}
+A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.}
 
 \item{custom_threshold}{(\emph{optional, default} \code{NULL}) \cr
-A \code{numeric} value specifying a custom threshold for binary classification. If \code{NULL}, the default threshold is used used based on the \code{new_matrix_method}.    #@@JMB igual podemos llamar a esto ensemble_binary_threshold para que quede más claro. Yo no le entiendo muy bien así que revisa que esté la explicación correcta}
+A \code{numeric} value between 0 and 1 specifying a custom threshold for the reconstruction of the final binary matrix.
+The behavior of \code{custom_threshold} depends on the value of \code{new_matrix_method}:
+\itemize{
+\item If \code{"average_thresholded"}: \code{custom_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
+\item If \code{"ensemble_binary"}: \code{custom_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\\% of the folds).
+}}
 }
 \value{
-An object of class \code{hsbm.reconstructed} containing the reconstructed matrices and related statistics:
+An object of class \code{hsbm.reconstructed} containing:
 \itemize{
-\item \code{$data} A \code{matrix} of the original input data.
-\item \code{$pred_mats} A \code{list} of \code{matrix}, each containing predicted probabilities for edges/links from different cross-validation folds.
-\item \code{$reconstructed_bin_mats} A \code{list} of binary reconstructed matrices (0s or 1s) for each fold, based on the applied threshold.
-\item \code{$reconstructed_stats} A list of reconstruction statistics for each fold.
-\item \code{$tb} A \code{data.frame} with combined statistics for all folds. It includes the following columns:
+\item \code{$data} The original binary input matrix.
+\item \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
+\item \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@JMB para qué queremos esto si ya está $tb?
+\item \code{$reconstructed_df}: A \code{list} with:
+\itemize{
+\item \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?
+\itemize{
+\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
+\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+\item \code{p}: Predicted probabilities for each edge/link.
+\item \code{edge_type}: Type of edge: "documented"or "reconstructed".
+}
+\item \code{res_averaged}: A \code{data.frame} summarizing predictions averaged across all folds, with columns:
+\itemize{
+\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
+\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+\item \code{p}: Average predicted probabilities for each edge/link.
+\item \code{sd}: Standard deviation of predicted probabilities across folds.
+\item \code{range}: Range of predicted probabilities across folds.
+\item \code{edge_type}: Type of edge (e.g., "documented", "reconstructed").
+\item \code{nr_na}: Number of folds where a given edge/link had \code{NA} predictions.
+}
+}
+\item \code{$tb} A \code{data.frame} summarizing evaluation metrics for each fold. It includes the following columns: #@@JMB podemos cambiar el nombre a este $  (tb/fold_statistics)??
 \itemize{
 \item \code{folds}: The index of the cross-validation fold.
 \item \code{auc}: The Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve for the fold.
 \item \code{aucpr}: The Area Under the Curve (AUC) of the Precision-Recall Curve (PRC) for the fold.
 \item \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
-\item \code{thresh}: The binary classification threshold applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
+\item \code{thresh}: The binary classification threshold value applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
 \item \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
 \item \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
 \item \code{n_ones}: The total number of positive edges/links in the original data.
@@ -57,8 +81,8 @@ An object of class \code{hsbm.reconstructed} containing the reconstructed matric
 \item \code{ERR}: The error rate of the model.
 \item \code{tss}: The True Skill Statistic (TSS).
 }
-\item \code{$new_mat} A \code{matrix} representing the final reconstructed binary matrix using the specified \code{new_matrix_method} and \code{threshold}.
-\item \code{$threshold} A \code{character} string indicating the method used to determine the binary classification threshold.
+\item \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{new_matrix_method}.
+\item \code{$threshold}: The method or value used to determine the binary classification threshold.
 }
 }
 \description{
@@ -66,9 +90,13 @@ This function generates a reconstructed bipartite binary matrix based on the HSB
 }
 \details{
 \itemize{
-\item The \code{pred_all} parameter indicates whether to use all predictions or a subset for the reconstruction.
-\item The \code{rm_documented} parameter controls whether documented entries (1s) are removed from the reconstruction.  #@@JMB terminar de aclarar
-\item The \code{threshold} parameter defines the method for determining the binary classification threshold. Valid options are:
+\item The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
+\itemize{
+\item \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
+\item \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving the uncertainty.
+\item \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics.
+}
+\item The \code{threshold} parameter defines the method for determining the binary classification threshold. Available options include:
 \itemize{
 \item \code{"roc_youden"}: Maximizes the Youden's J statistic (sensitivity + specificity - 1).
 \item \code{"roc_closest_topleft"}: Minimizes the distance to the top-left corner in the ROC space.
@@ -86,15 +114,38 @@ This function generates a reconstructed bipartite binary matrix based on the HSB
 \item \code{"ensemble_binary"}: This method creates a binary matrix by taking an ensemble approach, where each entry is set to 1 if it exceeds the specified threshold in any of the prediction matrices. The threshold can be set using the \code{custom_threshold} parameter or defaults to a predefined value (e.g., 0.1).
 }
 }
+
+When \code{new_matrix_method} is \code{"ensemble_binary"}, the binary matrices for each fold are computed first using the threshold defined in \code{threshold_method}, and \code{custom_threshold} is applied afterwards to determine the consensus among folds for each link.
 }
 \examples{
-# Load example HSBM prediction results
+## Not run:
+# Example workflow to generate `myPred`:
+data(dat, package = "sabinaHSBM")
+
+# Prepare input for HSBM
+myInput <- hsbm.input(data = example_data, n_folds = 10, method = "binary_classifier", iter = 1000)
+
+# Run HSBM predictions
+myPred <- hsbm.predict(hsbm_input = myInput)
+## End(Not run)
+
+# Load example HSBM reconstructed results
 data(myPred, package = "sabinaHSBM")
 
 myReconst <- hsbm.reconstructed(myPred)
 
 # View the final reconstructed binary matrix
 reconstructed_matrix <- myReconst$new_mat
+
+# Evaluation metrics
+eval_metrics <- myReconst$tb
+print(eval_metrics)
+
+# Final averaged matrix
+averaged_matrix <- myReconst$reconstructed_df$res_averaged
+
+# Plot Reconstructed matrix 
+plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 
 }
 \seealso{

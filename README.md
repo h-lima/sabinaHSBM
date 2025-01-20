@@ -1,33 +1,33 @@
 
 
-<img width="35%" align= "right" alt="logo_s-1" src="https://github.com/geoSABINA/sabinaNSDM/assets/168073517/d29288b9-c1a7-47aa-8753-918c931e4c53"/>
+<img width="38%" align= "right" alt="logo_s-1" src="https://github.com/geoSABINA/sabinaNSDM/assets/168073517/d29288b9-c1a7-47aa-8753-918c931e4c53"/>
 
 # *sabinaHSBM*: Hierarchical Stochastic Block Model for link prediction and network reconstruction
 
 
 ## Overview
-The ***sabinaHSBM*** R package makes the **Hierarchical Stochastic Block Model (HSBM)** available for predicting and reconstructing links in bipartite binary networks, a powerful tool for researchers in fields such as ecology, sociology, and data science. Networks are essential in representing complex systems, from species associations to social connections, but real-world networks often contain missing or spurious links due to sampling limitations. Accurately identifying these gaps and correcting errors enhances our understanding and reliability of network analyses.
+The ***sabinaHSBM*** R package makes the **Hierarchical Stochastic Block Model (HSBM)** available for predicting and reconstructing links in bipartite binary networks, a powerful tool for researchers in fields such as ecology, sociology, or data science. Networks are essential in representing complex systems, from species associations to social connections, but real-world networks often contain missing or spurious links due to sampling limitations. Accurately identifying these gaps and correcting errors enhances our understanding and reliability of network analyses.
 
 ***sabinaHSBM*** addresses these challenges by implementing a powerful HSBM-based approach that uses both observed interactions and the inherent structural patterns within networks to identify unoberved or unrealized (*missing links*) and potentially erroneous links (*spurious links*). Among the various network reconstruction techniques, HSBM stands out for its effectiveness, providing a nonparametric network reconstruction based on Bayesian inference that assigns error probabilities to observed and unobserved links. This approach minimizes subjective decisions, enabling robust statistical inference and model selection.
 
 With ***sabinaHSBM***, users can:
-- **Reconstruct complex networks** from partial or uncertain data.
+- **Reconstruct complex networks** from partial or uncertain data without requiring repeated measurements or direct error estimates.
 - **Estimate probabilities for missing or spurious links**, increasing network accuracy.
 - **Identify hierarchical groups** based on link patterns, uncovering insights into network structure.
-- **Visualize network partitions**, making patterns in large and complex networks more interpretable.
 
 This package provides an R-native environment to explore and validate link predictions, making HSBM-based network reconstruction accessible across systems.
 
 Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto, 2014](https://doi.org/10.6084/m9.figshare.1164194)), which is Linux-only, we’ve made HSBM’s capabilities accessible to all R users by offering a pre-configured Docker container. This container includes all necessary dependencies, enabling seamless use on Windows and Mac as well, so researchers on any platform can leverage the power of ***sabinaHSBM*** without compatibility concerns.
 
 
-## Key Features of ***sabinaHSBM***: #@@@JMB a esto hay que darle una vuelta para enfatizar las virtudes del paquete
+## Key Features of ***sabinaHSBM***:
 
-- Generates an input data with cross-validation across multiple partitions to test model robustness.
-- Predicts missing and spurious links using HSBM and evaluates the predictive performance.
-- Allows reconstruction of the full network, with options to set threshold criteria.
-- Includes visualization tools for comparing known and reconstructed matrices.
-
+- Cross-Validation: Generates an input data with cross-validation across multiple partitions to test model robustness.
+- Prediction and Evaluation: Predicts missing and spurious links using HSBM and evaluates the predictive performance.
+- Uncertainty Quantification.
+- Customizable Reconstruction: Reconstructs the full network with flexible threshold criteria and binary matrix generation.
+- Parallel Processing.
+- Cross-Platform Compatibility.
 
 ## Installation
 
@@ -55,24 +55,23 @@ A research paper detailing the functions and methodologies of the ***sabinaHSBM*
 
 | Step                             | Function                | Description                                                                                  |
 |----------------------------------|-------------------------|----------------------------------------------------------------------------------------------|
-| **Prepare the Input**             | `hsbm.input`           | Prepares cross-validated input data for HSBM analysis                                        |
-| **Reconstruct the network**              | `hsbm.predict`         | Predicts link probabilities and hierarchical node grouping for each fold       |
-| **Get the results** | `hsbm.reconstructed` | Return the reconstructed binary network from flexible threshold settings and provides evaluation metrics    |
-| **Results Exploration and Visualization** | `get_hsbm_results`  | Extracts and summarizes the results of HSBM predictions                                      |
-|                                  | `plot_interaction_matrix` | Visualizes a (reconstructed) binary bipartite matrix                                      |
+| **Prepare your input data**             | `hsbm.input`           | Prepares cross-validated input data for HSBM analysis                                        |
+| **Predict link probabilities**              | `hsbm.predict`         | Predicts link probabilities and hierarchical node grouping for each fold       |
+| **Reconstruct and validate your network** | `hsbm.reconstructed` | Return the reconstructed binary network from flexible threshold settings and provides evaluation metrics    |
+| **Results Exploration and Visualization** | `plot_interaction_matrix` | Visualizes a (reconstructed) binary bipartite matrix                                      |
 |                                  | `top_links`            | Identifies and ranks top predicted links for targeted analysis                               |
 
 
 ## Example Workflow
 
 This example demonstrates how to use the ***sabinaHSBM*** package to predict and reconstruct links in a bipartite binary network.
--   [1. Prepare the Input](#data_preparation)
--   [2. Reconstruct the network](#link_prediction)
--   [3. Get the results](#network_reconstruction)
+-   [1. Prepare your input data ](#data_preparation)
+-   [2. Predict link probabilities](#link_prediction)
+-   [3. Reconstruct and validate your network](#network_reconstruction)
 -   [4. Results Exploration and Visualization](#visualization)
 
   
-### 1. Prepare the Input  <a name="data_preparation">  
+### 1. Prepare your input data  <a name="data_preparation">  
 Begin by preparing the input data with `hsbm.input`:
 
 The input data for `hsbm.input` should be a **binary bipartite matrix** representing interactions between two distinct sets of nodes. Rows represent one type of node (e.g., hosts), columns represent the other type (e.g., parasites), and each entry is binary: `1` indicates a link (e.g., a host-parasite interaction is observed), and `0` indicates no link.
@@ -102,16 +101,16 @@ summary(myInput)   # Summarizes network characteristics
    - **`"binary_classifier"`**: Focuses on predicting probabilities for currently **unobserved links** (`0s`). Use this method if you want to identify **missing links** (unobserved links likely to exist) in partially incomplete networks.
    - **`"full_reconstruction"`**: Estimates probabilities for **all links** (both `0s` and `1s`), resulting in a fully reconstructed probability matrix. This method can identify both **missing links** (unobserved links likely to exist) and **spurious links** (observed links that might be erroneous) in incomplete or error-prone networks.
 
-
-      
-### 2. Reconstruct the network <a name="link_prediction">  
+     
+### 2. Predict link probabilities <a name="link_prediction">  
 Use ‘hsbm.predict’ function to predict the marginal posterior probabilities of each link according to network reconstruction. It requires an object of hsbm.input class, and returns an object of the hsbm.predict class with link probabilities and the hierarchical organization of nodes in groups, for each fold. 
 
 ```r
 myPred <- hsbm.predict(myInput)
 ```
 
-### 3. Get the results <a name="network_reconstruction">  
+
+### 3. Reconstruct and validate your network <a name="network_reconstruction">  
 Reconstruct the network with `hsbm.reconstructed` and customize threshold settings as needed:
 The function ‘hsbm.reconstructed()’ generates a reconstructed binary matrix (linked/unlinked) based on a user-defined threshold, and evaluates model performance with multiple metrics.
 
@@ -132,11 +131,8 @@ paste("The models predicted on average", round(mean(myReconst$tb$pred_held_ones)
 ### 4. Results Exploration and Visualization <a name="visualization"> 
 
 ```r
-# Summarize results
-myRes <- get_hsbm_results(myReconst)
-
 # Identify top predicted links
-top_links_df <- top_links(myRes,
+top_links_df <- top_links(myPred,
                           n = 25 # Number of top predicted links to retrieve
 )
 

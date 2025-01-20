@@ -1,3 +1,118 @@
+#' @name hsbm.reconstructed
+#'
+#' @title Generate a reconstructed bipartite binary matrix from Hierarchical Stochastic Block Model (HSBM)
+#'
+#' @description This function generates a reconstructed bipartite binary matrix based on the HSBM model.
+#'
+#' @param hsbm_out An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.
+#' @param rm_documented (\emph{optional, default} \code{FALSE}) \cr
+#' A \code{logical} value indicating whether to remove documented entries (1s).	#@@@JMB terminar de aclarar
+#' @param na_treatment (\emph{optional, default} \code{"na_to_0"}) \cr
+#' A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.
+#' @param threshold (\emph{optional, default} \code{"prc_closest_topright"}) \cr
+#' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.
+#' @param new_matrix_method (\emph{optional, default} \code{"average_thresholded"}) \cr
+#' A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.
+#' @param custom_threshold (\emph{optional, default} \code{NULL}) \cr
+#' A \code{numeric} value between 0 and 1 specifying a custom threshold for the reconstruction of the final binary matrix.
+#' The behavior of \code{custom_threshold} depends on the value of \code{new_matrix_method}:
+#' - If \code{"average_thresholded"}: \code{custom_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
+#' - If \code{"ensemble_binary"}: \code{custom_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds). 
+#'
+#' @return
+#' An object of class \code{hsbm.reconstructed} containing:
+#' - \code{$data} The original binary input matrix.
+#' - \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
+#' - \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@@JMB para qué queremos esto si ya está $tb?
+#' - \code{$reconstructed_df}: A \code{list} with:
+#'   - \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?
+#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
+#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+#'     - \code{p}: Predicted probabilities for each edge/link.
+#'     - \code{edge_type}: Type of edge: "documented"or "reconstructed".
+#'   - \code{res_averaged}: A \code{data.frame} summarizing predictions averaged across all folds, with columns:
+#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
+#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+#'     - \code{p}: Average predicted probabilities for each edge/link.
+#'     - \code{sd}: Standard deviation of predicted probabilities across folds.
+#'     - \code{range}: Range of predicted probabilities across folds.
+#'     - \code{edge_type}: Type of edge (e.g., "documented", "reconstructed").
+#'     - \code{nr_na}: Number of folds where a given edge/link had \code{NA} predictions.
+#' - \code{$tb} A \code{data.frame} summarizing evaluation metrics for each fold. It includes the following columns: #@@@JMB podemos cambiar el nombre a este $  (tb/fold_statistics)??
+#'   - \code{folds}: The index of the cross-validation fold.
+#'   - \code{auc}: The Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve for the fold.
+#'   - \code{aucpr}: The Area Under the Curve (AUC) of the Precision-Recall Curve (PRC) for the fold.
+#'   - \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
+#'   - \code{thresh}: The binary classification threshold value applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
+#'   - \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
+#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
+#'   - \code{n_ones}: The total number of positive edges/links in the original data.
+#'   - \code{pred_tot_ones}: The proportion of positive edges/links in the original data that were correctly predicted as positive by the model.
+#'   - \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.  		#@@@JMB estqo es así?
+#'   - \code{precision}: The precision of the model, calculated as the ratio of true positives to the sum of true positives and false positives.
+#'   - \code{sens}: The sensitivity (or recall) of the model.
+#'   - \code{spec}: The specificity of the model.
+#'   - \code{ACC}: The overall accuracy of the model.
+#'   - \code{ERR}: The error rate of the model.
+#'   - \code{tss}: The True Skill Statistic (TSS).
+#' - \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{new_matrix_method}.
+#' - \code{$threshold}: The method or value used to determine the binary classification threshold.
+#'
+#' @details
+#' - The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
+#'   - \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
+#'   - \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving the uncertainty.
+#'   - \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics.
+#'
+#' - The \code{threshold} parameter defines the method for determining the binary classification threshold. Available options include:
+#'   - \code{"roc_youden"}: Maximizes the Youden's J statistic (sensitivity + specificity - 1).
+#'   - \code{"roc_closest_topleft"}: Minimizes the distance to the top-left corner in the ROC space.
+#'   - \code{"roc_equal_sens_spec"}: Equalizes sensitivity and specificity.
+#'   - \code{"roc_no_omission"}: Maximizes the threshold with no false negatives.
+#'   - \code{"prc_min_rec_prec"}: Minimizes the sum of recall and precision.
+#'   - \code{"prc_equal_rec_prec"}: Equalizes recall and precision.
+#'   - \code{"prc_closest_topright"}: Minimizes the distance to the top-right corner in the PRC space.
+#'   - \code{"prc_max_F1"}: Maximizes the F1 score.
+#'   - Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
+#'
+#' - The \code{new_matrix_method} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
+#'   - \code{"average_thresholded"}: This method averages the predicted matrices and then applies a threshold to create a binary matrix. The threshold can be set using the \code{custom_threshold} parameter or defaults to the average threshold calculated from the folds.
+#'   - \code{"ensemble_binary"}: This method creates a binary matrix by taking an ensemble approach, where each entry is set to 1 if it exceeds the specified threshold in any of the prediction matrices. The threshold can be set using the \code{custom_threshold} parameter or defaults to a predefined value (e.g., 0.1).
+#'
+#' When \code{new_matrix_method} is \code{"ensemble_binary"}, the binary matrices for each fold are computed first using the threshold defined in \code{threshold_method}, and \code{custom_threshold} is applied afterwards to determine the consensus among folds for each link.
+#'
+#' @seealso \code{\link{hsbm.predict}}
+#'
+#' @examples
+#' ## Not run:
+#' # Example workflow to generate `myPred`:
+#' data(dat, package = "sabinaHSBM")
+#' 
+#' # Prepare input for HSBM
+#' myInput <- hsbm.input(data = example_data, n_folds = 10, method = "binary_classifier", iter = 1000)
+#' 
+#' # Run HSBM predictions
+#' myPred <- hsbm.predict(hsbm_input = myInput)
+#' ## End(Not run)
+#'
+#' # Load example HSBM reconstructed results
+#' data(myPred, package = "sabinaHSBM")
+#' 
+#' myReconst <- hsbm.reconstructed(myPred)
+#' 
+#' # View the final reconstructed binary matrix
+#' reconstructed_matrix <- myReconst$new_mat
+#'
+#' # Evaluation metrics
+#' eval_metrics <- myReconst$tb
+#' print(eval_metrics)
+#'
+#' # Final averaged matrix
+#' averaged_matrix <- myReconst$reconstructed_df$res_averaged
+#' 
+#' # Plot Reconstructed matrix 
+#' plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
+#'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                na_treatment = "na_to_0",
@@ -69,6 +184,31 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
     return(hsbm_reconstructed)
 }
 
+
+#' @name top_links
+#'
+#' @title Extract Top Predicted Links
+#'
+#' @description
+#' Extracts the top predicted links from the HSBM model output, allowing for prioritization of likely true links.
+#'
+#' @param hsbm_reconstructed An object of class \code{hsbm.reconstructed} containing the results of the HSBM model reconstruction.
+#' @param n (\emph{optional, default} \code{10}) \cr
+#' An \code{integer} specifying the number of top links to extract.
+#'
+#' @return
+#' A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
+#'
+#' @seealso \code{\link{hsbm.predict}}, \code{\link{hsbm.reconstructed}}
+#'
+#' @examples
+#' # Load example HSBM prediction results
+#' # Assuming `hsbm_reconstructed` is an object of class `hsbm.reconstructed`
+#' data(myReconst, package = "sabinaHSBM")
+#'
+#' top_10_links <- top_links(myPred, n = 10)
+#' print(top_10_links)
+#'
 #' @export
 top_links <- function(hsbm_reconstructed, n = 10){
 
@@ -82,43 +222,6 @@ top_links <- function(hsbm_reconstructed, n = 10){
     return(reconstructed)
 }
 
-#' @name get_hsbm_results
-#'
-#' @title Extract and summarize results from HSBM predictions.
-#'
-#' @description This function processes the output from an HSBM prediction to generate and summarize the results. It combines predictions across all cross-validation folds, computes the average probability, standard deviation, range of probabilities, and edge_type for each edge/link across the folds.
-#'
-#' @param hsbm_output An object of class \code{hsbm.predict} containing the predictions made by the HSBM model.
-#' @param input_names (\emph{optional, default} \code{TRUE}) \cr
-#' A \code{logical} value indicating whether to include the names of the nodes in the output. If \code{TRUE}, node names are extracted from the original data and added to the results.
-#' @param na_treatment (\emph{optional, default} \code{"na_to_0"}) \cr
-#' A \code{character} string specifying how to handle \code{NA} values in links derived from HSBM predictions. Options include \code{"na_to_0"}, which interprets \code{NA} values as no evidence of a existing link and assigns them a value of zero; \code{"keep_na"}, which retains \code{NA} if there is at least one \code{NA} among the predictions of folds, maintaining uncertainty; and \code{"ignore_na"}, which computes the average of predictions while ignoring \code{NA} values. This parameter provides flexibility in managing \code{NA} values within the final (averaged) predicted network.
-#'
-#' @return
-#' An object of class \code{hsbm.predict} with additional elements:
-#' - \code{$predictions$res_folds} A \code{list} where each element is a \code{data.frame} containing the results of the predictions for each fold, including predicted probabilities and edge types.  						#@@@JMB No recuerdo si qué diferencia había con $predictions$probs. Parece idéntico
-#' - \code{$predictions$res_averaged} A \code{data.frame} summarizing the averaged results across all folds. 
-#'   - \code{v1} The index of the first type of node.
-#'   - \code{v2} The index of the second type of node.
-#'   - \code{v1_names} Names of the first type of nodes.
-#'   - \code{v2_names} Names of the first type of nodes.
-#'   - \code{p} The average predicted probabilities for each edge.
-#'   - \code{sd} The standard deviation of predictions for each edge.
-#'   - \code{range} The range of predicted probabilities for each edge.
-#'   - \code{edge_type} Assigned type of edge after edge prediction: 'reconstructed' for undocumented edge (0s), and 'documented' for observed links (1s).
-#'   - \code{nr_na} The number of folds in which each edge was \code{NA} (i.e., no prediction was made).
-#'
-#' @seealso \code{\link{hsbm.predict}}
-#'
-#' @examples
-#' # Load example HSBM prediction results
-#' data(myPred, package = "sabinaHSBM")
-#'
-#' # Extract and summarize the results
-#' myResults <- get_hsbm_results(hsbm_output = myPred)
-#'
-#' # View the final averaged matrix
-#' averaged_matrix <- myResults$predictions$res_averaged
 get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 
     if(!inherits(hsbm_output, "hsbm.predict")){
@@ -298,6 +401,7 @@ avg_mat <- function(reconstructed_mats_list, thresh, na_treatment, method = "ave
 
 }
 
+
 # First column is v1 and second is v2
 tidy_hsbm_results <- function(gt_df, n_v1 = 447){
     last_v1_v <- n_v1 - 1
@@ -324,6 +428,7 @@ tidy_hsbm_results <- function(gt_df, n_v1 = 447){
 
     return(gt_df)
 }
+
 
 sel_thresh<- function(threshold, perf, perf2, f) {
 	 THRESH_names<-c("roc_youden",
