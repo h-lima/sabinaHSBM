@@ -115,6 +115,7 @@
 #'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
+                               spurious_edges = FALSE,
                                na_treatment = "na_to_0",
                                threshold = "prc_closest_topright",
                                new_matrix_method = "average_thresholded",
@@ -150,6 +151,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                                folds = hsbm_out$folds,
                                                method = hsbm_out$method,
                                                rm_documented = rm_documented,
+                                               spurious_edges = spurious_edges,
                                                na_treatment = na_treatment,
                                                threshold = threshold)
         hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
@@ -157,12 +159,17 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
         binary_mats[[i]] <- reconstruction_i$new_bin_mat
     }
 
+    if(spurious_edges){
+        spurious_name <- "spurious_ones"
+    }else{
+        spurious_name <- NULL
+    }
     tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
     #yPRC is the baseline of Precision-Recall Curve
     colnames(tb_all) <- c("folds", "auc",
                           "aucpr", "yPRC", "thresh",
-                          "n_heldout", "pred_held_ones",
+                          "n_heldout", "pred_held_ones", spurious_name,
                           "n_ones", "pred_tot_ones", "total_pred_ones",
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
@@ -296,7 +303,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
 
 
 get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold, 
-                               na_treatment, rm_documented = FALSE){
+                               na_treatment, rm_documented = FALSE, 
+                               spurious_edges = FALSE){
     df <- res_folds[[fold_id]]
     rows <- as.numeric(df$v1) + 1
     cols <- as.numeric(df$v2) - nrow(com) + 1
@@ -365,6 +373,12 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
     pred_held_ones <- sum((com[row_col] + com_fit_bin[row_col]) == 2, na.rm = TRUE)/sum(com[row_col])
     total_pred_ones <- sum(com_fit_bin, na.rm = TRUE)
 
+    spurious_ones <- NULL
+    if(spurious_edges){
+        spurious <- dplyr::filter(df, edge_type == "spurious_edge")
+        spurious_ones <- sum(spurious$p > thresh)
+    }
+
     return(list(pred_mat = com_fit,
                 new_bin_mat = com_fit_bin,
                 stats = c(auc, 
@@ -373,6 +387,7 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
                           thresh,
                           n_heldout,
                           pred_held_ones,
+                          spurious_ones,
                           documented_ones,
                           pred_tot_ones,
                           total_pred_ones,
