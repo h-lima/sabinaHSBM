@@ -79,7 +79,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     hsbm_name <- as.list(match.call())$hsbm_input
 
     reticulate::py_run_string(import_modules())
-    reticulate::py_run_string(add_taxa_vertex_prop())
+    reticulate::py_run_string(add_names_vertex_prop())
     reticulate::py_run_string(create_graph())
     reticulate::py_run_string(get_missing_edges())
     reticulate::py_run_string(hsbm_link_prediction())

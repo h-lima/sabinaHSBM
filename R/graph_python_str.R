@@ -13,30 +13,30 @@ from graph_tool.all import *')
 
 }
 
-add_taxa_vertex_prop <- function(){
+add_names_vertex_prop <- function(){
 
 return('
-def add_taxa_vertex_prop(g):
+def add_names_vertex_prop(g):
     r_names = []
     for r in g.ep.v1_names:
         if r not in r_names:
             r_names.append(r)
     n_rows = len(r_names)
 
-    vtaxa =  g.new_vp("string")
+    vnames =  g.new_vp("string")
     vbipartite =  g.new_vp("int")
     for v in g.vertices():
         for e in v.all_edges():
             edge = g.edge(e.source(), e.target())
             if v <= (n_rows - 1):
                 vbipartite[v] = 0
-                vtaxa[v] = g.ep.v1_names[edge]
+                vnames[v] = g.ep.v1_names[edge]
             else:
                 vbipartite[v] = 1
-                vtaxa[v] = g.ep.v2_names[edge]
+                vnames[v] = g.ep.v2_names[edge]
             break
 
-    g.vertex_properties["taxa"] = vtaxa
+    g.vertex_properties["names"] = vnames
     g.vertex_properties["bipartite"] = vbipartite')
 }
 
@@ -55,7 +55,7 @@ def create_graph(df,
         g.ep[ename] = p
 
     if add_bipartite:
-        add_taxa_vertex_prop(g)
+        add_names_vertex_prop(g)
 
     return(g)')
 }
@@ -155,8 +155,8 @@ def hsbm_predict(g, elist, wait = 1000,
         for v1, v2 in all_missing:
             pred_dict["v1"].append(v1)
             pred_dict["v2"].append(v2)
-            pred_dict["v1_names"].append(g.vp.taxa[v1])
-            pred_dict["v2_names"].append(g.vp.taxa[v2])
+            pred_dict["v1_names"].append(g.vp.names[v1])
+            pred_dict["v2_names"].append(g.vp.names[v2])
             if g.edge(v1, v2):
                 pred_dict["edge_type"].append(g.ep.edge_type[g.edge(v1, v2)])
             else:
@@ -206,8 +206,8 @@ get_groups <- function(){
         col_names.append(f"G{i + 1}")
         levels[col_names[i + 1]] = projected_partition
 
-    col_names.append("taxa")
-    levels["taxa"] = list(g.vp.taxa)
+    col_names.append("names")
+    levels["names"] = list(g.vp.names)
 
     df = pd.DataFrame(data = levels, columns = col_names)
 
@@ -249,8 +249,8 @@ def get_predicted_network(res_dict):
         pred_dict["p"].append(eprob[e])
         if not g.edge(s, t):
             # New not defined edge
-            pred_dict["v1_names"].append(g.vp.taxa[s])
-            pred_dict["v2_names"].append(g.vp.taxa[t])
+            pred_dict["v1_names"].append(g.vp.names[s])
+            pred_dict["v2_names"].append(g.vp.names[t])
             pred_dict["edge_type"].append("reconstructed")
         else:
             pred_dict["v1_names"].append(g.ep.v1_names[g.edge(s, t)])

@@ -42,16 +42,19 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
     long_mat$v1 <- as.numeric(factor(long_mat[[col_names[1]]])) - 1
     long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
 
-    long_mat <- dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], edge_type, n, x)
+    long_mat <- dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], 
+                              edge_type, n, x)
 
     if(add_spurious){
-        long_mat <- add_spurious_edges(long_mat, nrow(adj_mat), col_names[1:2])
+        long_mat <- add_spurious_edges(long_mat, adj_mat, col_names[1:2])
     }
 
     return(long_mat)
 }
 
-add_spurious_edges <- function(long_mat, n_row, col_names, add_n_x = TRUE){
+add_spurious_edges <- function(long_mat, adj_mat, col_names, add_n_x = TRUE){
+
+    n_row = nrow(adj_mat)
 
     v1_v2 <- paste0(long_mat$v1, "_", long_mat$v2)
     spurious_v1 <- sample(unique(long_mat$v1),
@@ -72,8 +75,8 @@ add_spurious_edges <- function(long_mat, n_row, col_names, add_n_x = TRUE){
         }
     }
     spurious_mat <- stringr::str_match(spurious_v1_v2, "(\\d+)_(\\d+)")[, 2:3]
-    x_names <- paste0("row", as.numeric(spurious_mat[, 1]) - 1)
-    y_names <- paste0("col", as.numeric(spurious_mat[, 2]) - n_row + 1)
+    x_names <- rownames(adj_mat)[as.numeric(spurious_mat[, 1]) + 1]
+    y_names <- colnames(adj_mat)[as.numeric(spurious_mat[, 2]) - n_row + 1]
     colnames(spurious_mat) <- c("v1", "v2")
     spurious_mat <- cbind(spurious_mat, value = 1, x_names,
                           y_names, edge_type = "spurious_edge")
