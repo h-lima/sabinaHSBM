@@ -175,11 +175,19 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
 
     hsbm_reconstructed$tb <- tb_all
     if(new_matrix_method == "ensemble_binary"){
-        if(is.null(custom_threshold)) thresh <- 0.1
+        if(is.null(custom_threshold)){
+            thresh <- 0.1
+        }else{
+            thresh <- custom_threshold
+        }
         hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
                                               thresh = thresh, na_treatment = na_treatment)
     }else{
-        if(is.null(custom_threshold)) thresh <- mean(tb_all$thresh)
+        if(is.null(custom_threshold)){
+            thresh <- mean(tb_all$thresh)
+        }else{
+            thresh <- custom_threshold
+        }
         hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
                                               thresh = thresh, na_treatment = na_treatment)
     }

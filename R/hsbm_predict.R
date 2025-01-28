@@ -9,6 +9,8 @@
 #' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
 #' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
 #' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
+#' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
+#' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 10000.
 #' @param verbose (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to print progress messages during prediction.
 #' @param save_blocks (\emph{optional, default} \code{TRUE}) \cr
@@ -20,6 +22,9 @@
 #' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
 #' - \code{$data} The binary bipartite \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+#' - \code{$method} The method used for the HSBM analysis, as specified by the user.
+#' - \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
+#' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 #' - \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
 #'   - \code{v1}: The index of the first type of node (rows in the original matrix).
 #'   - \code{v2}: The index of the second type of node (columns in the original matrix).
@@ -36,10 +41,14 @@
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
 #' - The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
-#' - The \code{method} parameter defines the prediction method to be used. Options are:
+#' - The \code{method} parameter determines the approach for link prediction:
 #'   \describe{
-#'     \item{\code{"binary_classifier"}}{Focuses on predicting probabilities for unobserved links (\code{0s}). Use this to identify missing links in partially incomplete networks.}
-#'     \item{\code{"full_reconstruction"}}{Estimates probabilities for all links (\code{0s} and \code{1s}), enabling the identification of both missing and spurious links in incomplete or error-prone networks.}
+#'     \item{\code{"binary_classifier"}}{
+#'       Focuses on predicting probabilities for currently unobserved links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved interactions/links might be real.
+#'     }
+#'     \item{\code{"full_reconstruction"}}{
+#'       Estimates probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved links likely to exist) but also detects spurious links (observed links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
+#'     }
 #'   }
 #' - The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
 #' - The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index. The pickle object is a dictionary with 5 elements. enum..... #@@@
@@ -53,15 +62,15 @@
 #' 
 #' # Prepare input for HSBM
 #' myInput <- hsbm.input(data = dat, 
-#'                       n_folds = 10, 
-#'                       method = "binary_classifier", 
-#'                       iter = 1000)
+#'                       n_folds = 10)
 #' ## End(Not run)
 #'
 #' # Load example HSBM predicted results
 #' data(myInput, package = "sabinaHSBM")
 #'
-#' myPred <- hsbm.predict(hsbm_input = myInput)
+#' myPred <- hsbm.predict(hsbm_input = myInput,
+#'                       method = "binary_classifier", 
+#'                       iter = 1000)
 #'
 #' # View link probabilities of fold 1
 #' myPred$predictions$probs[[1]]
@@ -71,12 +80,18 @@
 #'
 #' @export
 hsbm.predict <- function(hsbm_input, elist_i = NULL, 
-                         verbose = TRUE, save_blocks = TRUE, save_pickle = FALSE){
+                         method = "binary_classifier",
+                         iter = 10000, wait = 1000,
+                         verbose = TRUE, 
+                         save_blocks = TRUE, save_pickle = FALSE){
 
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
     }
-    hsbm_name <- as.list(match.call())$hsbm_input
+    if(!(method %in% c("binary_classifier", "full_reconstruction"))){
+        stop("Unknown method. Method should be binary_classifier or",
+             " full_reconstruction")
+    }
 
     reticulate::py_run_string(import_modules())
     reticulate::py_run_string(add_names_vertex_prop())
@@ -86,13 +101,13 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     reticulate::py_run_string(get_groups())
     reticulate::py_run_string(get_predicted_network())
     reticulate::py_run_string(save_pickle())
-
+    
     hsbm_output <- list()
     hsbm_output$data <- hsbm_input$data
     hsbm_output$folds <- hsbm_input$folds
-    hsbm_output$method <- hsbm_input$method
-    hsbm_output$iter <- hsbm_input$iter
-    hsbm_output$wait <- hsbm_input$wait
+    hsbm_output$method <- method
+    hsbm_output$iter <- iter
+    hsbm_output$wait <- wait
     hsbm_output$min_dl <- list()
 
     predictions <- list()
@@ -103,19 +118,21 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     }else{
         elist_predict <- elist_i
     }
+    
+    options("reticulate.engine.environment" = environment())
 
     for(i in elist_predict){
         if(verbose){
             cat("Computing predictions for fold ", i, "\n")
         }
         i_py <- i - 1
-        reticulate::py_run_string(stringr::str_glue("elists = r.{hsbm_name}['edgelists']"))
+        reticulate::py_run_string(stringr::str_glue("elists = r.hsbm_input['edgelists']"))
         reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
         reticulate::py_run_string("g = create_graph(elist)")
         reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
-                                                    "method = r.{hsbm_name}['method'], ",
-                                                    "force_niter = r.{hsbm_name}['iter'], ",
-                                                    "wait = r.{hsbm_name}['wait'])"))
+                                                    "method = r.method, ",
+                                                    "force_niter = r.iter, ",
+                                                    "wait = r.wait)"))
         reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
         if(save_pickle){
             #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
@@ -131,6 +148,8 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
         reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
 
     }
+
+    options("reticulate.engine.environment" = NULL)
 
     attr(hsbm_output, "class") <- "hsbm.predict"
 
