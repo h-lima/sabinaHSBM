@@ -12,7 +12,8 @@ hsbm.input(
   iter = 10000,
   wait = 1000,
   min_per_col = 2,
-  min_per_row = 2
+  min_per_row = 2,
+  add_spurious = FALSE
 )
 }
 \arguments{

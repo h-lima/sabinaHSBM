@@ -7,8 +7,6 @@
 #' @param hsbm_input An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
 #' @param elist_i (\emph{optional, default} \code{NULL}) \cr
 #' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
-#' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
-#' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
 #' @param verbose (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to print progress messages during prediction.
 #' @param save_blocks (\emph{optional, default} \code{TRUE}) \cr
@@ -20,18 +18,18 @@
 #' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
 #' - \code{$data} The binary bipartite \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+#' - \code{$min_dl} A \code{list} of minimum description length values for each fold.
 #' - \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
 #'   - \code{v1}: The index of the first type of node (rows in the original matrix).
 #'   - \code{v2}: The index of the second type of node (columns in the original matrix).
 #'   - \code{p}: Predicted probabilities of link between the nodes \code{v1} and \code{v2}.
 #'   - \code{v1_names}: Names of the nodes corresponding to \code{v1}, derived from the row names of the original input matrix.
 #'   - \code{v2_names}: Names of the nodes corresponding to \code{v2}, derived from the column names of the original input matrix.
-#'   - \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data or \code{"reconstructed"} for undomented edges/links.
+#'   - \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data, \code{"held_out"} for edges/links observed/documented that is retained/masked during cross-validation to assess the model's ability to predict known edges/links, or \code{"reconstructed"} for undomented edges/links.
 #' - \code{$predictions$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
 #'   - \code{nodes}: Indices of the nodes in the network.
 #'   - \code{G1, G2, G3, ...}: Group assignments for each node across different hierarchical levels, where each column represents a specific level of the hierarchy and the values indicate the group to which the node belongs.
-#'   - \code{taxa}: Names of the nodes, derived from the row and column names of the input matrix.   #@@@JMB la columna taxa puede llamrse de una forma más genérica????
-#' - \code{$min_dl} A \code{list} of minimum description length values for each fold.
+#'   - \code{names}: Names of the nodes, derived from the row and column names of the input matrix.
 #'
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.

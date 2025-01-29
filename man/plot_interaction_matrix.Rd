@@ -38,13 +38,13 @@ The \code{order_mat} argument indicates whether the interaction matrix should be
 }
 \examples{
 # Load example HSBM prediction results
-data(dat, package = "sabinaHSBM")  #@@JMB pensar ejemplo para data directory
+data(dat, package = "sabinaHSBM")
 
 # Plot the Known matrix
 plot_interaction_matrix(dat)
 
 # Plot the Reconstructed matrix
-# data(myReconst, package = "sabinaHSBM")  #@@JMB pensar ejemplo para data directory
+# data(myReconst, package = "sabinaHSBM")
 # plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 
 }
