@@ -13,11 +13,11 @@
 #' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.
 #' @param new_matrix_method (\emph{optional, default} \code{"average_thresholded"}) \cr
 #' A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.
-#' @param custom_threshold (\emph{optional, default} \code{NULL}) \cr
-#' A \code{numeric} value between 0 and 1 specifying a custom threshold for the reconstruction of the final binary matrix.
-#' The behavior of \code{custom_threshold} depends on the value of \code{new_matrix_method}:
-#' - If \code{"average_thresholded"}: \code{custom_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
-#' - If \code{"ensemble_binary"}: \code{custom_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds). 
+#' @param ensemble_threshold (\emph{optional, default} \code{NULL}) \cr
+#' A \code{numeric} value \code{(0-1)} for \code{new_matrix_method = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
+#' The behavior of \code{ensemble_threshold} depends on the value of \code{new_matrix_method}:
+#' - If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
+#' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds). 
 #'
 #' @return
 #' An object of class \code{hsbm.reconstructed} containing:
@@ -76,10 +76,10 @@
 #'   - Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
 #'
 #' - The \code{new_matrix_method} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
-#'   - \code{"average_thresholded"}: This method averages the predicted matrices and then applies a threshold to create a binary matrix. The threshold can be set using the \code{custom_threshold} parameter or defaults to the average threshold calculated from the folds.
-#'   - \code{"ensemble_binary"}: This method creates a binary matrix by taking an ensemble approach, where each entry is set to 1 if it exceeds the specified threshold in any of the prediction matrices. The threshold can be set using the \code{custom_threshold} parameter or defaults to a predefined value (e.g., 0.1).
+#'   - \code{"average_thresholded"}: This method averages the predicted matrices and then applies a threshold to create a binary matrix. The threshold can be set using the \code{ensemble_threshold} parameter or defaults to the average threshold calculated from the folds.
+#'   - \code{"ensemble_binary"}: This method creates a binary matrix by taking an ensemble approach, where each entry is set to 1 if it exceeds the specified threshold in any of the prediction matrices. The threshold can be set using the \code{ensemble_threshold} parameter or defaults to a predefined value (e.g., 0.1).
 #'
-#' When \code{new_matrix_method} is \code{"ensemble_binary"}, the binary matrices for each fold are computed first using the threshold defined in \code{threshold_method}, and \code{custom_threshold} is applied afterwards to determine the consensus among folds for each link.
+#' When \code{new_matrix_method} is \code{"ensemble_binary"}, the binary matrices for each fold are computed first using the threshold defined in \code{threshold_method}, and \code{ensemble_threshold} is applied afterwards to determine the consensus among folds for each link.
 #'
 #' @seealso \code{\link{hsbm.predict}}
 #'
@@ -115,11 +115,11 @@
 #'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
-                               spurious_edges = FALSE,
+                               spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda poner en la docu
                                na_treatment = "na_to_0",
                                threshold = "prc_closest_topright",
                                new_matrix_method = "average_thresholded",
-                               custom_threshold = NULL){
+                               ensemble_threshold = NULL){
 
     if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
         stop("Invalid value for new_matrix_method.",
@@ -175,11 +175,11 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
 
     hsbm_reconstructed$tb <- tb_all
     if(new_matrix_method == "ensemble_binary"){
-        if(is.null(custom_threshold)) thresh <- 0.1
+        thresh <- if(is.null(ensemble_threshold)) 0.1 else ensemble_threshold
         hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
                                               thresh = thresh, na_treatment = na_treatment)
     }else{
-        if(is.null(custom_threshold)) thresh <- mean(tb_all$thresh)
+        thresh <- mean(tb_all$thresh)
         hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
                                               thresh = thresh, na_treatment = na_treatment)
     }
