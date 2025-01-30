@@ -122,16 +122,24 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                ensemble_threshold = NULL){
 
     if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
-        stop("Invalid value for new_matrix_method.",
-             " It must be 'ensemble_binary or 'average_thresholded'")
+        stop("\nInvalid value for `new_matrix_method`.",
+             " It must be 'ensemble_binary' or 'average_thresholded'.\n")
     }
     if(na_treatment != "na_to_0" & hsbm_out$method == "binary_classifier"){
-        stop("na_treatment cannot be set for binary_classifier since there are no NAs.")
+        stop("\n`na_treatment` cannot be set for `binary_classifier` method since there are no NAs.\n")
     }
-    if(rm_documented & hsbm_out$method == "full_reconstruction"){
-        warning("Using rm_documented for full_reconstruction method.",
-                " full_reconstruction computes probabilities for documented so consider if your",
-                " choice is correct.")
+    if(rm_documented & hsbm_out$method == "full_reconstruction") {
+        warning("\n`rm_documented` was set to TRUE for the `full_reconstruction` method. ",
+                "Documented links (original 1s) were removed for evaluation. ",
+                "Ensure this setting was appropriate for your analysis.\n")
+    }
+    if(!rm_documented & hsbm_out$method == "binary_classifier") {
+        warning("\n`rm_documented` was set to FALSE for the `binary_classifier` method. ",
+                "Documented links (1s) were included in evaluation, even though no probabilities ",
+                "were computed for them. Ensure this setting was appropriate for your analysis.\n")
+    }
+    if (new_matrix_method == "ensemble_binary" & is.null(ensemble_threshold)) {
+        message("\nNo `ensemble_threshold` provided; defaulting to 0.1.\n")
     }
 
     hsbm_reconstructed <- list()
