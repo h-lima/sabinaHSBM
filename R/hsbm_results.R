@@ -38,14 +38,14 @@
 #'     - \code{range}: Range of predicted probabilities across folds.
 #'     - \code{edge_type}: Type of edge (e.g., "documented", "reconstructed").
 #'     - \code{nr_na}: Number of folds where a given edge/link had \code{NA} predictions.
-#' - \code{$tb} A \code{data.frame} summarizing evaluation metrics for each fold. It includes the following columns: #@@@JMB podemos cambiar el nombre a este $  (tb/fold_statistics)??
+#' - \code{$tb} A \code{data.frame} summarizing evaluation metrics for each fold. It includes the following columns: #@@@JMB podemos cambiar el nombre a este $fold_statistics o reconstructed_stats si eliminamos el de arriba??
 #'   - \code{folds}: The index of the cross-validation fold.
 #'   - \code{auc}: The Area Under the Curve (AUC) of the Receiver Operating Characteristic (ROC) curve for the fold.
 #'   - \code{aucpr}: The Area Under the Curve (AUC) of the Precision-Recall Curve (PRC) for the fold.
 #'   - \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
 #'   - \code{thresh}: The binary classification threshold value applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
 #'   - \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
-#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
+#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model. #@@@JMB podemos llamarlo RLRR como en el otro artículo?
 #'   - \code{n_ones}: The total number of positive edges/links in the original data.
 #'   - \code{pred_tot_ones}: The proportion of positive edges/links in the original data that were correctly predicted as positive by the model.
 #'   - \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.  		#@@@JMB estqo es así?
@@ -115,7 +115,7 @@
 #'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
-                               spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda poner en la docu
+                               spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda, hay que poner en la docu
                                na_treatment = "na_to_0",
                                threshold = "prc_closest_topright",
                                new_matrix_method = "average_thresholded",
@@ -228,6 +228,7 @@ top_links <- function(hsbm_reconstructed, n = 10){
 
     return(reconstructed)
 }
+
 
 get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 

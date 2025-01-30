@@ -105,7 +105,8 @@ summary.hsbm.reconstructed <- function(object, ...){
                        missing_links = missing_links)
 
  
-   summary_eval <- data.frame(mean_auc = mean(object$tb$auc),
+   summary_eval <- data.frame(mean_RLRR = mean(object$tb$pred_held_ones),
+                       mean_auc = mean(object$tb$auc),
                        mean_aucpr = mean(object$tb$aucpr),
 		       mean_yPRC = mean(object$tb$yPRC),    
                        mean_prec = mean(object$tb$precision),
