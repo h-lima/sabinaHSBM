@@ -7,7 +7,6 @@
 hsbm.predict(
   hsbm_input,
   elist_i = NULL,
-  method = "binary_classifier",
   verbose = TRUE,
   save_blocks = TRUE,
   save_pickle = FALSE
@@ -18,9 +17,6 @@ hsbm.predict(
 
 \item{elist_i}{(\emph{optional, default} \code{NULL}) \cr
 A \code{numeric} value specifying the index of the edge list (fold) from an \code{hsbm.input}to run predictions on. If \code{NULL}, predictions are run for all edge lists.}
-
-\item{method}{(\emph{optional, default} \code{"binary_classifier"}) \cr
-A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.}
 
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to print progress messages during prediction.}
@@ -36,6 +32,7 @@ An object of class \code{hsbm.predict} containing the edge/link predictions and 
 \itemize{
 \item \code{$data} The binary bipartite \code{matrix} of input data.
 \item \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+\item \code{$min_dl} A \code{list} of minimum description length values for each fold.
 \item \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
 \itemize{
 \item \code{v1}: The index of the first type of node (rows in the original matrix).
@@ -43,15 +40,14 @@ An object of class \code{hsbm.predict} containing the edge/link predictions and 
 \item \code{p}: Predicted probabilities of link between the nodes \code{v1} and \code{v2}.
 \item \code{v1_names}: Names of the nodes corresponding to \code{v1}, derived from the row names of the original input matrix.
 \item \code{v2_names}: Names of the nodes corresponding to \code{v2}, derived from the column names of the original input matrix.
-\item \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data or \code{"reconstructed"} for undomented edges/links.
+\item \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data, \code{"held_out"} for edges/links observed/documented that is retained/masked during cross-validation to assess the model's ability to predict known edges/links, or \code{"reconstructed"} for undomented edges/links.
 }
 \item \code{$predictions$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
 \itemize{
 \item \code{nodes}: Indices of the nodes in the network.
 \item \code{G1, G2, G3, ...}: Group assignments for each node across different hierarchical levels, where each column represents a specific level of the hierarchy and the values indicate the group to which the node belongs.
-\item \code{taxa}: Names of the nodes, derived from the row and column names of the input matrix.   #@@JMB la columna taxa puede llamrse de una forma más genérica????
+\item \code{names}: Names of the nodes, derived from the row and column names of the input matrix.
 }
-\item \code{$min_dl} A \code{list} of minimum description length values for each fold.
 }
 }
 \description{

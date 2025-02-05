@@ -25,18 +25,18 @@
 #' - \code{$method} The method used for the HSBM analysis, as specified by the user.
 #' - \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
 #' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
+#' - \code{$min_dl} A \code{list} of minimum description length values for each fold.
 #' - \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
 #'   - \code{v1}: The index of the first type of node (rows in the original matrix).
 #'   - \code{v2}: The index of the second type of node (columns in the original matrix).
 #'   - \code{p}: Predicted probabilities of link between the nodes \code{v1} and \code{v2}.
 #'   - \code{v1_names}: Names of the nodes corresponding to \code{v1}, derived from the row names of the original input matrix.
 #'   - \code{v2_names}: Names of the nodes corresponding to \code{v2}, derived from the column names of the original input matrix.
-#'   - \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data or \code{"reconstructed"} for undomented edges/links.
+#'   - \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data, \code{"held_out"} for edges/links observed/documented that is retained/masked during cross-validation to assess the model's ability to predict known edges/links, or \code{"reconstructed"} for undomented edges/links.
 #' - \code{$predictions$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
 #'   - \code{nodes}: Indices of the nodes in the network.
 #'   - \code{G1, G2, G3, ...}: Group assignments for each node across different hierarchical levels, where each column represents a specific level of the hierarchy and the values indicate the group to which the node belongs.
-#'   - \code{taxa}: Names of the nodes, derived from the row and column names of the input matrix.   #@@@JMB la columna taxa puede llamrse de una forma más genérica????
-#' - \code{$min_dl} A \code{list} of minimum description length values for each fold.
+#'   - \code{names}: Names of the nodes, derived from the row and column names of the input matrix.
 #'
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
