@@ -1,0 +1,171 @@
+---
+title: "Using sabinaHSBM for link prediction and network reconstruction using Hierarchical Stochastic Block Models"
+subtitle: "Example on how to use it to identify missing links with the binary_classifier method"
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+
+The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use case based on the `binary_classified` method to identify missing links. We will use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
+
+
+# Loading Required Libraries
+
+We begin by loading the required R packages. Missing packages are automatically installed.
+
+```{r setup, message=FALSE, warning=FALSE}
+# If the package is not installed, install it from GitHub
+# if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
+#   library(remotes)
+#   remotes::install_github("h-lima/sabinaHSBM")
+# }
+
+# Load the sabinaHSBM package
+#library(sabinaHSBM)
+devtools::load_all("/media/sf_UAM_NexTdive/graph_tool/sabinaHSBM/")
+
+# If the required packages are not already installed, install them from CRAN
+list.of.packages <- c(
+  "dplyr",
+  "reshape2",
+  "reticulate",
+  "stringr",
+  "tidyr",
+  "ROCR",
+  "data.table"
+)
+
+# Check for missing packages and install them
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
+if (length(new.packages) > 0) {
+  install.packages(new.packages, dependencies = TRUE)
+}
+
+# Load the required packages
+for (package in list.of.packages) {
+  library(package, character.only = TRUE)
+}
+```
+
+
+# Load data
+
+The dataset `dat` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. 
+
+```{r load-data}
+# Load the dataset
+data(dat, package = "sabinaHSBM")
+```
+
+```{r plot-observed-matrix, echo=TRUE}
+# Plot the simulated matrix
+plot_interaction_matrix(dat, order_mat = FALSE)
+```
+
+
+# Preparing Input data for HSBM
+
+The `hsbm.input` function pre-processes the dataset, creating cross-validation folds and edge lists required for modeling. Here, we use 10-fold cross-validation and the `binary_classifier` method. This method focuses on predicting probabilities for currently unobserved links (`0s`). Use this method if you want to identify missing links (unobserved links likely to exist) in partially incomplete networks.
+
+```{r prepare-input}
+# Prepare input object
+myInput <- hsbm.input(
+  dat,              # Binary bipartite matrix of observed links
+  n_folds = 10,     # Number of folds for cross-validation
+  iter = 1000,      # Number of iterations
+  wait = 1000,      # Number of ..............
+  method = "binary_classifier"  # Method for link prediction
+)
+```
+
+```{r summary-input}
+# Summarizes network characteristics
+summary(myInput)
+```
+
+
+# Predicting Missing Links
+
+The `hsbm.predict` function applies HSBM to predict link probabilities in a network. The function works directly with the processed input created by `hsbm.input`.
+
+```{r sequential-prediction}
+# Predict missing links using HSBM
+start <- Sys.time()
+
+myPred <- hsbm.predict(
+  myInput,   # Input data processed by hsbm.input
+  #method = "binary_classifier" # Prediction method
+)
+
+end <- Sys.time()
+cat("Sequential prediction took:", end - start, "mins\n")
+```
+
+Predicted link probabilities and group assignments are stored for each fold. Below, we extract the probabilities (p) and groups for fold 1.
+
+```{r prediction-probs}
+# View probabilities for fold 1
+probabilities_fold1 <- myPred$predictions$probs[[1]]
+head(probabilities_fold1)
+```
+
+The group assignments provide the hierarchical clustering structure of nodes for each fold. Let’s extract and examine the group assignments for fold 1:
+
+```{r prediction-groups}
+# View the group assignments for fold 1
+groups_fold1 <- myPred$predictions$groups[[1]]
+
+# Filter one type of nodes (e.g., hosts, in columns)
+vnames <- colnames(myPred$data)
+groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
+
+g_cols <- grep("^G", names(groups_fold1))
+groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
+
+print(groups_fold1)
+```
+Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1), nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4), these groups are progressively aggregated, revealing broader patterns and relationships or communities.
+
+
+# Network Reconstruction
+
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is binarized using a user-specified threshold.  
+
+```{r network-reconstruction}
+# Network reconstruction
+myReconst <- hsbm.reconstructed(
+  myPred,                    # Predictions processed by hsbm.predict
+  threshold = "roc_closest_topleft", # Binarization threshold
+  new_matrix_method = "average_thresholded" # Combine fold predictions
+)
+
+cat(paste("The models predicted on average", round(mean(myReconst$tb$pred_held_ones), 1), "% of the held out links. "))
+```
+
+This output includes the averaged probability matrix, the final reconstructed matrix, and evaluation metrics. These results highlight the predicted interactions, showcasing the method's ability to detect missing links effectively. Let’s explore some of the key outputs in detail.
+
+```{r summary-reconstruction}
+# View the reconstruction summary and evaluation metrics
+summary(myReconst)
+```
+The summary provides the number of missing links, as well as key evaluation metrics, such as the retained link recovery rate (RLRR).
+
+```{r tiop-links}
+# View the top links
+top_links_df <- top_links(myReconst, n = 10)
+print(top_links_df)
+```
+The `top-links functions` identifies the most probable missing links in a network predicted by HSBM.
+
+```{r plot-reconstruction}
+# View the reconstructed binary matrix
+plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
+```
+
+
+
+This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. By applying the `binary_classifier` method, we showcased how missing links can be effectively identified and addressed in incomplete networks.
