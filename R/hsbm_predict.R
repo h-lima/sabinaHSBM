@@ -73,10 +73,10 @@
 #'                       iter = 1000)
 #'
 #' # View link probabilities of fold 1
-#' myPred$predictions$probs[[1]]
+#' myPred$probs[[1]]
 #'
 #' # View groups of fold 1
-#' myPred$predictions$groups[[1]]
+#' myPred$groups[[1]]
 #'
 #' @export
 hsbm.predict <- function(hsbm_input, elist_i = NULL, 
@@ -109,10 +109,11 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     hsbm_output$iter <- iter
     hsbm_output$wait <- wait
     hsbm_output$min_dl <- list()
+    hsbm_output$probs <- list()
+    if(save_blocks){
+        hsbm_output$groups <- list()
+    }
 
-    predictions <- list()
-    predictions$probs <- list()
-    predictions$groups <- list()
     if(is.null(elist_i)){
         elist_predict <- 1:length(hsbm_input$edgelists)
     }else{
@@ -139,9 +140,9 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
             reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
         }
 
-        hsbm_output$predictions$probs[[i]] <- reticulate::py$res_dict$pred_probs
+        hsbm_output$probs[[i]] <- reticulate::py$res_dict$pred_probs
         if(save_blocks){
-            hsbm_output$predictions$groups[[i]] <- reticulate::py$groups_df
+            hsbm_output$groups[[i]] <- reticulate::py$groups_df
         }
         hsbm_output$min_dl[[i]] <- reticulate::py$res_dict$min_dl
 
@@ -154,6 +155,35 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     attr(hsbm_output, "class") <- "hsbm.predict"
 
     return(hsbm_output)
+}
+
+#' @name merge_hsbm.out
+#'
+#' Order of out_lst must be the order of folds.
+#'
+#' @export
+merge_hsbm.out <- function(out_lst){
+
+    merged <- out_lst[[1]]
+
+    for(el in c("min_dl", "probs", "groups")){
+        if(!(el %in% names(merged))) next
+        preds <- lapply(out_lst, 
+                        function(x){
+                            res <- unlist(x[[el]],
+                                          recursive = FALSE)
+                            if(length(res) == 1){
+                                return(res)
+                            }else{
+                               return(data.frame(res))
+                            }
+                        })
+        
+        merged[[el]] <- preds
+        
+    }
+                      
+    return(merged)
 }
 
 

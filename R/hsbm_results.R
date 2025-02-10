@@ -145,13 +145,14 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
     hsbm_reconstructed <- list()
     hsbm_reconstructed$data <- hsbm_out$data
     hsbm_reconstructed$pred_mats <- list()
-    hsbm_reconstructed$reconstructed_stats <- list()
     hsbm_reconstructed$reconstructed_df <- list()
     binary_mats <- list()
+    reconstructed_stats <- list()
 
-    hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out, input_names = TRUE,
-                                                             na_treatment = na_treatment)
-    n_folds <- length(hsbm_out$predictions$probs)
+    hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out, 
+                                                            input_names = TRUE,
+                                                            na_treatment = na_treatment)
+    n_folds <- length(hsbm_out$probs)
     for(i in 1:n_folds){
         reconstruction_i <- get_reconstruction(hsbm_reconstructed$reconstructed_df$res_folds,
                                                fold_id = i,
@@ -163,7 +164,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                                                na_treatment = na_treatment,
                                                threshold = threshold)
         hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
-        hsbm_reconstructed$reconstructed_stats[[i]] <- reconstruction_i$stats
+        reconstructed_stats[[i]] <- reconstruction_i$stats
         binary_mats[[i]] <- reconstruction_i$new_bin_mat
     }
 
@@ -172,7 +173,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
     }else{
         spurious_name <- NULL
     }
-    tb_all <- do.call(rbind, hsbm_reconstructed$reconstructed_stats)
+    tb_all <- do.call(rbind, reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
     #yPRC is the baseline of Precision-Recall Curve
     colnames(tb_all) <- c("folds", "auc",
@@ -181,7 +182,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = FALSE,
                           "n_ones", "pred_tot_ones", "total_pred_ones",
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
-    hsbm_reconstructed$tb <- tb_all
+    hsbm_reconstructed$stats <- tb_all
     if(new_matrix_method == "ensemble_binary"){
         thresh <- if(is.null(ensemble_threshold)) 0.1 else ensemble_threshold
         hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
@@ -248,7 +249,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
 
     com <- hsbm_output$data
     n_v1 <- nrow(hsbm_output$data)
-    folds_res_list <- lapply(hsbm_output$predictions$probs,
+    folds_res_list <- lapply(hsbm_output$probs,
                              function(x){
                                  df <- tidy_hsbm_results(x, n_v1)
                                  return(df)
