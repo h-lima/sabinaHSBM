@@ -1,4 +1,5 @@
-hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
+hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
+                          no_heldout = FALSE){
     col_names <- c("row_names", "col_names", "value")
 
     if(!(is.matrix(adj_mat))) stop("adj_mat argument must be of type 'matrix'.")
@@ -37,7 +38,11 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE){
     long_mat$n <- 1
     long_mat$x <- 1
     long_mat[long_mat$edge_type == "held_out", ]$n <- 1
-    long_mat[long_mat$edge_type == "held_out", ]$x <- 0
+    if(no_heldout){
+        long_mat[long_mat$edge_type == "held_out", ]$x <- 1
+    }else{
+        long_mat[long_mat$edge_type == "held_out", ]$x <- 0
+    }
 
     long_mat$v1 <- as.numeric(factor(long_mat[[col_names[1]]])) - 1
     long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
