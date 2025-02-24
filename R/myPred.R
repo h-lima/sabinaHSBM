@@ -6,9 +6,8 @@
 #' \describe{
 #'   \item{data}{A \code{matrix} representing the binary bipartite input data.}
 #'   \item{folds}{A \code{matrix} specifying cross-validation fold assignments for held-out edges/links.}
-#'   \item{predictions}{A \code{list} with:
-#'       \item{probs}{Predicted probabilities for edges/links, stored as \code{data.frame}s, one for each fold.}
-#'       \item{groups}{Group assignments for nodes across hierarchical levels, stored as \code{data.frame}s.}
+#'   \item{probs}{Predicted probabilities for edges/links, stored as \code{data.frame}s, one for each fold.}
+#'   \item{groups}{Group assignments for nodes across hierarchical levels, stored as \code{data.frame}s.}
 #'   \item{min_dl}{A \code{list} of minimum description length values for each fold.}
 #' }
 #'

@@ -8,12 +8,10 @@ hsbm.input(
   data,
   folds = NULL,
   n_folds = 5,
-  method = "binary_classifier",
-  iter = 10000,
-  wait = 1000,
   min_per_col = 2,
   min_per_row = 2,
-  add_spurious = FALSE
+  add_spurious = FALSE,
+  no_heldout = FALSE
 )
 }
 \arguments{
@@ -25,14 +23,10 @@ An optional \code{matrix} of precomputed cross-validation folds for the input da
 \item{n_folds}{(\emph{optional, default} \code{5}) \cr
 A \code{numeric} value specifying the number of cross-validation folds to generate.}
 
-\item{method}{(\emph{optional, default} \code{"binary_classifier"}) \cr
-A \code{character} string specifying the method used for the HSBM analysis. Options include \code{"binary_classifier"} or \code{"full_reconstruction"}.}
-
-\item{iter}{A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.}
-
 \item{min_per_col}{A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.}
 
-\item{min_per_row}{A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.}
+\item{min_per_row}{A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
+#@@JMB pendiente param add_spurious?? y no_heldout}
 }
 \value{
 An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
@@ -50,9 +44,6 @@ An object of class \code{hsbm.input} containing the organized input data, the cr
 \item \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
 \item \code{x} The observed values for each node pair (i, j), where \( x_{ij} \in \{0, 1\} \) represents the reported matrix \( A \). Here, \( x_{ij} = 1 \) indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
 }
-\item \code{$method} The method used for the HSBM analysis, as specified by the user.
-\item \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
-\item \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 }
 }
 \description{
@@ -69,15 +60,6 @@ It typically contains columns:
 \item{gr}{Group identifier indicating which cross-validation fold the edge/link pair belongs to.}
 }
 \item If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
-\item The \code{method} parameter determines the approach for link prediction:
-\describe{
-\item{\code{"binary_classifier"}}{
-Focuses on predicting probabilities for currently unobserved links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved interactions/links might be real.
-}
-\item{\code{"full_reconstruction"}}{
-Estimates probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved links likely to exist) but also detects spurious links (observed links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
-}
-}
 \item The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column.
 }
 }
@@ -87,9 +69,7 @@ data(dat, package = "sabinaHSBM")
 
 # Prepare input data
 myInput <- hsbm.input(data = dat, 
-                      n_folds = 10, 
-                      method = "binary_classifier", 
-                      iter = 1000)
+                      n_folds = 10) 
 
 # Summary of dataset
 summary(myInput)

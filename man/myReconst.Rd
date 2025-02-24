@@ -9,9 +9,10 @@ A \code{list} with the following components:
 \describe{
 \item{data}{A \code{matrix} representing the binary bipartite input data.}
 \item{pred_mats}{A \code{list} of matrices containing predicted probabilities for links in each cross-validation fold.}
-\item{reconstructed_bin_mats}{A \code{list} of binary matrices representing reconstructed data for each fold.}
-\item{reconstructed_stats}{A \code{list} of numeric vectors summarizing performance metrics for each fold.}
-\item{tb}{A \code{data.frame} summarizing performance metrics across folds.}
+\item{reconstructed_df}{A \code{list} with:
+\item{res_folds}{A \code{list} of binary matrices representing reconstructed data for each fold, stored as \code{data.frame}s.}
+\item{res_averaged}{A \code{data.frame} summarizing predictions averaged across all folds}
+\item{stats}{A \code{data.frame} summarizing performance metrics across folds.}
 \item{new_mat}{A \code{matrix} representing the final reconstructed binary matrix.}
 \item{threshold}{A \code{character} string indicating the thresholding method used.}
 }

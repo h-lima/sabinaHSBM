@@ -11,6 +11,7 @@
 #' A \code{numeric} value specifying the number of cross-validation folds to generate. 
 #' @param min_per_col A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.
 #' @param min_per_row A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
+#' #@@@JMB pendiente param add_spurious?? y no_heldout
 #'
 #' @return
 #' An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
