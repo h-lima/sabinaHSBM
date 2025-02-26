@@ -11,26 +11,30 @@ This Docker setup lets Windows users run ***sabinaHSBM*** in a Linux-friendly en
 - **sabinaHSBM & Dependencies**: The Docker image includes ***sabinaHSBM*** along with every required package.
 
 
-## Installation
-
-### 1. Using the Pre-built Docker Image (Recommended for Windows Users)
+### Using the Pre-built Docker Image
 
 1. **Install Docker Desktop**
 Download and install Docker Desktop for Windows [from here](https://www.docker.com/products/docker-desktop).
 
-3. **Pull the Docker Image**: To get the pre-configured image from Docker Hub:
+2. **Pull the docker image**: To get the pre-configured image from Docker Hub:
    ```bash
-   docker pull <your-dockerhub-username>/sabinaHSBM:latest
+   docker pull herlima/sabinahsbm:base
+   # Check if the image is available
+   docker images
    ```
-
-4. **Run the Docker Container**:
+3. **Create and start the container**:
    ```bash
-   docker run -it <your-dockerhub-username>/sabinaHSBM:latest
+   docker run -it --name sabinahsbm_container herlima/sabinahsbm:base /bin/bash
+   ```
+You will now be in an interactive R session inside the container with the *sabinaHSBM* package and all necessary dependencies loaded.
+
+4. **Run an interactive R session within the docker container**:
+   ```bash
+   R
    ```
 This command opens an interactive R session within the container, where you can use the *sabinaHSBM* package.
 
-5. **Use the *sabinaHSBM* package**. 
-Here’s a quick example:
+5. **Use the *sabinaHSBM* package**. Here’s a quick example:
    ```r
    # Load sbinaHSBM
    library(sabinaHSBM)
@@ -41,13 +45,14 @@ Here’s a quick example:
    # Prepare the input
    myInput <- hsbm.input(
        dat,
-       n_folds = 10,
-       iter = 1000,
-       method = "binary_classifier"
+       n_folds = 10
    )
 
    # Generate link predictions
-   myPred <- hsbm.predict(myInput)
+   myPred <- hsbm.predict(myInput,
+                          iter = 1000,
+                          method = "binary_classifier"
+   )
 
    # Reconstruct the network and evaluate
    myReconst <- hsbm.reconstructed(myPred,
@@ -55,8 +60,11 @@ Here’s a quick example:
                          threshold = "prc_closest_topright")
    summary(myReconst)
 
-   # Save the HSBM object
+   # Save the HSBM reconstructed object
    #saveRDS(myReconst, file="myReconst.RData")
+
+   # Exit R
+   q()
    ```
 
 5. **Exit the Container**
@@ -64,50 +72,14 @@ Here’s a quick example:
    exit
    ```
 
-
-### 2. Build the Docker Image Locally (Alternative Option)
-
-If you need to customize the Docker image, use the following Dockerfile as a base. This will allow you to add or remove dependencies as needed.
-
-#### Dockerfile Template
-
-```Dockerfile
-# Base R image
-FROM rocker/r-ver:4.3.1
-
-# System dependencies and Python setup
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip software-properties-common && \
-    add-apt-repository ppa:ubuntugis/ppa -y && \
-    apt-get update && \
-    apt-get install -y python3-graph-tool
-
-# R packages (customize as needed)
-RUN R -e "install.packages('reticulate')" && \
-    R -e "install.packages(c('dplyr', 'tibble', 'remotes'))"
-
-# Install the sabinaHSBM package from GitHub
-RUN R -e "remotes::install_github('h-lima/sabinaHSBM')"
-
-# Set the default command to R
-CMD ["R"]
-```
-
-#### Building the Docker Image
-
-After saving the Dockerfile, follow these steps to build the Docker image:
-
-1. Open a terminal and navigate to the directory containing the Dockerfile.
-2. Run the following command to build the image:
-
+6. **Stop the container**
    ```bash
-   docker build -t sabinaHSBM .
-   ```
+   docker stop sabinahsbm_container
+   #The container will stop and can be started later with:
+   #docker start -ai sabinahsbm_container
+   ```   
 
-3. Once the image is built, start a container with:
-   ```bash
-   docker run -it sabinaHSBM
-   ```
-You will now be in an interactive R session inside the container with sabinaHSBM and all necessary dependencies loaded.
+
+
 
 
