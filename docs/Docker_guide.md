@@ -2,40 +2,51 @@
 
 ## Overview
 
-This Docker setup lets Windows users run ***sabinaHSBM*** in a Linux-friendly environment. It includes `graph-tool`, a Linux-only Python library needed for **HSBM**, so you can dive into ***sabinaHSBM*** without any compatibility issues.
+This guide will help Windows users run the ***sabinaHSBM*** package within a Linux-based Docker container.
 
-### What's in this Docker Image
+### What's included in the Docker Image
 
-- **R Environment**: Ready-to-go R setup with all essential packages, including `reticulate` for seamless Python integration.
+- **R Environment**: Pre-configured with all necessary packages, including `reticulate` for Python integration.
 - **Python & graph-tool**: Python is pre-configured with `graph-tool` for advanced network analysis.
-- **sabinaHSBM & Dependencies**: The Docker image includes ***sabinaHSBM*** along with every required package.
+- **sabinaHSBM**: The Docker image includes the ***sabinaHSBM*** package and all required dependencies.
 
-
-### Using the Pre-built Docker Image
+### Step-by-step setup
 
 1. **Install Docker Desktop**
-Download and install Docker Desktop for Windows [from here](https://www.docker.com/products/docker-desktop).
 
-2. **Pull the docker image**: To get the pre-configured image from Docker Hub:
+Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
+
+Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
+
+2. **Pull the docker image**
+
+To download the pre-configured image from Docker Hub, run:
    ```bash
    docker pull herlima/sabinahsbm:base
-   # Check if the image is available
-   docker images
    ```
-3. **Create and start the container**:
-   ```bash
-   docker run -it --name sabinahsbm_container herlima/sabinahsbm:base /bin/bash
-   ```
-You will now be in an interactive R session inside the container with the *sabinaHSBM* package and all necessary dependencies loaded.
+   
+3. **Create and start the container**
 
-4. **Run an interactive R session within the docker container**:
+The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. The `-p` flags are optional and map ports `6006`, `8787`and `8880` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server if needed. The `-v` flag is also optional (but recommended) and establish a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount with `-v project_hsbm:/home/project_hsbm`. Unlike bind mounts, whick link directly to local directory, volume are stored within a Docker filesystem.
    ```bash
-   R
+   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -p 6006:6006 -v "loca/path/to/your/project:/home/my_project" sabinahsbm bash 
    ```
-This command opens an interactive R session within the container, where you can use the *sabinaHSBM* package.
+After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
 
-5. **Use the *sabinaHSBM* package**. Here’s a quick example:
+4. **Run R or Jupyter Notebook**
+
+Start an R session inside the docker container by typing `R`, or launch a Jupyter Notebook with:
+   ```bash
+   jupyter notebook --allow-root --ip 0.0.0.0 --port=8880 --no-browser
+   ```
+When you run this command, the terminal will display a clickable URL. Simply click the provided link or paste it into your browser to open the Jupyter interface, ideal for coding, data visualization, and interactive analysis.
+
+5. **Use the *sabinaHSBM* package**
+
+Here’s an example to get started:
    ```r
+   setwd("/home/my_project")
+
    # Load sbinaHSBM
    library(sabinaHSBM)
 
@@ -67,17 +78,24 @@ This command opens an interactive R session within the container, where you can 
    q()
    ```
 
-5. **Exit the Container**
+6. **Exit the Container**
+
+To exit the container, simply type:
    ```bash
    exit
    ```
 
-6. **Stop the container**
+7. **Stop and Restart the container**
+
+To stop the container:
    ```bash
    docker stop sabinahsbm_container
-   #The container will stop and can be started later with:
-   #docker start -ai sabinahsbm_container
-   ```   
+   ```
+To start the container again and access its shell, run:
+   ```bash
+   docker start -ai sabinahsbm_container
+   docker exec -it sabinahsbm_container bash
+   ```
 
 
 
