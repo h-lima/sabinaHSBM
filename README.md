@@ -81,14 +81,14 @@ The input data for `hsbm.input` should be a **binary bipartite matrix** represen
 # setwd("/path/to/your/project")
 
 # Load the sabinaNSDM package
-library(sabinaNSDM)
+library(sabinaHSBM)
 
 # Load the binary bipartite matrix
 data(dat, package = "sabinaHSBM")
 
 # Prepare input data
 myInput <- hsbm.input(
-    dat,                    # Binary bipartite matrix of observed links
+    dat,                   # Binary bipartite matrix of observed links
     n_folds = 10           # Number of folds for cross-validation
 )
 
@@ -100,7 +100,8 @@ summary(myInput)   # Summarizes network characteristics
 Use ‘hsbm.predict’ function to predict the marginal posterior probabilities of each link according to network reconstruction. It requires an object of hsbm.input class, and returns an object of the hsbm.predict class with link probabilities and the hierarchical organization of nodes in groups, for each fold. 
 
 ```r
-myPred <- hsbm.predict(myInput,
+myPred <- hsbm.predict(
+    myInput,                # Input data processed by hsbm.input()
     method = "binary_classifier",  # Choose method for link prediction(*)
     iter = 1000,            # Number of iterations for the HSBM model
     wait=1000               # Number of iterations needed for MCMC equilibration
@@ -135,8 +136,9 @@ paste("The models predicted on average", round(mean(myReconst$stats$pred_held_on
 
 ```r
 # Identify top predicted links
-top_links_df <- top_links(myPred,
-                          n = 25 # Number of top predicted links to retrieve
+top_links_df <- top_links(myReconst,
+                          n = 10, # Number of top predicted links to retrieve
+                          edge_type = "undocumented"
 )
 
 # Visualize interaction matrix
