@@ -28,7 +28,6 @@ We begin by loading the required R packages. Missing packages are automatically 
 
 # Load the sabinaHSBM package
 #library(sabinaHSBM)
-#devtools::load_all("/media/sf_UAM_NexTdive/graph_tool/sabinaHSBM/")
 devtools::load_all("/media/sf_UAM_NexTdive/graph_tool/sabinaHSBM/")
 
 # If the required packages are not already installed, install them from CRAN
