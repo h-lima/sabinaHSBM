@@ -83,7 +83,8 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
                          method = "binary_classifier",
                          iter = 10000, wait = 1000,
                          verbose = TRUE, 
-                         save_blocks = TRUE, save_pickle = FALSE){
+                         save_blocks = TRUE, save_pickle = FALSE,
+                         n_cores = 1){
 
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("hsbm must be an object of hsbm.input class. Consider running hsbm_input() function.")
@@ -93,15 +94,6 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
              " full_reconstruction")
     }
 
-    reticulate::py_run_string(import_modules())
-    reticulate::py_run_string(add_names_vertex_prop())
-    reticulate::py_run_string(create_graph())
-    reticulate::py_run_string(get_missing_edges())
-    reticulate::py_run_string(hsbm_link_prediction())
-    reticulate::py_run_string(get_groups())
-    reticulate::py_run_string(get_predicted_network())
-    reticulate::py_run_string(save_pickle())
-    
     hsbm_output <- list()
     hsbm_output$data <- hsbm_input$data
     hsbm_output$folds <- hsbm_input$folds
@@ -119,38 +111,22 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     }else{
         elist_predict <- elist_i
     }
-    
-    options("reticulate.engine.environment" = environment())
 
-    for(i in elist_predict){
-        if(verbose){
-            cat("Computing predictions for fold ", i, "\n")
-        }
-        i_py <- i - 1
-        reticulate::py_run_string(stringr::str_glue("elists = r.hsbm_input['edgelists']"))
-        reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
-        reticulate::py_run_string("g = create_graph(elist)")
-        reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
-                                                    "method = r.method, ",
-                                                    "force_niter = r.iter, ",
-                                                    "wait = r.wait)"))
-        reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
-        if(save_pickle){
-            #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
-            reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
-        }
+    # For n_cores = 1 mclapply calls lapply
+    out_lst <- parallel::mclapply(elist_predict,
+                                  function(i){
+                                     run_hsbm(hsbm_input = hsbm_input,
+                                              hsbm_output = hsbm_output,
+                                              method = method,
+                                              iter = iter,
+                                              wait = wait,
+                                              save_pickle = save_pickle,
+                                              save_blocks = save_blocks,
+                                              verbose = verbose,
+                                              i = i)
+                                    }, mc.cores = n_cores)
 
-        hsbm_output$probs[[i]] <- reticulate::py$res_dict$pred_probs
-        if(save_blocks){
-            hsbm_output$groups[[i]] <- reticulate::py$groups_df
-        }
-        hsbm_output$min_dl[[i]] <- reticulate::py$res_dict$min_dl
-
-        reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
-
-    }
-
-    options("reticulate.engine.environment" = NULL)
+    hsbm_output <- merge_hsbm.out(out_lst)
 
     attr(hsbm_output, "class") <- "hsbm.predict"
 
@@ -168,7 +144,7 @@ merge_hsbm.out <- function(out_lst){
 
     for(el in c("min_dl", "probs", "groups")){
         if(!(el %in% names(merged))) next
-        preds <- lapply(out_lst, 
+        preds <- lapply(out_lst,
                         function(x){
                             res <- unlist(x[[el]],
                                           recursive = FALSE)
@@ -178,12 +154,57 @@ merge_hsbm.out <- function(out_lst){
                                return(data.frame(res))
                             }
                         })
-        
+
         merged[[el]] <- preds
-        
+
     }
-                      
+
     return(merged)
 }
 
+
+run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
+                     save_pickle, save_blocks, verbose, i){
+
+    reticulate::py_run_string(import_modules())
+    reticulate::py_run_string(add_names_vertex_prop())
+    reticulate::py_run_string(create_graph())
+    reticulate::py_run_string(get_missing_edges())
+    reticulate::py_run_string(hsbm_link_prediction())
+    reticulate::py_run_string(get_groups())
+    reticulate::py_run_string(get_predicted_network())
+    reticulate::py_run_string(save_pickle())
+
+    options("reticulate.engine.environment" = environment())
+
+    if(verbose){
+        cat("Computing predictions for fold ", i, "\n")
+    }
+    i_py <- i - 1
+    reticulate::py_run_string(stringr::str_glue("elists = r.hsbm_input['edgelists']"))
+    reticulate::py_run_string(paste0("elist = elists[", i_py, "]"))
+    reticulate::py_run_string("g = create_graph(elist)")
+    reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
+                                                "method = r.method, ",
+                                                "force_niter = r.iter, ",
+                                                "wait = r.wait)"))
+    reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
+    if(save_pickle){
+        #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
+        reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
+    }
+
+    hsbm_output$probs[[i]] <- reticulate::py$res_dict$pred_probs
+    if(save_blocks){
+        hsbm_output$groups[[i]] <- reticulate::py$groups_df
+    }
+    hsbm_output$min_dl[[i]] <- reticulate::py$res_dict$min_dl
+
+    reticulate::py_run_string("del res_dict; del groups_df; del g; gc.collect()")
+
+    options("reticulate.engine.environment" = NULL)
+
+    return(hsbm_output)
+
+}
 
