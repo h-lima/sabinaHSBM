@@ -29,7 +29,7 @@ To download the pre-configured image from Docker Hub, run:
 
 The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. The `-p` flags are optional and map ports `6006`, `8787`and `8880` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server if needed. The `-v` flag is also optional (but recommended) and establish a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount with `-v project_hsbm:/home/project_hsbm`. Unlike bind mounts, whick link directly to local directory, volume are stored within a Docker filesystem.
    ```bash
-   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -p 6006:6006 -v "loca/path/to/your/project:/home/my_project" sabinahsbm bash 
+   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -p 6006:6006 -v "local/path/to/your/project:/home/my_project" sabinahsbm bash 
    ```
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
 
