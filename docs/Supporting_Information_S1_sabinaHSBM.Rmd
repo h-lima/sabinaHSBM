@@ -182,9 +182,10 @@ cat("The processing time of this script took: ", end_time - start_time, "mins\n"
 ```
 
 This analysis was performed on a Dynabook with the following characteristics:
-  - Processor (CPU): Intel Core i7-1165G7 @ 2.80GHz (11th Gen)
-  - Memory (RAM): 32 GB
-  - Operating System: Windows 11 Pro, Version 24H2
-  - R Version: 4.3.3
+
+- Processor (CPU): Intel Core i7-1165G7 @ 2.80GHz (11th Gen)
+- Memory (RAM): 32 GB
+- Operating System: Windows 11 Pro, Version 24H2
+- R Version: 4.3.3
   
 
