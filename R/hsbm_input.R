@@ -8,7 +8,7 @@
 #' @param folds (\emph{optional, default} \code{NULL}) \cr
 #' An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.
 #' @param n_folds (\emph{optional, default} \code{5}) \cr
-#' A \code{numeric} value specifying the number of cross-validation folds to generate. 
+#' A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified, held-out links will not be computed.
 #' @param min_per_col A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.
 #' @param min_per_row A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
 #' #@@@JMB pendiente param add_spurious?? y no_heldout
@@ -56,7 +56,9 @@
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, 
                        min_per_col = 2, min_per_row = 2, 
-                       add_spurious = FALSE, no_heldout = FALSE){
+                       add_spurious = FALSE){
+
+    no_heldout <- if (n_folds == 1) TRUE else FALSE
 
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
