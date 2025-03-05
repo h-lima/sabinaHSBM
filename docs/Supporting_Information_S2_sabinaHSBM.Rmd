@@ -118,7 +118,7 @@ myInput <- hsbm.input(
 )
 ```
 
-Only for this example, the following code assigns the "spurious_edge" label to the previously added spurious links. The purpose is to track these links throughout the analysis and network reconstruction process.
+For the purposes of this example, artificial spurious links are labeled with the "spurious_edge" tag using the code below. This labeling allows for tracking these links throughout the analysis and network reconstruction process, although in typical use, such labeling would not be necessary.
 
 ```{r add-spur}
 myInput$edgelists <- lapply(myInput$edgelists,
@@ -159,12 +159,12 @@ nCores <- 2
 
 # Generate HSBM predictions
 myPred <- hsbm.predict(
-  myInput,           # Input data processed by hsbm.input()
-  iter = 10000,      # Number of iterations
-  wait= 10000,       # Number of iterations for MCMC equilibration
+  myInput,             # Input data processed by hsbm.input()
+  iter = 10000,        # Number of iterations
+  wait= 10000,         # Number of iterations for MCMC equilibration
   method = "full_reconstruction", # Method for link prediction
-  save_blocks = TRUE, 
-  save_pickle = FALSE,
+  save_blocks = TRUE,  # Save group assignments 
+  save_pickle = FALSE, # Save results as pickle files
   n_cores = nCores
 )
 ```
@@ -186,16 +186,15 @@ groups_fold1 <- myPred$groups[[1]]
 # Filter one type of nodes (e.g., hosts, in columns)
 vnames <- colnames(myPred$data)
 groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
-
 g_cols <- grep("^G", names(groups_fold1))
 groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
 
 print(head(groups_fold1))
 ```
 
-Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1), nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4), these groups (or communities) are progressively aggregated, revealing broader patterns and relationships or communities.
+Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1) nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4) these groups (or communities) are progressively aggregated, revealing broader patterns and relationships or communities.
 
-Let's now look at the links for each fold filtered by type ("documented", "held out", and "spurious_edge") with a probability lower than 0.99.
+Next, we will explore how the model assigns specific probabilities to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0, as the model should recognize them as false links (false negatives).
 
 ```{r view-spur}
 for(i in 1:5){
@@ -216,11 +215,12 @@ The `hsbm.reconstructed` function generates a reconstructed binary interaction m
 ```{r network-reconstruction}
 # Network reconstruction
 myReconst <- hsbm.reconstructed(
-  myPred,              # Predictions processed by hsbm.predict
-  rm_documented=FALSE,
-  threshold = 0.5,       # Binarization threshold
+  myPred,                 # Predictions processed by hsbm.predict
+  rm_documented=FALSE,    # Remove documented links during validation
+  na_treatment = "ignore_na", # Handle NA values in predictions
+  threshold = 0.5,            # Binarization threshold
   new_matrix_method = "average_thresholded", # Combine fold predictions
-  spurious_edges = TRUE
+  spurious_edges = TRUE,
 )
 ```
 
@@ -261,9 +261,10 @@ end_time - start_time
 ```
 
 This analysis was performed on a Dynabook with the following characteristics:
-  - Processor (CPU): Intel Core i7-1165G7 @ 2.80GHz (11th Gen)
-  - Memory (RAM): 32 GB
-  - Operating System: Windows 11 Pro, Version 24H2
-  - R Version: 4.3.3
+
+- Processor (CPU): Intel Core i7-1165G7 @ 2.80GHz (11th Gen)
+- Memory (RAM): 32 GB
+- Operating System: Windows 11 Pro, Version 24H2
+- R Version: 4.3.3
   
 
