@@ -122,11 +122,10 @@ groups_fold1 <- myPred$groups[[1]]
 # Filter one type of nodes (e.g., hosts, in columns)
 vnames <- colnames(myPred$data)
 groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
-
 g_cols <- grep("^G", names(groups_fold1))
 groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
 
-print(groups_fold1)
+print(head(groups_fold1))
 ```
 
 Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1), nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4), these groups are progressively aggregated, revealing broader patterns and relationships or communities.
@@ -139,8 +138,8 @@ The `hsbm.reconstructed` function generates a reconstructed binary interaction m
 ```{r network-reconstruction}
 # Network reconstruction
 myReconst <- hsbm.reconstructed(
-  myPred,                    # Predictions processed by hsbm.predict
-  rm_documented = TRUE,      # Use of documented entries during evaluation and binarization
+  myPred,                # Predictions processed by hsbm.predict
+  rm_documented = TRUE,  # Use of documented entries during validation
   threshold = "prc_closest_topright", # Binarization threshold
   new_matrix_method = "average_thresholded" # Combine fold predictions
 )
@@ -149,7 +148,7 @@ myReconst <- hsbm.reconstructed(
 This output includes the averaged probability matrix, the final reconstructed matrix, and evaluation metrics. These results highlight the predicted interactions, showcasing the method's ability to detect missing links effectively. Let’s explore some of the key outputs in detail.
 
 ```{r summary-reconstruction}
-# View the reconstruction summary and evaluation metrics
+# View the reconstructed network summary and evaluation metrics
 summary(myReconst)
 ```
 
