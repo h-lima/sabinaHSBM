@@ -15,9 +15,12 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
     if(is.null(colnames(adj_mat))) colnames(adj_mat) <- paste0("col", 1:ncol(adj_mat))
     if(is.null(rownames(adj_mat))) rownames(adj_mat) <- paste0("row", 1:nrow(adj_mat))
 
+    adj_mat_train <- adj_mat
     if(!is.null(fold_id)){
         folds <- as.matrix(folds[which(folds[, 'gr'] == fold_id), ])
         adj_mat_train <- adj_mat
+        adj_mat_train[folds[, c('row', 'col')]] <- 0
+    }else if(!is.null(folds)){
         adj_mat_train[folds[, c('row', 'col')]] <- 0
     }
 
@@ -26,29 +29,28 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
     long_mat <- dplyr::filter(long_mat, value == 1)
     long_mat$edge_type <- "documented"
 
-    colnames(folds) <- col_names
-    folds[, 'value'] <- 0
-    folds <- as.data.frame(folds)
-    folds$edge_type <- "held_out"
-    folds$row_names <- rownames(adj_mat)[folds$row_names]
-    folds$col_names <- colnames(adj_mat)[folds$col_names]
+    if(!is.null(folds)){
+        colnames(folds) <- col_names
+        folds[, 'value'] <- 0
+        folds <- as.data.frame(folds)
+        folds$edge_type <- "held_out"
+        folds$row_names <- rownames(adj_mat)[folds$row_names]
+        folds$col_names <- colnames(adj_mat)[folds$col_names]
 
-    long_mat <- rbind(long_mat, folds)
+        long_mat <- rbind(long_mat, folds)
+    }
 
     long_mat$n <- 1
     long_mat$x <- 1
-    long_mat[long_mat$edge_type == "held_out", ]$n <- 1
-    if(no_heldout){
-        long_mat[long_mat$edge_type == "held_out", ]$x <- 1
-    }else{
-        long_mat[long_mat$edge_type == "held_out", ]$x <- 0
+    if(!no_heldout){
+        long_mat$x <- ifelse(long_mat$edge_type == "held_out", 0, long_mat$x)
     }
 
     long_mat$v1 <- as.numeric(factor(long_mat[[col_names[1]]])) - 1
     long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
 
-    long_mat <- dplyr::select(long_mat, v1, v2, value, col_names[1], col_names[2], 
-                              edge_type, n, x)
+    long_mat <- dplyr::select(long_mat, v1, v2, value, col_names[1], 
+                              col_names[2], edge_type, n, x)
 
     if(add_spurious){
         long_mat <- add_spurious_edges(long_mat, adj_mat, col_names[1:2])

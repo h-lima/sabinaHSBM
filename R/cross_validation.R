@@ -1,5 +1,5 @@
 #' @export
-create_cv_folds <-function(Z, n= 10, min_per_col = 2, min_per_row = 2,
+create_cv_folds <-function(Z, n = 10, min_per_col = 2, min_per_row = 2,
                            get_zeros = FALSE){
 
     if(!(is.matrix(Z))) stop("Z argument must be of type matrix")

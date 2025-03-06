@@ -60,15 +60,24 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5,
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
 
+    edgelists <- list()
+    if(n_folds == 1){
+        edgelists[[1]] <- hsbm_edgelist(data, folds = NULL, 
+                                        add_spurious = add_spurious,
+                                        no_heldout = no_heldout)
+        value <- list(data = data, folds = folds, edgelists = edgelists)
+        attr(value, "class") <- "hsbm.input"
+        return(value)
+    }
+
     if(is.null(folds)){
         folds <- create_cv_folds(Z = data, n = n_folds,
                                  min_per_col = min_per_col, 
                                  min_per_row = min_per_row)
     }
 
-    edgelists <- list()
-
-    for(i in 1:n_folds){
+    nr_folds <- unique(folds[, 'gr'])
+    for(i in 1:nr_folds){
         edgelists[[i]] <- hsbm_edgelist(data, folds, fold_id = i, 
                                         add_spurious = add_spurious,
                                         no_heldout = no_heldout)
