@@ -12,8 +12,7 @@ hsbm.predict(
   wait = 1000,
   verbose = TRUE,
   save_blocks = TRUE,
-  save_pickle = FALSE,
-  n_cores = 1
+  save_pickle = FALSE
 )
 }
 \arguments{
@@ -27,7 +26,7 @@ A \code{character} string specifying the method used for the HSBM prediction. Op
 
 \item{iter}{A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.}
 
-\item{wait}{A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 10000.}
+\item{wait}{A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 10000. #@@JMB 10000 o 1000???}
 
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to print progress messages during prediction.}
@@ -47,16 +46,16 @@ An object of class \code{hsbm.predict} containing the edge/link predictions and 
 \item \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
 \item \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 \item \code{$min_dl} A \code{list} of minimum description length values for each fold.
-\item \code{$predictions$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
+\item \code{$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
 \itemize{
 \item \code{v1}: The index of the first type of node (rows in the original matrix).
 \item \code{v2}: The index of the second type of node (columns in the original matrix).
 \item \code{p}: Predicted probabilities of link between the nodes \code{v1} and \code{v2}.
 \item \code{v1_names}: Names of the nodes corresponding to \code{v1}, derived from the row names of the original input matrix.
 \item \code{v2_names}: Names of the nodes corresponding to \code{v2}, derived from the column names of the original input matrix.
-\item \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data, \code{"held_out"} for edges/links observed/documented that is retained/masked during cross-validation to assess the model's ability to predict known edges/links, or \code{"reconstructed"} for undomented edges/links.
+\item \code{edge_type}: The type of edge/link, such as \code{"documented"} for edges/links observed/documented in the original data, \code{"held_out"} for edges/links observed/documented that is retained/masked during cross-validation to assess the model's ability to predict known edges/links, or \code{"reconstructed"} for undocumented edges/links.
 }
-\item \code{$predictions$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
+\item \code{$groups} (if \code{save_blocks = TRUE}) A \code{list} where each element is a \code{data.frame} containing the group assignments for each node in the network for the corresponding edge list (fold). Each \code{data.frame} includes:
 \itemize{
 \item \code{nodes}: Indices of the nodes in the network.
 \item \code{G1, G2, G3, ...}: Group assignments for each node across different hierarchical levels, where each column represents a specific level of the hierarchy and the values indicate the group to which the node belongs.
@@ -74,10 +73,10 @@ This function performs predictions based on the HSBM for a specified edge list (
 \item The \code{method} parameter determines the approach for link prediction:
 \describe{
 \item{\code{"binary_classifier"}}{
-Focuses on predicting probabilities for currently unobserved links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved interactions/links might be real.
+Focuses on predicting conditional probabilities for currently unobserved/undocumented edges/links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved/undocumented interactions/links might be real, based on existing observed data.  #@@JMB probs condiconales
 }
 \item{\code{"full_reconstruction"}}{
-Estimates probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved links likely to exist) but also detects spurious links (observed links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
+Estimates marginal probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved/undocumented edges/links likely to exist) but also detects spurious links (observed/documented edges/links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity. ##@@JMB probs marginales
 }
 }
 \item The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
@@ -99,7 +98,8 @@ data(myInput, package = "sabinaHSBM")
 
 myPred <- hsbm.predict(hsbm_input = myInput,
                       method = "binary_classifier", 
-                      iter = 1000)
+                      iter = 1000,
+                      wait=1000)
 
 # View link probabilities of fold 1
 myPred$probs[[1]]
