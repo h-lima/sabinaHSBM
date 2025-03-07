@@ -75,7 +75,7 @@ plot_interaction_matrix(dat, order_mat = FALSE)
 
 # Preparing Input data for HSBM
 
-The `hsbm.input` function pre-processes the dataset, creating cross-validation folds and edge lists required for modeling. Here, we use 10-fold cross-validation.
+The `hsbm.input` function pre-processes the dataset, creating cross-validation folds and edge lists required for modeling. Here, we use 5-fold cross-validation.
 
 ```{r prepare-input}
 # Prepare input object
@@ -99,7 +99,7 @@ The `hsbm.predict` function applies HSBM to predict link probabilities in a netw
 # Predict missing links using HSBM
 myPred <- hsbm.predict(
   myInput,          # Input data processed by hsbm.input()
-  iter = 1000,      # Number of iterations
+  iter = 1000,      # Number of iterations ...
   wait = 1000,      # Number of iterations for MCMC equilibration
   method = "binary_classifier"  # Prediction method
 )
@@ -155,9 +155,11 @@ summary(myReconst)
 The summary provides the number of missing links, as well as key evaluation metrics, such as the retained link recovery rate (RLRR).
 
 ```{r tiop-links}
-# # View the top links
-# top_links_df <- top_links(myReconst, n = 10, edge_type = "undocumented")
-# print(top_links_df)
+# View the top potential missing links
+top_links_df <- top_links(myReconst, 
+                          n = 10, 
+                          edge_type = "undocumented") # Type of edge to rank
+print(top_links_df)
 ```
 
 The `top-links functions` identifies the most probable missing links in a network predicted by HSBM.
