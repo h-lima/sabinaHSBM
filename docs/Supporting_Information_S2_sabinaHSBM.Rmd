@@ -242,8 +242,10 @@ Let's now examine the top 10 predicted links that are most likely to be spurious
 
 ```{r top-links}
 # Visualize the top most likely spurious links
-# top_links_spurious <- top_links(hsbm_out, n = 10, edge_type = "documented")
-# print(top_links_spurious)
+top_links_spurious <- top_links(hsbm_out, 
+                                n = 10, 
+                                edge_type = "documented")
+print(top_links_spurious)
 ```
 
 
