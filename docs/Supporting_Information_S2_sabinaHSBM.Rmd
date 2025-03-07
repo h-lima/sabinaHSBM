@@ -258,8 +258,8 @@ Show processing time and computer characteristics
 
 ```{r end_time}
 end_time <- Sys.time()
-cat("The processing time of this script took: \n")
-end_time - start_time
+cat("The processing time of this script took: ",
+    round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")
 ```
 
 This analysis was performed on a Dynabook with the following characteristics:
