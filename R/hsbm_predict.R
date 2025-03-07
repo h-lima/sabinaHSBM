@@ -10,7 +10,7 @@
 #' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
 #' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
 #' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
-#' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 10000. #@@@JMB 10000 o 1000???
+#' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.
 #' @param verbose (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to print progress messages during prediction.
 #' @param save_blocks (\emph{optional, default} \code{TRUE}) \cr
@@ -23,7 +23,7 @@
 #' - \code{$data} The binary bipartite \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
 #' - \code{$method} The method used for the HSBM analysis, as specified by the user.
-#' - \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
+#' - \code{$iter} The number of iterations used to extract link probabilities, as specified by the user. Default is 10000.
 #' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 #' - \code{$min_dl} A \code{list} of minimum description length values for each fold.
 #' - \code{$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:
@@ -82,7 +82,7 @@
 #' @export
 hsbm.predict <- function(hsbm_input, elist_i = NULL, 
                          method = "binary_classifier",
-                         iter = 10000, wait = 1000,   #@@@JMB wait 10000 o 1000?
+                         iter = 10000, wait = 1000,
                          verbose = TRUE, 
                          save_blocks = TRUE, save_pickle = FALSE){
 
@@ -159,7 +159,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
 }
 
 
-merge_hsbm.out <- function(out_lst){  #@@@JMB cuando esté disponible nCores no es necesario que sea export
+merge_hsbm.out <- function(out_lst){ 
 
     merged <- out_lst[[1]]
 

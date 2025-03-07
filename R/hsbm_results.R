@@ -23,6 +23,7 @@
 #' An object of class \code{hsbm.reconstructed} containing:
 #' - \code{$data} The original binary input matrix.
 #' - \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
+#' - \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@@JMB para qué queremos esto si ya está $tb?
 #' - \code{$reconstructed_df}: A \code{list} with:
 #'   - \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?
 #'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.

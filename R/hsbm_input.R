@@ -56,9 +56,7 @@
 #' @export
 hsbm.input <- function(data, folds = NULL, n_folds = 5, 
                        min_per_col = 2, min_per_row = 2, 
-                       add_spurious = FALSE){
-
-    no_heldout <- if (n_folds == 1) TRUE else FALSE
+                       add_spurious = FALSE, no_heldout = FALSE){
 
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
