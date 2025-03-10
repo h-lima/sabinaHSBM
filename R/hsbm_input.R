@@ -77,7 +77,7 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5,
                                  min_per_row = min_per_row)
     }
 
-    nr_folds <- unique(folds[, 'gr'])
+    nr_folds <- length(unique(folds[, 'gr']))
     for(i in 1:nr_folds){
         edgelists[[i]] <- hsbm_edgelist(data, folds, fold_id = i, 
                                         add_spurious = add_spurious,
