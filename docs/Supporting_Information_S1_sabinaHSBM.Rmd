@@ -60,7 +60,7 @@ start_time <- Sys.time()
 
 # Load data
 
-The dataset `dat` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. 
+The dataset `dat` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. The network contains gaps, indicating potential missing links.
 
 ```{r load-data}
 # Load the dataset
@@ -93,7 +93,7 @@ summary(myInput)
 
 # Predicting Missing Links
 
-The `hsbm.predict` function applies HSBM to predict link probabilities in a network. The function works directly with the processed input created by `hsbm.input`. Here, we use the `binary_classifier` method. This method focuses on predicting probabilities for currently unobserved links (`0s`). Use this method if you want to identify missing links (unobserved links likely to exist) in partially incomplete networks.
+The `hsbm.predict` function applies HSBM to predict link probabilities and group assignments in a network. The function works directly with the processed input created by `hsbm.input`. Here, we use the `binary_classifier` method. This method focuses on predicting probabilities for currently unobserved links (`0s`). Use this method if you want to identify missing links (unobserved links likely to exist) in partially incomplete networks.
 
 ```{r sequential-prediction}
 # Predict missing links using HSBM
@@ -125,7 +125,7 @@ groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
 g_cols <- grep("^G", names(groups_fold1))
 groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
 
-print(head(groups_fold1))
+print(groups_fold1)
 ```
 
 Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1), nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4), these groups are progressively aggregated, revealing broader patterns and relationships or communities.
@@ -162,7 +162,7 @@ top_links_df <- top_links(myReconst,
 print(top_links_df)
 ```
 
-The `top-links functions` identifies the most probable missing links in a network predicted by HSBM.
+The `top-links functions` identifies the undocumented links most likely to be missing links in a network predicted by HSBM.
 
 ```{r plot-reconstruction}
 # View the reconstructed binary matrix
@@ -175,11 +175,11 @@ This document demonstrates the use of the *sabinaHSBM* package for network recon
 
 # Computing characteristics
 
-Show processing time and computer characteristics
 
 ```{r end_time}
+# Show processing time and computer characteristics (optional)
 end_time <- Sys.time()
-cat("The processing time of this script took: ", end_time - start_time, "mins\n")
+cat("The processing time of this script took: ", end_time - start_time, "minutes\n")
 ```
 
 This analysis was performed on a Dynabook with the following characteristics:

@@ -42,6 +42,7 @@ An object of class \code{hsbm.reconstructed} containing:
 \itemize{
 \item \code{$data} The original binary input matrix.
 \item \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
+\item \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@JMB para qué queremos esto si ya está $tb?
 \item \code{$reconstructed_df}: A \code{list} with:
 \itemize{
 \item \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?

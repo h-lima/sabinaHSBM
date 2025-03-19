@@ -254,9 +254,10 @@ This document demonstrates the use of the *sabinaHSBM* package for network recon
 
 # Computing characteristics
 
-Show processing time and computer characteristics
+
 
 ```{r end_time}
+# Show processing time and computer characteristics (optional)
 end_time <- Sys.time()
 cat("The processing time of this script took: ",
     round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")

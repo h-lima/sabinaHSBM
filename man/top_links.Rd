@@ -4,26 +4,29 @@
 \alias{top_links}
 \title{Extract Top Predicted Links}
 \usage{
-top_links(hsbm_reconstructed, n = 10)
+top_links(hsbm_reconstructed, n = 10, edge_type = "undocumented")
 }
 \arguments{
 \item{hsbm_reconstructed}{An object of class \code{hsbm.reconstructed} containing the results of the HSBM model reconstruction.}
 
 \item{n}{(\emph{optional, default} \code{10}) \cr
 An \code{integer} specifying the number of top links to extract.}
+
+\item{edge_type}{(\emph{optional, default} \code{"undocumented"}) \cr
+A \code{character} indicating the type of edge/link to extract and rank: "undocumented" or "documented", "spurious" or "missing".}
 }
 \value{
 A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
 }
 \description{
-Extracts the top predicted links from the HSBM model output, allowing for prioritization of likely true links.
+Extracts the top \code{n} predicted links from the HSBM model, allowing for prioritization of the links most likely to be false negatives or false positives. It ranks "undocumented" links (originally 0s) by descending probability, with higher probabilities indicating the most likely false negatives (links that were not observed but are likely true/present). Ranks "documented" links (originally 1s) by ascending probability, with lower probabilities suggesting the most likely false positives (links that were observed but are likely false/absent). Similarly, ranks identified "missing" links and "spurious" links.
 }
 \examples{
 # Load example HSBM prediction results
 # Assuming `hsbm_reconstructed` is an object of class `hsbm.reconstructed`
 data(myReconst, package = "sabinaHSBM")
 
-top_10_links <- top_links(myPred, n = 10)
+top_10_links <- top_links(myPred, n = 10, edge_type = "undocumented")
 print(top_10_links)
 
 }
