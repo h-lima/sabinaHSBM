@@ -84,7 +84,9 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
                          method = "binary_classifier",
                          iter = 10000, wait = 1000,
                          verbose = TRUE, 
-                         save_blocks = TRUE, save_pickle = FALSE,
+                         save_blocks = TRUE,
+                         save_pickle = FALSE,
+                         save_plots = FALSE,
                          n_cores = 1){
 
     if(!inherits(hsbm_input, "hsbm.input")){
@@ -123,6 +125,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
                                               wait = wait,
                                               save_pickle = save_pickle,
                                               save_blocks = save_blocks,
+                                              save_plots = save_plots,
                                               verbose = verbose,
                                               i = i)
                                     }, mc.cores = n_cores)
@@ -161,7 +164,7 @@ merge_hsbm.out <- function(out_lst){
 
 
 run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
-                     save_pickle, save_blocks, verbose, i){
+                     save_pickle, save_blocks, save_plots, verbose, i){
 
     reticulate::py_run_string(import_modules())
     reticulate::py_run_string(add_names_vertex_prop())
@@ -171,6 +174,7 @@ run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
     reticulate::py_run_string(get_groups())
     reticulate::py_run_string(get_predicted_network())
     reticulate::py_run_string(save_pickle())
+    reticulate::py_run_string(save_plot())
 
     options("reticulate.engine.environment" = environment())
 
@@ -189,6 +193,10 @@ run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
     if(save_pickle){
         #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
         reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
+    }
+    if(save_plots){
+        reticulate::py_run_string(
+                        paste0("save_plot(res_dict['state_min_dl'],", i,")"))
     }
 
     hsbm_output$probs[[i]] <- reticulate::py$res_dict$pred_probs

@@ -5,7 +5,7 @@
 #' @description This function generates a reconstructed bipartite binary matrix based on the HSBM model.
 #'
 #' @param hsbm_out An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.
-#' @param rm_documented (\emph{optional, default} \code{FALSE}) \cr
+#' @param rm_documented (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to remove documented entries (1s) from the evaluation.
 #' @param na_treatment (\emph{optional, default} \code{"na_to_0"}) \cr
 #' A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.
@@ -17,7 +17,7 @@
 #' A \code{numeric} value \code{(0-1)} for \code{new_matrix_method = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
 #' The behavior of \code{ensemble_threshold} depends on the value of \code{new_matrix_method}:
 #' - If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
-#' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds). 
+#' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds).
 #'
 #' @return
 #' An object of class \code{hsbm.reconstructed} containing:
@@ -88,23 +88,23 @@
 #' ## Not run:
 #' # Example workflow to generate `myPred`:
 #' data(dat, package = "sabinaHSBM")
-#' 
+#'
 #' # Prepare input for HSBM
-#' myInput <- hsbm.input(data = dat, 
+#' myInput <- hsbm.input(data = dat,
 #'                       n_folds = 10)
-#' 
+#'
 #' # Run HSBM predictions
 #' myPred <- hsbm.predict(hsbm_input = myInput,
-#'                       method = "binary_classifier", 
+#'                       method = "binary_classifier",
 #'                       iter = 1000,
 #'                       wait=1000)
 #' ## End(Not run)
 #'
 #' # Load example HSBM reconstructed results
 #' data(myPred, package = "sabinaHSBM")
-#' 
+#'
 #' myReconst <- hsbm.reconstructed(myPred)
-#' 
+#'
 #' # View the final reconstructed binary matrix
 #' reconstructed_matrix <- myReconst$new_mat
 #'
@@ -114,15 +114,15 @@
 #'
 #' # Final averaged matrix
 #' averaged_matrix <- myReconst$reconstructed_df$res_averaged
-#' 
-#' # Plot Reconstructed matrix 
+#'
+#' # Plot Reconstructed matrix
 #' plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 #'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                                spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda, hay que poner en la docu
                                na_treatment = "na_to_0",
-                               threshold = "prc_closest_topright",
+                               threshold = "roc_youden",
                                new_matrix_method = "average_thresholded",
                                ensemble_threshold = NULL){
 
@@ -158,7 +158,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
     binary_mats <- list()
     reconstructed_stats <- list()
 
-    hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out, 
+    hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out,
                                                             input_names = TRUE,
                                                             na_treatment = na_treatment)
     n_folds <- length(hsbm_out$probs)
@@ -195,12 +195,12 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
     if(new_matrix_method == "ensemble_binary"){
         ens_thresh <- if(is.null(ensemble_threshold)) 0.1 else ensemble_threshold
         hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
-                                              thresh = ens_thresh, 
+                                              thresh = ens_thresh,
                                               na_treatment = na_treatment)
     }else{
         thresh <- mean(tb_all$thresh)
         hsbm_reconstructed$new_mat <- avg_mat(hsbm_reconstructed$pred_mats,
-                                              thresh = thresh, 
+                                              thresh = thresh,
                                               na_treatment = na_treatment)
     }
 
@@ -210,84 +210,6 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
 
     return(hsbm_reconstructed)
 }
-
-
-#' @name top_links
-#'
-#' @title Extract Top Predicted Links
-#'
-#' @description
-#' Extracts the top \code{n} predicted links from the HSBM model, allowing for prioritization of the links most likely to be false negatives or false positives. It ranks "undocumented" links (originally 0s) by descending probability, with higher probabilities indicating the most likely false negatives (links that were not observed but are likely true/present). Ranks "documented" links (originally 1s) by ascending probability, with lower probabilities suggesting the most likely false positives (links that were observed but are likely false/absent). Similarly, ranks identified "missing" links and "spurious" links.
-#'
-#' @param hsbm_reconstructed An object of class \code{hsbm.reconstructed} containing the results of the HSBM model reconstruction.
-#' @param n (\emph{optional, default} \code{10}) \cr
-#' An \code{integer} specifying the number of top links to extract.
-#' @param edge_type (\emph{optional, default} \code{"undocumented"}) \cr
-#' A \code{character} indicating the type of edge/link to extract and rank: "undocumented" or "documented", "spurious" or "missing".
-#'
-#' @return
-#' A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
-#'
-#' @seealso \code{\link{hsbm.predict}}, \code{\link{hsbm.reconstructed}}
-#'
-#' @examples
-#' # Load example HSBM prediction results
-#' # Assuming `hsbm_reconstructed` is an object of class `hsbm.reconstructed`
-#' data(myReconst, package = "sabinaHSBM")
-#'
-#' top_10_links <- top_links(myPred, n = 10, edge_type = "undocumented")
-#' print(top_10_links)
-#'
-#' @export
-top_links <- function(hsbm_reconstructed, n = 10, edge_type = "undocumented") {
-  
-    if(!inherits(hsbm_reconstructed, "hsbm.reconstructed")) {
-        stop("hsbm_reconstructed must be of class hsbm.reconstructed. Consider running hsbm.reconstructed() function.")
-    }
-
-    mat1 <- as.matrix(hsbm_reconstructed$data)
-    mat2 <- as.matrix(hsbm_reconstructed$new_mat)
-    
-    if(edge_type == "spurious") {
-      link_condition <- (mat1 == 1 & mat2 == 0)
-    } else if(edge_type == "missing") {
-      link_condition <- (mat1 == 0 & mat2 == 1)
-    } else if(edge_type == "undocumented") {
-      link_condition <- (mat1 == 0)
-    } else if(edge_type == "documented") {
-      link_condition <- (mat1 == 1)
-    } else {
-      stop("The 'edge_type' argument must be either 'spurious', 'missing', 'reconstructed' or 'documented'.")
-    }
-    
-    links <- which(link_condition, arr.ind = TRUE)
-    
-    rows <- links[, 1]
-    cols <- links[, 2]
-
-    selected_rows <- rownames(mat1)[rows]
-    selected_cols <- colnames(mat2)[cols]
-    selected_links <- paste(selected_rows, selected_cols, sep = "_")
-
-    res_averaged <- hsbm_reconstructed$reconstructed_df$res_averaged
-    res_averaged$combined_names <- paste(res_averaged$v1_names, res_averaged$v2_names, sep = "_")
-
-    reconstructed <- res_averaged[res_averaged$combined_names %in% selected_links, c("v1_names", "v2_names", "p", "sd")]
-
-    if(edge_type %in% c("documented", "spurious")) {
-      reconstructed <- reconstructed[order(reconstructed$p), ]
-    } else {
-      reconstructed <- reconstructed[order(reconstructed$p, decreasing = TRUE), ]
-    }
-
-    reconstructed <- reconstructed[1:n, ]
-
-    row.names(reconstructed) <- NULL
-    
-    return(reconstructed)
-}
-
-
 
 get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 
@@ -362,8 +284,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
 }
 
 
-get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold, 
-                               na_treatment, rm_documented = FALSE, 
+get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold,
+                               na_treatment, rm_documented = FALSE,
                                spurious_edges = FALSE){
     df <- res_folds[[fold_id]]
     rows <- as.numeric(df$v1) + 1
@@ -441,7 +363,7 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
 
     return(list(pred_mat = com_fit,
                 new_bin_mat = com_fit_bin,
-                stats = c(auc, 
+                stats = c(auc,
                           aucpr,
                           yPRC,
                           thresh,
@@ -507,22 +429,22 @@ tidy_hsbm_results <- function(gt_df, n_v1 = 447){
 
 sel_thresh<- function(threshold, perf, perf2, f) {
 	 THRESH_names<-c("roc_youden",
-			  "roc_closest_topleft", 
-			  "roc_equal_sens_spec", 
-			  "roc_no_omission", 
-			  "prc_min_rec_prec", 
-			  "prc_equal_rec_prec", 
+			  "roc_closest_topleft",
+			  "roc_equal_sens_spec",
+			  "roc_no_omission",
+			  "prc_min_rec_prec",
+			  "prc_equal_rec_prec",
 			  "prc_closest_topright",
 			  "prc_max_F1")
   if (threshold %in% THRESH_names) {
 	  if (threshold == "roc_youden") {
 	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
-	    roc_youden <- df[which.max(df$tpr - df$fpr), "cut"] 
+	    roc_youden <- df[which.max(df$tpr - df$fpr), "cut"]
 	    thresh<-roc_youden
 	  } else if (threshold == "roc_closest_topleft") {
 	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
 	    roc_closest_topleft <- df[which.min((1-df$tpr)^2 + (df$fpr)^2), "cut"]
-	    thresh<-roc_closest_topleft 
+	    thresh<-roc_closest_topleft
 	  } else if (threshold == "roc_equal_sens_spec") {
 	    df <- data.frame(cut = perf@alpha.values[[1]], fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
  	    roc_equal_sens_spec <- df[which.min(abs(df$tpr - (1-df$fpr))), "cut"]
@@ -547,7 +469,7 @@ sel_thresh<- function(threshold, perf, perf2, f) {
 	    df3 <- data.frame(Cutoff = f@x.values[[1]], PrecisionRecallFmeasure = f@y.values[[1]])
 	    prc_max_F1 <- df3[which.max(df3$PrecisionRecallFmeasure), "Cutoff"]
 	    thresh<-prc_max_F1
-	  } 
+	  }
   } else if (is.numeric(threshold)) {
         if (threshold >= 0 && threshold <= 1) {
           thresh <- threshold
@@ -556,7 +478,6 @@ sel_thresh<- function(threshold, perf, perf2, f) {
         }
   } else {
     stop("Invalid threshold option")
-  }	
+  }
   return(thresh)
 }
-

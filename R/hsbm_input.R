@@ -58,6 +58,10 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5,
                        min_per_col = 2, min_per_row = 2, 
                        add_spurious = FALSE, no_heldout = FALSE){
 
+    if(!is.matrix(data)){
+        warning("data should be of type matrix. Converting to matrix.")
+        data <- as.matrix(data)
+    }
     # data checks, rowsums == 0, etc
     data <- data[rowSums(data) != 0, colSums(data) != 0]
 

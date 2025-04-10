@@ -281,8 +281,19 @@ def save_pickle(res_dict, i):
     pkl_file = f"hsbm_res_fold{i}.pkl"
     with open(pkl_file, "wb") as pkl:
         pickle.dump(res_dict, pkl)
-    print(f"\tPython pickle save as {pkl_file}")
+    print(f"\tPython pickle save as {pkl_file}.")
     return(0)
 ')
 
+}
+
+save_plot <- function(){
+    return(
+    '
+def save_plot(nested_state, i):
+    plt_name = f"hierarchical_plot_fold{i}.pdf"
+    nested_state.get_block_state().draw(output = plt_name)
+    print(f"\tHierarchical edge bundling plot saved {plt_name}.")
+    return(0)
+    ')
 }
