@@ -276,7 +276,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     min_size_warning <- 0.5 * prod(dim(com))
     if((hsbm_output$method == "full_reconstruction") && (nrow(folds_select) < min_size_warning)) {
         percentage <- 100 * (nrow(folds_select) / prod(dim(com)))
-        warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage))
+        warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage)) #@@@JMB which iterations? iter? wait?
     }
 
     return(list(res_folds = folds_res_list, res_averaged = folds_select))

@@ -21,7 +21,7 @@ hsbm.input(
 An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.}
 
 \item{n_folds}{(\emph{optional, default} \code{5}) \cr
-A \code{numeric} value specifying the number of cross-validation folds to generate.}
+A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified, held-out links will not be computed. This is not recommended, as the main objective of the package is to predict missing links through cross-validation.}
 
 \item{min_per_col}{A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.}
 

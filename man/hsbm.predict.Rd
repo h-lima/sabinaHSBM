@@ -12,7 +12,8 @@ hsbm.predict(
   wait = 1000,
   verbose = TRUE,
   save_blocks = TRUE,
-  save_pickle = FALSE
+  save_pickle = FALSE,
+  n_cores = 1
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ A \code{character} string specifying the method used for the HSBM prediction. Op
 
 \item{iter}{A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.}
 
-\item{wait}{A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 10000. #@@JMB 10000 o 1000???}
+\item{wait}{A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.}
 
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to print progress messages during prediction.}
@@ -43,7 +44,7 @@ An object of class \code{hsbm.predict} containing the edge/link predictions and 
 \item \code{$data} The binary bipartite \code{matrix} of input data.
 \item \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
 \item \code{$method} The method used for the HSBM analysis, as specified by the user.
-\item \code{$iter} The number of iterations for the HSBM analysis, as specified by the user.
+\item \code{$iter} The number of iterations used to extract link probabilities, as specified by the user. Default is 10000.
 \item \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
 \item \code{$min_dl} A \code{list} of minimum description length values for each fold.
 \item \code{$probs} A \code{list} where each element is a \code{data.frame} with the predicted probabilities for the edges/links in the corresponding edge list (fold), according to the HSBM model. Each \code{data.frame} contains:

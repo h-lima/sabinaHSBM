@@ -40,7 +40,7 @@ library(remotes)
 remotes::install_github("h-lima/sabinaHSBM")
 ```
 
-**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows and Mac to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Docker_guide.md).
+**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows and Mac to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S3_sabinaHSBM.md).
 
 
 ### Citing sabinaHSBM package
@@ -48,7 +48,7 @@ remotes::install_github("h-lima/sabinaHSBM")
 A research paper detailing the functions and methodologies of the ***sabinaHSBM*** package is in preparation. Until its publication, please cite the package as follows:
 
 > Lima, H., ... (2024). sabinaHSBM: an R package for Hierarchical Stochastic Block Model-based link prediction and network reconstruction.  
-> Aquí doi -----
+> doi -----
 
 
 ## Core Functions in *sabinaHSBM*
@@ -149,7 +149,9 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 ## Tutorials
-*Aquí poner enlaces a los tutoriales (uno con ejemplo de paralelización)* #@@@JMB
+- Tutorial on using `binary_classifier` method to identify missing links. [View PDF](docs/Supporting_Information_S1_sabinaHSBM.pdf)
+- Tutorial on `full_reconstruction` method to identify both missing and spurious links. [View PDF](docs/Supporting_Information_S2_sabinaHSBM.pdf)
+
 
 ## Contributions
 

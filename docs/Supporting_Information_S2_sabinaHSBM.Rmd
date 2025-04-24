@@ -29,6 +29,7 @@ We begin by loading the required R packages. Missing packages are automatically 
 # Load the sabinaHSBM package
 #library(sabinaHSBM)
 devtools::load_all("/home/project_hsbm/graph_tool/sabinaHSBM/")
+#devtools::load_all("/media/sf_UAM_NexTdive/graph_tool/sabinaHSBM/")
 ```
 
 If the required packages are not already installed, install them from CRAN
@@ -62,7 +63,7 @@ start_time <- Sys.time()
 
 # Load data
 
-The dataset `dat2` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. The distribution of these links follows a structured pattern.
+The dataset `dat2` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. These links are distributed in a structured pattern, with no missing information, to focus the example on identifying spurious links.
 
 ```{r load-data}
 # Load the dataset
@@ -242,7 +243,7 @@ Let's now examine the top 10 predicted links that are most likely to be spurious
 
 ```{r top-links}
 # Visualize the top most likely spurious links
-top_links_spurious <- top_links(hsbm_out, 
+top_links_spurious <- top_links(myReconst, 
                                 n = 10, 
                                 edge_type = "documented")
 print(top_links_spurious)
@@ -254,9 +255,10 @@ This document demonstrates the use of the *sabinaHSBM* package for network recon
 
 # Computing characteristics
 
-Show processing time and computer characteristics
+
 
 ```{r end_time}
+# Show processing time and computer characteristics (optional)
 end_time <- Sys.time()
 cat("The processing time of this script took: ",
     round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")
