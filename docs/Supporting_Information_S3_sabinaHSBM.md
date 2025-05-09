@@ -41,7 +41,8 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
 
 - **Use RStudio Server** *(optional)*
 
-  RStudio Server is already installed in the image. 
+  RStudio Server is already installed in the image.
+  
   Create a user and password (replace `yourname` and `yourpassword` with your credentials; only needed the first time):
      ```bash
      useradd -m yourname
@@ -52,7 +53,9 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
      /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --www-port=8787 --www-address=0.0.0.0
      ```
   In your browser, open: http://localhost:8787
+  
   Log in with the user and password you just created.
+  
   To work in your mounted project directory `/home/my_project` use in the R console `setwd("/home/my_project"`; or go to the `Files` pane (bottom-right), click `“...”` → `“Go to folder...”` and enter `/home/my_project`.
   
   *Note: RStudio Server runs in the foreground. Keep the terminal open while working.*
