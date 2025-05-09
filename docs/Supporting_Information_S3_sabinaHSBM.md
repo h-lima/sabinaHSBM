@@ -42,7 +42,7 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
 - **Use RStudio Server** *(optional)*
 
   RStudio Server is already installed in the image. 
-  Create a user and password (replace `yourname` and `yourpassword` with your credentials):
+  Create a user and password (replace `yourname` and `yourpassword` with your credentials; only needed the first time):
      ```bash
      useradd -m yourname
      echo "yourname:yourpassword" | chpasswd
