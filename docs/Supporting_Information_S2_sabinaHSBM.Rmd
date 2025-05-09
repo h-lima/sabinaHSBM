@@ -14,10 +14,21 @@ The *sabinaHSBM* package provides tools for link prediction and network reconstr
 
 We use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
+**Important note**
+The *sabinaHSBM* package depends on various R and Python libraries, as well as system-level components — especially the `graph-tool` Python package.
+
+ - **UNIX users** can run *sabinaHSBM* natively if their system includes:
+   - R (version ≥ 4.3.3) with all required R packages (listed below)
+   - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
+ 
+ - For all other users — or to avoid configuration issues — a **ready-to-use Docker image** is available.  
+   It includes all dependencies pre-installed, including the *sabinaHSBM* package.  
+   See *Supporting Information S3* for instructions on how to use 
+
 
 # Loading Required Libraries
 
-We begin by loading the required R packages. Missing packages are automatically installed.
+After ensuring the required system dependencies are available (see note above), we begin by loading the required R packages. Missing packages are automatically installed.
 
 ```{r setup, message=FALSE, warning=FALSE}
 # If the package is not installed, install it from GitHub
