@@ -13,16 +13,15 @@ output:
 The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use case based on the `binary_classified` method to identify missing links. We will use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
 
-**Important note**
+**Important note**:
+
 The *sabinaHSBM* package depends on various R and Python libraries, as well as system-level components — especially the `graph-tool` Python package.
 
  - **UNIX users** can run *sabinaHSBM* natively if their system includes:
    - R (version ≥ 4.3.3) with all required R packages (listed below)
    - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
  
- - For all other users — or to avoid configuration issues — a **ready-to-use Docker image** is available.  
-   It includes all dependencies pre-installed, including the *sabinaHSBM* package.  
-   See *Supporting Information S3* for instructions on how to use 
+ - For all other users — or to avoid configuration issues — a **ready-to-use Docker image** is available. It includes all dependencies pre-installed, including the *sabinaHSBM* package. See *Supporting Information S3* for instructions on how to use. 
 
 
 # Loading Required Libraries
@@ -113,7 +112,10 @@ myPred <- hsbm.predict(
   myInput,          # Input data processed by hsbm.input()
   iter = 1000,      # Number of iterations ...
   wait = 1000,      # Number of iterations for MCMC equilibration
-  method = "binary_classifier"  # Prediction method
+  method = "binary_classifier",  # Prediction method
+  save_blocks = TRUE,  # Save group assignments 
+  save_pickle = FALSE, # Save results as pickle files,
+  save_plots = FALSE  # Save hierarchical edge bundling plots
 )
 ```
 
