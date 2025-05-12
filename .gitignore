@@ -1,3 +1,5 @@
 testing/*
 .Rbuildignore
 notes*
+rmd/*
+!rmd/supp_mat.pdf

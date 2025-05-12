@@ -10,7 +10,7 @@ output:
 ---
 
 
-The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use for the `full_reconstruction` method, showcasing how it handles missing and spurious links in an incomplete and error-prone network. To enhance computational efficiency during the prediction links step we leverage parallelized computation.
+The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use for the `full_reconstruction` method, showcasing how it handles missing and spurious links in an incomplete and error-prone network. To enhance computational efficiency during the prediction links steps we use parallelized computation.
 
 We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
@@ -38,10 +38,10 @@ These users must ensure their system includes the required dependencies before p
 
 ```{r setup, message=FALSE, warning=FALSE}
 # If the package is not installed, install it from GitHub
-# if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
-#   library(remotes)
-#   remotes::install_github("h-lima/sabinaHSBM")
-# }
+ if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
+   library(remotes)
+   remotes::install_github("h-lima/sabinaHSBM")
+ }
 
 # Load the sabinaHSBM package
 #library(sabinaHSBM)
@@ -84,9 +84,10 @@ If you're using the **Docker image** (see *Supporting Information S3*) **you do 
 start_time <- Sys.time()
 ```
 
+
 # Load data
 
-The dataset `dat2` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. These links are distributed in a structured pattern, with no missing information, to focus the example on identifying spurious links.
+The dataset `dat2` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interactions between them while `0` (in black) represent lack of an observed interaction. These links are distributed in a structured pattern, with no missing information, to focus the example on identifying spurious links.
 
 ```{r load-data}
 # Load the dataset
@@ -184,7 +185,7 @@ nCores <- 2
 # Generate HSBM predictions
 myPred <- hsbm.predict(
   myInput,             # Input data processed by hsbm.input()
-  iter = 10000,        # Number of iterations
+  iter = 1000,        # Number of iterations
   wait= 10000,         # Number of iterations for MCMC equilibration
   method = "full_reconstruction", # Method for link prediction
   save_blocks = TRUE,  # Save group assignments 
@@ -208,7 +209,7 @@ The group assignments provide the hierarchical clustering structure of nodes for
 # View the group/block assignments for fold 1
 groups_fold1 <- myPred$groups[[1]]
 
-# Filter one type of nodes (e.g., hosts, in columns)
+# Filter one type of nodes (nodes in columns)
 vnames <- colnames(myPred$data)
 groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
 g_cols <- grep("^G", names(groups_fold1))
@@ -235,7 +236,7 @@ for(i in 1:5){
 
 # Network Reconstruction
 
-The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is binarized using a user-specified threshold.  
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold.  
 
 ```{r network-reconstruction}
 # Network reconstruction
