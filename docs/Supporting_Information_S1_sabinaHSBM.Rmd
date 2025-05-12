@@ -10,7 +10,7 @@ output:
 ---
 
 
-The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use case based on the `binary_classified` method to identify missing links. We will use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
+The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use case based on the `binary_classifier` method to identify missing links. We will use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
 
 **Important note**:
@@ -18,8 +18,8 @@ The *sabinaHSBM* package provides tools for link prediction and network reconstr
 The *sabinaHSBM* package depends on various R and Python libraries, as well as system-level components — especially the `graph-tool` Python package.
 
  - **UNIX users** can run *sabinaHSBM* natively if their system includes:
-   - R (version ≥ 4.3.3) with all required R packages (listed below)
-   - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
+   - R (version ≥ 4.0.4) with all required R packages (listed below)
+   - Python ≥ 3.9.2 with the `graph-tool` library (version ≥ 2.45)
  
  - For all other users — or to avoid configuration issues — a **ready-to-use Docker image** is available. It includes all dependencies pre-installed, including the *sabinaHSBM* package. See *Supporting Information S3* for instructions on how to use. 
 
@@ -30,14 +30,13 @@ After ensuring the required system dependencies are available (see note above), 
 
 ```{r setup, message=FALSE, warning=FALSE}
 # If the package is not installed, install it from GitHub
-# if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
-#   library(remotes)
-#   remotes::install_github("h-lima/sabinaHSBM")
-# }
+ if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
+   library(remotes)
+   remotes::install_github("h-lima/sabinaHSBM")
+ }
 
 # Load the sabinaHSBM package
-#library(sabinaHSBM)
-devtools::load_all("/home/project_hsbm/graph_tool/sabinaHSBM/")
+library(sabinaHSBM)
 ```
 
 If the required packages are not already installed, install them from CRAN
@@ -71,7 +70,7 @@ start_time <- Sys.time()
 
 # Load data
 
-The dataset `dat` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of observed interaction. The network contains gaps, indicating potential missing links.
+The dataset `dat` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g. hosts and parasites), and links (values of `1`, in red) represent interaction between them while `0` (in black) represent lack of an observed interaction. The network contains gaps, indicating potential missing links.
 
 ```{r load-data}
 # Load the dataset
@@ -104,7 +103,7 @@ summary(myInput)
 
 # Predicting Missing Links
 
-The `hsbm.predict` function applies HSBM to predict link probabilities and group assignments in a network. The function works directly with the processed input created by `hsbm.input`. Here, we use the `binary_classifier` method. This method focuses on predicting probabilities for currently unobserved links (`0s`). Use this method if you want to identify missing links (unobserved links likely to exist) in partially incomplete networks.
+The `hsbm.predict` function applies HSBM to predict link probabilities and group assignments in a network. The function works directly with the processed input created by `hsbm.input`. Here, we use the `binary_classifier` method. This method focuses on predicting probabilities for currently unobserved links (`0s`). Use this method if you want to obtain probabilities for all missing links (unobserved links likely to exist) in partially incomplete networks.
 
 ```{r sequential-prediction}
 # Predict missing links using HSBM
@@ -133,7 +132,7 @@ The group assignments provide the hierarchical clustering structure of nodes for
 # View the group/block assignments for fold 1
 groups_fold1 <- myPred$groups[[1]]
 
-# Filter one type of nodes (e.g., hosts, in columns)
+# Filter one type of nodes (e.g., nodes in columns)
 vnames <- colnames(myPred$data)
 groups_fold1 <- groups_fold1 %>% filter(names %in% vnames)
 g_cols <- grep("^G", names(groups_fold1))
@@ -147,7 +146,7 @@ Hierarchical group assignments provide insight into how nodes (e.g., hosts) are 
 
 # Network Reconstruction
 
-The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is binarized using a user-specified threshold.  
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transform to binary values using a user-specified threshold.  
 
 ```{r network-reconstruction}
 # Network reconstruction

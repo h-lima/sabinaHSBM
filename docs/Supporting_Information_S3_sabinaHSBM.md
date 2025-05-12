@@ -4,10 +4,11 @@
 This guide will help Windows users run the ***sabinaHSBM*** package within a Linux-based Docker container.
 
 ### What's included in the Docker Image
+- **Linux operating system**: Ubuntu 24.04
 - **R Environment**: Pre-configured with all necessary packages, including `reticulate` for Python integration.
-- **Python & graph-tool**: Python is pre-configured with `graph-tool` for advanced network analysis.
+- **Python & graph-tool**: Python is pre-configured with `graph-tool` for network analysis.
 - **sabinaHSBM**: The Docker image includes the ***sabinaHSBM*** package and all required dependencies.
-- **RStudio Server**: Installed and ready to use as a browser-based R interface (user creation required).
+- **RStudio Server**: Installed and ready to use as a browser-based R interface (user creation recommended).
 - **Jupyter Notebook**: Pre-installed and ready to launch from the container for interactive coding and analysis.
 
 ### Step-by-step setup
@@ -37,12 +38,13 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
 
 - **Run R from the terminal**
 
-  Start an R session by typing `R`. This opens an interactive console where you can load and use ***sabinaHSBM*** normally.
+  Start an R session by typing `R`. This opens an interactive console where you can load and use ***sabinaHSBM*** from the terminal environment.
 
 - **Use RStudio Server** *(optional)*
 
   RStudio Server is already installed in the image.
   
+  A default user was created with user name `test` and password `sabinahsbm`. But we recommend you to set your own.
   Create a user and password (replace `yourname` and `yourpassword` with your credentials; only needed the first time):
      ```bash
      useradd -m yourname
@@ -74,7 +76,7 @@ Here’s an example to get started:
    ```r
    setwd("/home/my_project")
 
-   # Load sbinaHSBM
+   # Load sabinaHSBM
    library(sabinaHSBM)
 
    # Load the data
@@ -94,8 +96,8 @@ Here’s an example to get started:
 
    # Reconstruct the network and evaluate
    myReconst <- hsbm.reconstructed(myPred,
-                         rm_documented = TRUE,
-                         threshold = "prc_closest_topright")
+                                   rm_documented = TRUE,
+                                   threshold = "prc_closest_topright")
    summary(myReconst)
 
    # Save the HSBM reconstructed object
