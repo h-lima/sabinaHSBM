@@ -21,25 +21,14 @@ There are **two ways** to use the package:
    - R (version ≥ 4.3.3) with all required R packages (listed below)
    - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
 
-  In this case, the package must be installed from GitHub using `remotes::install_github()` or `devtools::load_all()`.
-
-- **All other users**, or those who prefer to avoid manual setup, can use the ****ready-to-use Docker image**, which includes everything needed:
+- **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
   - All R and Python dependencies
   - The *sabinaHSBM* package pre-installed and ready to use
-
-If you're using the Docker image (see *Supporting Information S3*), simply start the container and load the package with:
 
 
 # Loading Required Libraries
 
 **Note**: 
-
-If you're using the **Docker container**, **you do not need to install any packages**. Everything — including R, Python, `graph-tool`, and the *sabinaHSBM* package — is already pre-installed.  
-Simply load the package in your R session with:
-
-```r
-#library(sabinaHSBM)
-```
 
 The following instructions are **only required for UNIX users** running *sabinaHSBM natively* (outside Docker). 
 
@@ -80,6 +69,13 @@ for (package in list.of.packages) {
   library(package, character.only = TRUE)
 }
 ```
+
+If you're using the **Docker image** (see *Supporting Information S3*) **you do not need to install any packages**, simply start the container and load the package in your R session with:
+
+```{r docker, message=FALSE, warning=FALSE}
+#library(sabinaHSBM)
+```
+
 
 ```{r start_time}
 # Record starting time (optional)
