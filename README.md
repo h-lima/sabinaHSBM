@@ -43,7 +43,7 @@ remotes::install_github("h-lima/sabinaHSBM")
 **Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows and Mac to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S3_sabinaHSBM.md).
 
 
-### Citing sabinaHSBM package
+### Citing *sabinaHSBM* package
 
 A research paper detailing the functions and methodologies of the ***sabinaHSBM*** package is in preparation. Until its publication, please cite the package as follows:
 
@@ -103,15 +103,15 @@ Use ‘hsbm.predict’ function to predict the marginal posterior probabilities 
 myPred <- hsbm.predict(
     myInput,                # Input data processed by hsbm.input()
     method = "binary_classifier",  # Choose method for link prediction(*)
-    iter = 1000,            # Number of iterations for the HSBM model
-    wait=1000               # Number of iterations needed for MCMC equilibration
+    wait=1000,              # Number of iterations needed for MCMC equilibration
+    iter = 1000             # Number of iterations for the HSBM model
 )
 ```
 
 
 (*)`hsbm.predict` offers two methods for link prediction:
-   - **`"binary_classifier"`**: Focuses on predicting probabilities for currently **unobserved links** (`0s`). Use this method if you want to identify **missing links** (unobserved links likely to exist) in partially incomplete networks.
-   - **`"full_reconstruction"`**: Estimates probabilities for **all links** (both `0s` and `1s`), resulting in a fully reconstructed probability matrix. This method can identify both **missing links** (unobserved links likely to exist) and **spurious links** (observed links that might be erroneous) in incomplete or error-prone networks.
+   - **`"binary_classifier"`**: Focuses on predicting conditional probabilities that a link exists given the inferred block structure. It is applied for currently **unobserved links** (`0s`). Use this method if you want to identify **missing links** (unobserved links likely to exist) in partially incomplete networks.
+   - **`"full_reconstruction"`**: Estimates the marginal posterior probabilities that a link exists. It is applied for **all links** (both `0s` and `1s`), resulting in a fully reconstructed probability matrix. This method can identify both **missing links** (unobserved links likely to exist) and **spurious links** (observed links that might be erroneous) in incomplete or error-prone networks.
 
 
 ### 3. Reconstruct and validate your network <a name="network_reconstruction">  
