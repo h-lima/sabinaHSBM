@@ -15,21 +15,26 @@ The *sabinaHSBM* package provides tools for link prediction and network reconstr
 We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
 
-**Important note**
+**Important note**:
 
-The *sabinaHSBM* package depends on various R and Python libraries, as well as system-level components — especially the `graph-tool` Python package.
+There are **two ways** to use the package:
 
- - **UNIX users** can run *sabinaHSBM* natively if their system includes:
-   - R (version ≥ 4.0.4) with all required R packages (listed below)
-   - Python ≥ 3.9.2 with the `graph-tool` library (version ≥ 2.45)
- 
- - For all other users — or to avoid configuration issues — a **ready-to-use Docker image** is available.  
-   It includes all dependencies pre-installed, including the *sabinaHSBM* package.  
-   See *Supporting Information S3* for instructions on how to use 
+- **UNIX users (native installation)** can run *sabinaHSBM* locally **if** their system includes:
+   - R (version ≥ 4.3.3) with all required R packages (listed below)
+   - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
+
+- **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
+  - All R and Python dependencies
+  - The *sabinaHSBM* package pre-installed and ready to use
+
 
 # Loading Required Libraries
 
-After ensuring the required system dependencies are available (see note above), we begin by loading the required R packages. Missing packages are automatically installed.
+**Note**: 
+
+The following instructions are **only required for UNIX users** running *sabinaHSBM natively* (outside Docker). 
+
+These users must ensure their system includes the required dependencies before proceeding.
 
 ```{r setup, message=FALSE, warning=FALSE}
 # If the package is not installed, install it from GitHub
@@ -39,10 +44,11 @@ After ensuring the required system dependencies are available (see note above), 
  }
 
 # Load the sabinaHSBM package
-library(sabinaHSBM)
+#library(sabinaHSBM)
+devtools::load_all("/home/project_hsbm/graph_tool/sabinaHSBM/")
 ```
 
-If the required packages are not already installed, install them from CRAN
+Install required R packages if not already available:
 
 ```{r install_depend, message=FALSE, warning=FALSE}
 list.of.packages <- c(
@@ -65,6 +71,13 @@ for (package in list.of.packages) {
   library(package, character.only = TRUE)
 }
 ```
+
+If you're using the **Docker image** (see *Supporting Information S3*) **you do not need to install any packages**, simply start the container and load the package in your R session with:
+
+```{r docker, message=FALSE, warning=FALSE}
+#library(sabinaHSBM)
+```
+
 
 ```{r start_time}
 # Record starting time (optional)
