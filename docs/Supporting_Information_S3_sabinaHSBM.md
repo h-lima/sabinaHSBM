@@ -1,21 +1,20 @@
 # *sabinaHSBM* Docker Setup
 
 ## Overview
-
 This guide will help Windows users run the ***sabinaHSBM*** package within a Linux-based Docker container.
 
 ### What's included in the Docker Image
-
+- **Linux operating system**: Ubuntu 24.04
 - **R Environment**: Pre-configured with all necessary packages, including `reticulate` for Python integration.
-- **Python & graph-tool**: Python is pre-configured with `graph-tool` for advanced network analysis.
+- **Python & graph-tool**: Python is pre-configured with `graph-tool` for network analysis.
 - **sabinaHSBM**: The Docker image includes the ***sabinaHSBM*** package and all required dependencies.
+- **RStudio Server**: Installed and ready to use as a browser-based R interface (user creation recommended).
+- **Jupyter Notebook**: Pre-installed and ready to launch from the container for interactive coding and analysis.
 
 ### Step-by-step setup
-
 1. **Install Docker Desktop**
 
 Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
-
 Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
 
 2. **Pull the docker image**
@@ -33,13 +32,43 @@ The following command creates and runs a new Docker container named `sabinahsbm_
    ```
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
 
-4. **Run R or Jupyter Notebook**
+4. **Run R, RStudio Server or Jupyter Notebook**
 
-Start an R session inside the docker container by typing `R`, or launch a Jupyter Notebook with:
-   ```bash
-   jupyter notebook --allow-root --ip 0.0.0.0 --port=8880 --no-browser
-   ```
-When you run this command, the terminal will display a clickable URL. Simply click the provided link or paste it into your browser to open the Jupyter interface, ideal for coding, data visualization, and interactive analysis.
+Once the docker container is running, you can interact with the ***sabinaHSBM*** package using different environments: through the R console, RStudio Server, or Jupyter Notebook.
+
+- **Run R from the terminal**
+
+  Start an R session by typing `R`. This opens an interactive console where you can load and use ***sabinaHSBM*** from the terminal environment.
+
+- **Use RStudio Server** *(optional)*
+
+  RStudio Server is already installed in the image.
+  
+  A default user was created with user name `test` and password `sabinahsbm`. But we recommend you to set your own.
+  Create a user and password (replace `yourname` and `yourpassword` with your credentials; only needed the first time):
+     ```bash
+     useradd -m yourname
+     echo "yourname:yourpassword" | chpasswd
+     ```
+  Then launch RStudio Server:
+     ```bash
+     /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --www-port=8787 --www-address=0.0.0.0
+     ```
+  In your browser, open: http://localhost:8787
+  
+  Log in with the user and password you just created.
+  
+  To work in your mounted project directory `/home/my_project` use in the R console `setwd("/home/my_project"`; or go to the `Files` pane (bottom-right), click `“...”` → `“Go to folder...”` and enter `/home/my_project`.
+  
+  *Note: RStudio Server runs in the foreground. Keep the terminal open while working.*
+
+- **Use Jupyter Notebook** *(optional)*
+
+  You can also use a Jupyter Notebook. Launch it with:
+     ```bash
+     jupyter notebook --allow-root --ip 0.0.0.0 --port=8880 --no-browser
+     ```
+  The terminal will display a clickable URL. Simply click the provided link or paste it into your browser to acces the Jupyter interface, ideal for coding, data visualization, and interactive analysis.
 
 5. **Use the *sabinaHSBM* package**
 
@@ -47,7 +76,7 @@ Here’s an example to get started:
    ```r
    setwd("/home/my_project")
 
-   # Load sbinaHSBM
+   # Load sabinaHSBM
    library(sabinaHSBM)
 
    # Load the data
@@ -67,8 +96,8 @@ Here’s an example to get started:
 
    # Reconstruct the network and evaluate
    myReconst <- hsbm.reconstructed(myPred,
-                         rm_documented = TRUE,
-                         threshold = "prc_closest_topright")
+                                   rm_documented = TRUE,
+                                   threshold = "prc_closest_topright")
    summary(myReconst)
 
    # Save the HSBM reconstructed object

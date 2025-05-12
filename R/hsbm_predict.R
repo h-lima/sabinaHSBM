@@ -17,6 +17,10 @@
 #' A \code{logical} value indicating whether to save group assignments (blocks) for nodes in the network during the prediction process.
 #' @param save_pickle (\emph{optional, default} \code{FALSE}) \cr
 #' A \code{logical} value indicating whether to save the model results as Python pickle files for each fold.
+#' @param save_plots (\emph{optional, default} \code{FALSE}) \cr
+#' A \code{logical} value indicating whether to save a hierarchical edge bundling plot for each fold. When \code{TRUE}, a figure is saved in the working directory as a visual representation of the inferred structure.
+#' @param n_cores (\emph{optional, default} \code{1}) \cr
+#' A \code{numeric} value indicating the number of CPU cores to use for parallel computation; use \code{parallel::detectCores()} to check the maximum available on your system.
 #'
 #' @return
 #' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
@@ -41,17 +45,22 @@
 #' @details
 #' - The \code{hsbm_input} parameter should be an object of class \code{hsbm.input}, which includes the input data, the cross-validation folds, and corresponding edge lists.
 #' - The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
-#' - The \code{method} parameter determines the approach for link prediction:
+#' - The \code{method} parameter determines the link prediction approach:
 #'   \describe{
 #'     \item{\code{"binary_classifier"}}{
-#'       Focuses on predicting conditional probabilities for currently unobserved/undocumented edges/links (\code{0s}). This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks. Use this method when your primary objective is to predict which unobserved/undocumented interactions/links might be real, based on existing observed data.  #@@@JMB probs condiconales
+#'       Computes conditional probabilities for each unobserved/undocumented edges/links (\code{0s}), given the inferred block structure. 
+#'       The probability is computed as: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} P(A_{ij} = 1 \mid b^{(k)})}, where \eqn{b^{(k)}} is the block partition sampled at iteration \eqn{k}.
+#'       This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks.
 #'     }
 #'     \item{\code{"full_reconstruction"}}{
-#'       Estimates marginal probabilities for all links (\code{0s} and \code{1s}), resulting in a fully reconstructed probability matrix. This method not only identifies missing links (unobserved/undocumented edges/links likely to exist) but also detects spurious links (observed/documented edges/links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity. ##@@@JMB probs marginales
+#'       Estimates the marginal posterior probabilities for each links (\code{0s} and \code{1s}), by averaging over sampled network configurations. 
+#'       The probability is given by: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} A_{ij}^{(k)}}, where \eqn{A_{ij}^{(k)} = 1} if the link is present in sample \eqn{k}, and \eqn{0} otherwise.
+#'       This method allows identifying both missing links (unobserved/undocumented edges/links likely to exist) and potentially spurious links (observed/documented edges/links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
 #'     }
 #'   }
 #' - The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
 #' - The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index. The pickle object is a dictionary with 5 elements. enum..... #@@@
+#' - If \code{save_plots = TRUE}, hierarchical edge bundling plots are saved in the working directory as PDF files named \code{hsbm_plot_foldi.pdf}, where \code{i} refers to the fold index.
 #'
 #' @seealso \code{\link{hsbm.input}}
 #'
