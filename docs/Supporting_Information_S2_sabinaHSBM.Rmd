@@ -21,8 +21,8 @@ We use the example dataset `dat2` included in the package to show key functional
 There are **two ways** to use the package:
 
 - **UNIX users (native installation)** can run *sabinaHSBM* locally **if** their system includes:
-   - R (version ≥ 4.0.4) with all required R packages (listed below)
-   - Python ≥ 3.9.2 with the `graph-tool` library (version ≥ 2.45)
+   - R (version $\leq$ 4.0.4) with all required R packages (listed below)
+   - Python $\leq$ 3.9.2 with the `graph-tool` library (version $\leq$ 2.45)
 
 - **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
   - All R and Python dependencies

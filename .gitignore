@@ -3,6 +3,7 @@ notes*
 docs/*docx
 docs/carnivore*
 docs/*cache
+docs/*files
 docs/Supplementary_material*
 !docs/Supplementary_material.pdf
 docs/ref.bib
