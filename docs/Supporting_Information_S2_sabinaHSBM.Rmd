@@ -3,7 +3,8 @@ title: "Using sabinaHSBM for link prediction and network reconstruction using Hi
 subtitle: "Example on how to use it to identify missing and spurious links with the full_reconstruction method (with parallelized computation)"
 output:
   word_document: default
-  pdf_document: default
+  pdf_document:
+    latex_engine: xelatex
   html_document:
     toc: true
     toc_float: true
@@ -20,8 +21,8 @@ We use the example dataset `dat2` included in the package to show key functional
 There are **two ways** to use the package:
 
 - **UNIX users (native installation)** can run *sabinaHSBM* locally **if** their system includes:
-   - R (version ≥ 4.3.3) with all required R packages (listed below)
-   - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
+   - R (version ≥ 4.0.4) with all required R packages (listed below)
+   - Python ≥ 3.9.2 with the `graph-tool` library (version ≥ 2.45)
 
 - **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
   - All R and Python dependencies
@@ -36,7 +37,7 @@ The following instructions are **only required for UNIX users** running *sabinaH
 
 These users must ensure their system includes the required dependencies before proceeding.
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r setup, message=FALSE, warning=FALSE, eval = FALSE}
 # If the package is not installed, install it from GitHub
  if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
    library(remotes)
@@ -44,13 +45,12 @@ These users must ensure their system includes the required dependencies before p
  }
 
 # Load the sabinaHSBM package
-#library(sabinaHSBM)
-devtools::load_all("/home/project_hsbm/graph_tool/sabinaHSBM/")
+library(sabinaHSBM)
 ```
 
 Install required R packages if not already available:
 
-```{r install_depend, message=FALSE, warning=FALSE}
+```{r install_depend, message=FALSE, warning=FALSE, eval = FALSE}
 list.of.packages <- c(
   "dplyr",
   "parallel",
@@ -74,10 +74,15 @@ for (package in list.of.packages) {
 
 If you're using the **Docker image** (see *Supporting Information S3*) **you do not need to install any packages**, simply start the container and load the package in your R session with:
 
-```{r docker, message=FALSE, warning=FALSE}
-#library(sabinaHSBM)
+```{r docker, message=FALSE, warning=FALSE, eval = FALSE}
+library(sabinaHSBM)
 ```
 
+```{r load_env, include = FALSE}
+library(dplyr)
+library(kableExtra)
+devtools::load_all(".")
+```
 
 ```{r start_time}
 # Record starting time (optional)
@@ -175,18 +180,17 @@ summary(myInput)
 # Predict link probabilities
 
 The `hsbm.predict` function applies the HSBM to predict probabilities of all links (observed and unobserved links). This step is crucial to identify spurious and missing links within the data, which are often present in incomplete or error-prone networks. The function works directly with the processed input created by `hsbm.input`.
-This step can be computationally intensive when working with large datasets or numerous folds. To improve performance, we use parallelized computation, distributing tasks across multiple cores.  
+This step can be computationally intensive when working with large datasets or numerous folds. To improve performance, we use parallelized computation, distributing tasks across multiple cores.
 
-```{r paarallel-prediction}
+```{r parallel-prediction}
 # Define the number of cores to use
-#nCores <- detectCores() - 1
 nCores <- 2
 
 # Generate HSBM predictions
 myPred <- hsbm.predict(
   myInput,             # Input data processed by hsbm.input()
-  iter = 1000,        # Number of iterations
-  wait= 10000,         # Number of iterations for MCMC equilibration
+  iter = 10000,        # Number of iterations
+  wait= 1000,         # Number of iterations for MCMC equilibration
   method = "full_reconstruction", # Method for link prediction
   save_blocks = TRUE,  # Save group assignments 
   save_pickle = FALSE, # Save results as pickle files,
@@ -220,23 +224,32 @@ print(head(groups_fold1))
 
 Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1) nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4) these groups (or communities) are progressively aggregated, revealing broader patterns and relationships or communities.
 
-Next, we will explore how the model assigns specific probabilities to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0, as the model should recognize them as false links (false negatives).
+Next, we will explore how the model assigns specific probabilities to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0 (unless it could be a missing link), as the model should recognize them as false links (false negatives).
 
 ```{r view-spur}
+fold_res <- list()
 for(i in 1:5){
-    cat("Fold ", i, "\n")
-    cat("\tDocumented\n\t")
-    print(dplyr::filter(myPred$probs[[i]], edge_type == "documented", p < 0.95))
-    cat("\tHeld out\n\t")
-    print(dplyr::filter(myPred$probs[[i]], edge_type == "held_out", p < 0.95))
-    cat("\tSpurious edge\n\t")
-    print(dplyr::filter(myPred$probs[[i]], edge_type == "spurious_edge", p < 0.95))
+    doc <- dplyr::filter(myPred$probs[[i]], edge_type == "documented")
+    held <- dplyr::filter(myPred$probs[[i]], edge_type == "held_out")
+    spur <- dplyr::filter(myPred$probs[[i]], edge_type == "spurious_edge")
+    fold_data <- c(i,
+                   nrow(doc), sum(doc$p < 0.95),
+                   nrow(held), sum(held$p < 0.95),
+                   nrow(spur), sum(spur$p < 0.95))
+    fold_res[[i]] <- fold_data
 }
+
+res_summary <- do.call(rbind, fold_res)
+colnames(res_summary) <- c("Fold", "Nr doc", "Doc p <0.95",
+                           "Nr held", "Held p < 0.95",
+                           "Nr spur", "Spur p < 0.95")
+
+kable(res_summary)
 ```
 
 # Network Reconstruction
 
-The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold.  
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold.
 
 ```{r network-reconstruction}
 # Network reconstruction

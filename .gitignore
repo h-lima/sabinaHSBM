@@ -1,5 +1,8 @@
 testing/*
-.Rbuildignore
 notes*
-rmd/*
-!rmd/supp_mat.pdf
+docs/*docx
+docs/carnivore*
+docs/*cache
+docs/Supplementary_material*
+!docs/Supplementary_material.pdf
+docs/ref.bib

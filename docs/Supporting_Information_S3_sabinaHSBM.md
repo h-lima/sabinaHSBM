@@ -26,9 +26,9 @@ To download the pre-configured image from Docker Hub, run:
    
 3. **Create and start the container**
 
-The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. The `-p` flags are optional and map ports `8787`, `8880` and `6006` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server, respectively, if needed. The `-v` flag is also optional (but recommended) and establish a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount with `-v my_project:/home/my_project`. Unlike bind mounts, which link directly to local directory, volume are stored within a Docker filesystem.
+The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. The `-p` flags are optional and map ports `8787`, `8880` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server, respectively, if needed. The `-v` flag is also optional (but recommended) and establishes a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount. Unlike bind mounts, which link directly to local directory, volume are stored within a Docker filesystem.
    ```bash
-   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -p 6006:6006 -v "local/path/to/your/project:/home/my_project" sabinahsbm bash 
+   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -v "local/path/to/your/project:/home/my_project" sabinahsbm bash 
    ```
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
 
@@ -44,11 +44,12 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
 
   RStudio Server is already installed in the image.
   
-  Create a user and password (This step is only needed the first time) (replace `yourname` and `yourpassword` with your credentials):
+  A default user was created with username `test` and password `sabinahsbm`. But we recommend you to set your own.
+  Create a user and password (This step is only needed the first time) (replace `yourname` with your desired username):
 
      ```bash
      useradd -m yourname
-     echo "yourname:yourpassword" | chpasswd
+     passwd yourname # you will be prompted to set a password
      ```
   Then launch RStudio Server:
      ```bash

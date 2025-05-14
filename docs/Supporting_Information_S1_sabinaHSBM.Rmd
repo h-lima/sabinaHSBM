@@ -3,7 +3,8 @@ title: "Using sabinaHSBM for link prediction and network reconstruction using Hi
 subtitle: "Example on how to use it to identify missing links with the binary_classifier method"
 output:
   word_document: default
-  pdf_document: default
+  pdf_document: 
+    latex_engine: xelatex
   html_document:
     toc: true
     toc_float: true
@@ -18,8 +19,8 @@ The *sabinaHSBM* package provides tools for link prediction and network reconstr
 There are **two ways** to use the package:
 
 - **UNIX users (native installation)** can run *sabinaHSBM* locally **if** their system includes:
-   - R (version ≥ 4.3.3) with all required R packages (listed below)
-   - Python ≥ 3.12 with the `graph-tool` library (version 2.59)
+   - R (version ≥ 4.0.4) with all required R packages (listed below)
+   - Python ≥ 3.9.2 with the `graph-tool` library (version ≥ 2.45)
 
 - **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
   - All R and Python dependencies
@@ -34,7 +35,7 @@ The following instructions are **only required for UNIX users** running *sabinaH
 
 These users must ensure their system includes the required dependencies before proceeding.
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r setup, message=FALSE, warning=FALSE, eval = FALSE}
 # If the package is not installed, install it from GitHub
  if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
    library(remotes)
@@ -47,7 +48,7 @@ library(sabinaHSBM)
 
 Install required R packages if not already available:
 
-```{r install_depend, message=FALSE, warning=FALSE}
+```{r install_depend, message=FALSE, warning=FALSE, eval = FALSE}
 list.of.packages <- c(
   "dplyr",
   "parallel",
@@ -71,10 +72,15 @@ for (package in list.of.packages) {
 
 If you're using the **Docker image** (see *Supporting Information S3*) **you do not need to install any packages**, simply start the container and load the package in your R session with:
 
-```{r docker, message=FALSE, warning=FALSE}
-#library(sabinaHSBM)
+```{r docker, message=FALSE, warning=FALSE, eval = FALSE}
+library(sabinaHSBM)
 ```
 
+```{r load_env, include = FALSE}
+library(dplyr)
+library(kableExtra)
+devtools::load_all(".")
+```
 
 ```{r start_time}
 # Record starting time (optional)
@@ -159,7 +165,7 @@ Hierarchical group assignments provide insight into how nodes (e.g., hosts) are 
 
 # Network Reconstruction
 
-The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transform to binary values using a user-specified threshold.  
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold.
 
 ```{r network-reconstruction}
 # Network reconstruction
@@ -180,7 +186,7 @@ summary(myReconst)
 
 The summary provides the number of missing links, as well as key evaluation metrics, such as the retained link recovery rate (RLRR).
 
-```{r tiop-links}
+```{r top-links}
 # View the top potential missing links
 top_links_df <- top_links(myReconst, 
                           n = 10, 
