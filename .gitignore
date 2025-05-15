@@ -1,9 +1,11 @@
 testing/*
 notes*
 docs/*docx
+docs/*tex
 docs/carnivore*
 docs/*cache
 docs/*files
 docs/Supplementary_material*
 !docs/Supplementary_material.pdf
 docs/ref.bib
+*lock*

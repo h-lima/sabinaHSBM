@@ -10,6 +10,7 @@ hsbm.predict(
   method = "binary_classifier",
   iter = 10000,
   wait = 1000,
+  rnd_seed = NULL,
   verbose = TRUE,
   save_blocks = TRUE,
   save_pickle = FALSE,
@@ -29,6 +30,8 @@ A \code{character} string specifying the method used for the HSBM prediction. Op
 \item{iter}{A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.}
 
 \item{wait}{A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.}
+
+\item{rnd_seed}{A \code{numeric} value specifying a seed for the random number generator in graph-tool and numpy python modules. Default is \code{NULL} which does not set a random seed.}
 
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to print progress messages during prediction.}

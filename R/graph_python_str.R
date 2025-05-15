@@ -84,10 +84,15 @@ hsbm_link_prediction <- function(){
 
 return('
 def hsbm_predict(g, elist, wait = 1000,
-                 niter = 10, force_niter = 10000,
+                 niter = 10, force_niter = 10000, rnd_seed = None,
                  n_default = 1, x_default = 0, alpha = 1, beta = 1,
                  all_missing = None,
                  method = "binary_classifier", save_pickle = False):
+
+    if rnd_seed:
+        rnd_seed = int(rnd_seed)
+        np.random.seed(rnd_seed)
+        seed_rng(rnd_seed)
 
     N = g.num_vertices()
     E = g.num_edges()

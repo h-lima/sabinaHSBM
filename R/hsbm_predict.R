@@ -11,6 +11,7 @@
 #' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
 #' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
 #' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.
+#' @param rnd_seed A \code{numeric} value specifying a seed for the random number generator in graph-tool and numpy python modules. Default is \code{NULL} which does not set a random seed.
 #' @param verbose (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to print progress messages during prediction.
 #' @param save_blocks (\emph{optional, default} \code{TRUE}) \cr
@@ -92,6 +93,7 @@
 hsbm.predict <- function(hsbm_input, elist_i = NULL, 
                          method = "binary_classifier",
                          iter = 10000, wait = 1000,
+                         rnd_seed = NULL,
                          verbose = TRUE, 
                          save_blocks = TRUE,
                          save_pickle = FALSE,
@@ -132,6 +134,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
                                               method = method,
                                               iter = iter,
                                               wait = wait,
+                                              rnd_seed = rnd_seed,
                                               save_pickle = save_pickle,
                                               save_blocks = save_blocks,
                                               save_plots = save_plots,
@@ -172,7 +175,7 @@ merge_hsbm.out <- function(out_lst){
 }
 
 
-run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
+run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait, rnd_seed,
                      save_pickle, save_blocks, save_plots, verbose, i){
 
     reticulate::py_run_string(import_modules())
@@ -187,6 +190,10 @@ run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
 
     options("reticulate.engine.environment" = environment())
 
+    if(is.null(rnd_seed)){
+        rnd_seed <- reticulate::py_none()
+    }
+
     if(verbose){
         cat("Computing predictions for fold ", i, "\n")
     }
@@ -197,7 +204,8 @@ run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait,
     reticulate::py_run_string(stringr::str_glue("res_dict = hsbm_predict(g, elist, ",
                                                 "method = r.method, ",
                                                 "force_niter = r.iter, ",
-                                                "wait = r.wait)"))
+                                                "wait = r.wait, ",
+                                                "rnd_seed = r.rnd_seed)"))
     reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
     if(save_pickle){
         #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
