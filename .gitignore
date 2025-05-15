@@ -7,5 +7,6 @@ docs/*cache
 docs/*files
 docs/Supplementary_material*
 !docs/Supplementary_material.pdf
+!docs/Supplementary_data_1.csv
 docs/ref.bib
 *lock*
