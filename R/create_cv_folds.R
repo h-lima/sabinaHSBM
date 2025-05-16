@@ -1,14 +1,14 @@
 #' @export
-create_cv_folds <-function(Z, n = 10, min_per_col = 2, min_per_row = 2,
+create_cv_folds <-function(com, n = 10, min_per_col = 2, min_per_row = 2,
                            get_zeros = FALSE){
 
-    if(!(is.matrix(Z))) stop("Z argument must be of type matrix")
-    if(max(range(Z))>1) Z[Z>0]<-1
-    pairs = which(Z==1, arr.ind=T)
+    if(!(is.matrix(com))) stop("com argument must be of type matrix")
+    if(max(range(com))>1) com[com>0]<-1
+    pairs = which(com==1, arr.ind=T)
     colnames(pairs)<-c('row', 'col')
 
-    colm = colSums(Z)
-    rowm <- rowSums(Z)
+    colm = colSums(com)
+    rowm <- rowSums(com)
 
     # Exclude pairs that cannot be removed
     pairs_dim <- 'col'
@@ -27,7 +27,7 @@ create_cv_folds <-function(Z, n = 10, min_per_col = 2, min_per_row = 2,
     if(nrow(pairs) %% size!=0) gr[n] =  gr[n] + nrow(pairs) %% size
 
     # Distribute pairs over folds
-    folds_lst <- create_folds(Z, pairs, gr, min_per_col, min_per_row)
+    folds_lst <- create_folds(com, pairs, gr, min_per_col, min_per_row)
 
     # Correct possible cases when distribution leads to zero dim sums
     held_res <- NULL
@@ -68,7 +68,7 @@ create_cv_folds <-function(Z, n = 10, min_per_col = 2, min_per_row = 2,
 
     held_pairs <- folds_lst$held_pairs
 
-    print(sprintf("Actual cross-validation rate is %0.3f" , table(held_pairs[,'gr'])/sum(1*(Z>0))))
+    print(sprintf("Actual cross-validation rate is %0.3f" , table(held_pairs[,'gr'])/sum(1*(com>0))))
 
     return(held_pairs[order(held_pairs[,'gr']),])
 
@@ -120,16 +120,16 @@ has_0_sum_folds <- function(com, held_pairs, n, pairs_dim){
     test <- logical(n)
     if(pairs_dim == "row") sum_func <- rowSums else sum_func <- colSums
     for(i in 1:n){
-        Z_test <- com
+        com_test <- com
         row_col <- held_pairs[held_pairs[,3] == i, c(1,2)]
-        Z_test[row_col] <- 0
-        test[i] <- any(sum_func(Z_test) == 0)
+        com_test[row_col] <- 0
+        test[i] <- any(sum_func(com_test) == 0)
     }
 
     return(test)
 }
 
-create_folds <- function(Z, pairs, gr, min_per_col, min_per_row){
+create_folds <- function(com, pairs, gr, min_per_col, min_per_row){
     fold_sz <- gr
     n <- length(gr)
     pairs_sums <- get_pairs_sums(pairs)
@@ -169,22 +169,22 @@ create_folds <- function(Z, pairs, gr, min_per_col, min_per_row){
     last_fold_i <- (nrow(held_pairs) - fold_sz[n] + 1):nrow(held_pairs)
     held_pairs[last_fold_i, ] <- cbind(pairs_sums[, c(1, 2)], n)
 
-    return(list(com = Z, held_pairs = held_pairs, pairs_sums = pairs_sums))
+    return(list(com = com, held_pairs = held_pairs, pairs_sums = pairs_sums))
 }
 
 
 # Get zero sum dimensions and distribute to other folds
 distribute_zero_sum_folds <- function(com, held_pairs, pairs_sums, pairs_dim,
-                                      min_per_col, min_per_row, fold_i, n){
-    Z_test <- com
+                                      min_per_col, min_per_row, fold_i, n, debug = FALSE){
+    com_test <- com
     row_col <- held_pairs[held_pairs[,3] == fold_i, c(1,2)]
-    Z_test[row_col] <- 0
+    com_test[row_col] <- 0
     if(pairs_dim == "row") sum_func <- rowSums else sum_func <- colSums
-    if(all(sum_func(Z_test) != 0)){
+    if(all(sum_func(com_test) != 0) & debug){
         warning("Nothing to do in distribute_zero_sum_folds. Return original held_pairs.")
         return(held_pairs)
     }
-    dim_zero <- which(sum_func(Z_test) == 0)
+    dim_zero <- which(sum_func(com_test) == 0)
     for(dim_j in dim_zero){
         pairs_i <- pairs_sums[pairs_sums[, pairs_dim] == dim_j, , drop = FALSE]
         pairs_rsums <- pairs_i[, 3]
@@ -222,72 +222,3 @@ distribute_zero_sum_folds <- function(com, held_pairs, pairs_sums, pairs_dim,
 
 }
 
-#' Code adapted from HPprediction package
-#' @export
-create_cv_folds_old <-function(Z, n= 10, min_per_col = 2, min_per_row = 2,
-                           get_zeros = FALSE){
-
-    # TODO error number columns must match with bat data
-
-    if(!(is.matrix(Z))) stop("Z argument must be of type matrix")
-    ## n-fold cross validation
-    if(max(range(Z))>1) Z[Z>0]<-1
-    pairs = which(Z==1, arr.ind=T)
-    colnames(pairs)<-c('row', 'col')
-
-    colm = colSums(Z)
-    min_rows <- which(rowSums(Z) < min_per_row)
-    # Discount min_rows elements
-    for(i in min_rows){
-        pairs <- pairs[-which(pairs[, 'row'] == i), ]
-        colm[which(Z[i, ] == 1)] <- colm[which(Z[i, ] == 1)] - 1
-    }
-    # Place zero to ignore columns
-    for(i in 1:length(colm)){
-        if(colm[i] < min_per_col){
-            colm[i] <- 0
-        }
-    }
-    size = floor(sum(colm)/n)
-    gr = rep(size, n)
-    if(sum(colm) %% size!=0) gr[n] =  gr[n] + sum(colm) %% size
-
-    group_colm = rep(1:n,times = gr)[sample.int(sum(colm), sum(colm))]
-    pair_list = numeric(sum(colm))
-    for(i in 1:sum(colm)){
-        a = which(colm>0)
-        b = a[sample.int(length(a),1)]
-        colm[b] = colm[b]-1
-        pair_list[i]<-b
-    }
-    pair_list= tapply(pair_list, group_colm,identity)
-
-    gr_list= list()
-    bank= c()
-    for(i in 1:n){
-        a= table(pair_list[[i]])
-        gr_rows = unlist(sapply(1:length(a), function(r){
-            b = which(pairs[,'col']== as.numeric(names(a[r])))
-            b =setdiff(b, bank)
-            b[sample.int(length(b), a[r])]
-        }))
-        bank = c(bank, gr_rows)
-        gr_list[[i]]<-cbind(gr_rows, i)
-    }
-
-    aux = do.call('rbind', gr_list)
-    held_pairs = cbind(pairs[aux[,1], ], gr = aux[,2])
-
-    if(get_zeros){
-        pairs_0 = which(Z==0, arr.ind=T)
-        held_zeros <- cbind(pairs_0[sample.int(nrow(pairs_0), sum(gr)), ], 
-                            gr = rep(1:10, times = gr), value = 0)
-        held_pairs <- cbind(held_pairs, value = 1)
-        held_pairs <- rbind(held_pairs, held_zeros)
-    }
-
-    print(sprintf("Actual cross-validation rate is %0.3f" , table(held_pairs[,'gr'])/sum(1*(Z>0))))
-
-    return(held_pairs[order(held_pairs[,'gr']),])
-
-}

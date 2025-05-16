@@ -5,10 +5,10 @@
 #' @description This function prepares the input data necessary for running the \bold{Hierarchical Stochastic Block Model (HSBM)} analysis by creating cross-validation folds and corresponding edgelists.
 #'
 #' @param data A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/no link.
-#' @param folds (\emph{optional, default} \code{NULL}) \cr
-#' An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.
 #' @param n_folds (\emph{optional, default} \code{5}) \cr
 #' A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified, held-out links will not be computed. This is not recommended, as the main objective of the package is to predict missing links through cross-validation.
+#' @param folds (\emph{optional, default} \code{NULL}) \cr
+#' An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.
 #' @param min_per_col A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.
 #' @param min_per_row A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
 #' #@@@JMB pendiente param add_spurious?? y no_heldout
@@ -54,7 +54,7 @@
 #' plot_interaction_matrix(myInput$data, order_mat = FALSE)
 #'
 #' @export
-hsbm.input <- function(data, folds = NULL, n_folds = 5, 
+hsbm.input <- function(data, n_folds = 5, folds = NULL,
                        min_per_col = 2, min_per_row = 2, 
                        add_spurious = FALSE, no_heldout = FALSE){
 
@@ -76,7 +76,7 @@ hsbm.input <- function(data, folds = NULL, n_folds = 5,
     }
 
     if(is.null(folds)){
-        folds <- create_cv_folds(Z = data, n = n_folds,
+        folds <- create_cv_folds(com = data, n = n_folds,
                                  min_per_col = min_per_col, 
                                  min_per_row = min_per_row)
     }
