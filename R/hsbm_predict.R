@@ -101,10 +101,10 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
                          n_cores = 1){
 
     if(!inherits(hsbm_input, "hsbm.input")){
-        stop("hsbm_input must be an object of hsbm.input class. Consider running hsbm.input() function.")
+        stop("Error: hsbm_input must be an object of hsbm.input class. Consider running hsbm.input() function.")
     }
     if(!(method %in% c("binary_classifier", "full_reconstruction"))){
-        stop("Unknown method. Method should be binary_classifier or",
+        stop("Error: Unknown method. Method should be binary_classifier or",
              " full_reconstruction")
     }
 

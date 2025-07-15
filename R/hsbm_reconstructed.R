@@ -127,18 +127,18 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                                ensemble_threshold = NULL){
 
     if(!inherits(hsbm_out, "hsbm.predict")) {
-        stop("hsbm_out must be an object of hsbm.predict class. Consider running hsbm.predict() function.")
+        stop("Error: hsbm_out must be an object of hsbm.predict class. Consider running hsbm.predict() function.")
     }
 
     if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
-        stop("\nInvalid value for `new_matrix_method`.",
+        stop("\nError: Invalid value for `new_matrix_method`.",
              " It must be 'ensemble_binary' or 'average_thresholded'.\n")
     }
     if(na_treatment != "na_to_0" & hsbm_out$method == "binary_classifier"){
-        stop("\n`na_treatment` cannot be set for `binary_classifier` method since there are no NAs.\n")
+        stop("\nError: `na_treatment` cannot be set for `binary_classifier` method since there are no NAs.\n")
     }
     if(rm_documented & hsbm_out$method == "full_reconstruction") {
-        warning("\n`rm_documented` was set to TRUE for the `full_reconstruction` method. ",
+        warning("\`rm_documented` was set to TRUE for the `full_reconstruction` method. ",
                 "Documented links (original 1s) were removed for evaluation. ",
                 "Ensure this setting was appropriate for your analysis.\n")
     }
@@ -214,7 +214,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
 get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
 
     if(!inherits(hsbm_output, "hsbm.predict")){
-        stop("hsbm_output argument must be an hsbm.predict object.")
+        stop("Error: hsbm_output argument must be an hsbm.predict object.")
     }
 
     com <- hsbm_output$data
@@ -239,7 +239,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     }else if(na_treatment == "keep_na"){
         na_rm <- FALSE
     }else{
-        stop("Unkown na_treatment argument.")
+        stop("Error: Unkown na_treatment argument.")
     }
     folds_res_all$p <- rowMeans(folds_res_all[, p_cols], na.rm = na_rm)
     folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, function(x) sd(x, na.rm = na_rm))
@@ -293,7 +293,8 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
     ps <- df$p
     com_train <- com
     com_i <- com
-    row_col <- as.matrix(dplyr::filter(as.data.frame(folds), gr == fold_id)[, c('row', 'col')])
+    cond <- folds[, 3] == fold_id
+    row_col <- as.matrix(dplyr::filter(as.data.frame(folds), cond)[, c('row', 'col')])
     com_train[row_col] <- 0
     com_fit <- com_train
     com_fit[cbind(rows, cols)] <- ps
@@ -474,10 +475,10 @@ sel_thresh<- function(threshold, perf, perf2, f) {
         if (threshold >= 0 && threshold <= 1) {
           thresh <- threshold
         } else {
-          stop("Threshold must be a numeric value between 0 and 1")
+          stop("Error: Threshold must be a numeric value between 0 and 1")
         }
   } else {
-    stop("Invalid threshold option")
+    stop("Error: Invalid threshold option")
   }
   return(thresh)
 }

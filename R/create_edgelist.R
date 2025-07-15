@@ -17,7 +17,7 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
 
     adj_mat_train <- adj_mat
     if(!is.null(fold_id)){
-        folds <- as.matrix(folds[which(folds[, 'gr'] == fold_id), ])
+        folds <- as.matrix(folds[which(folds[, 3] == fold_id), ])
         adj_mat_train <- adj_mat
         adj_mat_train[folds[, c('row', 'col')]] <- 0
     }else if(!is.null(folds)){
