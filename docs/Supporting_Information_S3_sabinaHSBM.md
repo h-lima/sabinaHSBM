@@ -98,7 +98,7 @@ Here’s an example to get started:
    # Generate link predictions
    myPred <- hsbm.predict(myInput,
                           iter = 1000,
-                          method = "binary_classifier"
+                          method = "conditional_missing"
    )
 
    # Reconstruct the network and evaluate
