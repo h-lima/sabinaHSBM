@@ -256,7 +256,7 @@ myReconst <- hsbm.reconstructed(
   rm_documented=FALSE,    # Remove documented links during validation
   na_treatment = "ignore_na", # Handle NA values in predictions
   threshold = 0.5,            # Binarization threshold
-  new_matrix_method = "average_thresholded", # Combine fold predictions
+  consistency_matrix = "average_thresholded", # Combine fold predictions
   spurious_edges = TRUE,
 )
 ```
@@ -269,11 +269,11 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 ```{r summary-reconstruction, cache = FALSE}
-# View the reconstruction summary and evaluation metrics
+# View the reconstruction summary and evaluation metrics0
 summary(myReconst)
 ```
 
-The summary provides the number of spurious and missing links, as well as key evaluation metrics, such as the retained link recovery rate (RLRR).
+The summary provides the number of spurious and missing links, as well as key evaluation metrics, such as the recovery link ratio (RLR).
 
 Let's now examine the top 10 predicted links that are most likely to be spurious (false positives) by visualizing the probabilities of "documented" links.
 
@@ -287,7 +287,7 @@ print(top_links_spurious)
 
 This example was tailored to find spurious links and the model didn't identify any missing links at the 
 threshold of 0.5 (but it did correctly identify 
-`r round(summary(myReconst)[["Evaluation Metrics"]]$mean_RLRR, 2) * 100`% of the held-out links as missing). 
+`r round(summary(myReconst)[["Evaluation Metrics"]]$mean_RLR, 2) * 100`% of the held-out links as missing). 
 Nevertheless, we show how we can rank the most likely missing links according to the model.
 
 ```{r top-links_missing, cache =  FALSE}
