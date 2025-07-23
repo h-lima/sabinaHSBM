@@ -40,7 +40,7 @@ library(remotes)
 remotes::install_github("h-lima/sabinaHSBM")
 ```
 
-**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S3_sabinaHSBM.md).
+**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
 
 
 ### Citing *sabinaHSBM* package
@@ -102,7 +102,7 @@ Use `hsbm.predict` function to predict the marginal posterior probabilities of e
 ```r
 myPred <- hsbm.predict(
     myInput,                # Input data processed by hsbm.input()
-    method = "binary_classifier",  # Choose method for link prediction(*)
+    method = "conditional_missing",  # Choose method for link prediction(*)
     wait=1000,              # Number of iterations needed for MCMC equilibration
     iter = 1000             # Number of iterations for the HSBM model
 )
@@ -110,8 +110,8 @@ myPred <- hsbm.predict(
 
 
 (*)`hsbm.predict` offers two methods for link prediction:
-   - **`"binary_classifier"`**: Focuses on predicting conditional probabilities that a link exists given the inferred block structure. It is applied for currently **unobserved links** (`0s`). Use this method if you want to obtain probabilities for all **missing links** (unobserved links likely to exist) in partially incomplete networks.
-   - **`"full_reconstruction"`**: Estimates the marginal posterior probabilities that a link exists. It is applied for **all links** (both `0s` and `1s`), resulting in a fully reconstructed probability matrix. This method can identify both **missing links** (unobserved links likely to exist) and **spurious links** (observed links that might be erroneous) in incomplete or error-prone networks.
+   - **`"conditional_missing"`**: Focuses on predicting conditional probabilities that a link exists given the inferred block structure. It is applied for currently **unobserved links** (`0s`). Use this method if you want to obtain probabilities for all **missing links** (unobserved links likely to exist) in partially incomplete networks.
+   - **`"marginal_all"`**: Estimates the marginal posterior probabilities that a link exists. It is applied for **all links** (both `0s` and `1s`), resulting in a fully reconstructed probability matrix. This method can identify both **missing links** (unobserved links likely to exist) and **spurious links** (observed links that might be erroneous) in incomplete or error-prone networks.
 
 
 ### 3. Reconstruct and validate your network <a name="network_reconstruction">  
@@ -124,7 +124,7 @@ myReconst <- hsbm.reconstructed(
     myPred,                # HSBM output object with predicted links
     rm_documented = TRUE,  # Remove documented links
     threshold = "prc_closest_topright", # Threshold method to binarize continuous predictions
-    new_matrix_method = "average_thresholded" # Method for creating the reconstructed binary matrix
+    consistency_matrix = "average_thresholded" # Method for creating the reconstructed binary matrix
 )
 
 # Evaluate model performance
@@ -149,8 +149,8 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 ## Tutorials
-- Tutorial on using `binary_classifier` method to identify missing links. [View PDF](docs/Supporting_Information_S1_sabinaHSBM.pdf)
-- Tutorial on `full_reconstruction` method to identify both missing and spurious links. [View PDF](docs/Supporting_Information_S2_sabinaHSBM.pdf)
+- Tutorial on using `conditional_missing` method to identify missing links. [View PDF](docs/Supporting_Information_S2_sabinaHSBM.pdf)
+- Tutorial on `marginal_all` method to identify both missing and spurious links. [View PDF](docs/Supporting_Information_S3_sabinaHSBM.pdf)
 
 
 ## Contributions
