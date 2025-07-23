@@ -170,7 +170,7 @@ myReconst <- hsbm.reconstructed(
   myPred,                # Predictions processed by hsbm.predict
   rm_documented = TRUE,  # Use of documented entries during validation
   threshold = "prc_closest_topright", # Binarization threshold
-  new_matrix_method = "average_thresholded" # Combine fold predictions
+  consistency_matrix = "average_thresholded" # Combine fold predictions
 )
 ```
 
@@ -181,7 +181,7 @@ This output includes the averaged probability matrix, the final reconstructed ma
 summary(myReconst)
 ```
 
-The summary provides the number of missing links, as well as key evaluation metrics, such as the retained link recovery rate (RLRR).
+The summary provides the number of missing links, as well as key evaluation metrics, such as the recovery link ratio (RLR).
 
 ```{r top-links}
 # View the top potential missing links
@@ -199,7 +199,7 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 
-This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. By applying the `binary_classifier` method, we showcased how missing links can be effectively identified and addressed in incomplete networks.
+This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. By applying the `conditional_missing` method, we showcased how missing links can be effectively identified and addressed in incomplete networks.
 
 
 # Computing characteristics
