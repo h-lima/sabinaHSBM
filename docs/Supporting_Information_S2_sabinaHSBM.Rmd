@@ -1,6 +1,6 @@
 ---
-title: "Using sabinaHSBM for link prediction and network reconstruction using Hierarchical Stochastic Block Models"
-subtitle: "Example on how to use it to identify missing and spurious links with the full_reconstruction method (with parallelized computation)"
+title: "Using sabinaHSBM for link prediction and network reconstruction with "marginal_all" method
+subtitle: ""
 output:
   word_document: default
   pdf_document:
@@ -12,40 +12,41 @@ output:
 ---
 
 
-The *sabinaHSBM* package provides tools for link prediction and network reconstruction using hierarchical stochastic block models (HSBM). This document demonstrates a simple use for the `full_reconstruction` method, showcasing how it handles missing and spurious links in an incomplete and error-prone network. To enhance computational efficiency during the prediction links steps we use parallelized computation.
+This guide shows how to use document demonstrates a simple use case based on the "marginal_all" method in *sabinaHSBM* to detect both missing (false negatives) and/or spurious (false positives) links in an incomplete and/or error-prone network.
+
+We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction.
+
 
 We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
 
 
-**Important note**:
+# Requirements and installation
 
 There are **two ways** to use the package:
 
-- **UNIX users (native installation)** can run *sabinaHSBM* locally **if** their system includes:
+**• Option A: Docker (recommended)**
+**Non-native UNIX users** or those who prefer to avoid manual dependency installation can use the provided **ready-to-use Docker image** (includes R, Python, all dependencies, and *sabinaHSBM* pre-installed (see Supporting Information S1 for Docker container setup).
+
+Once the container is running, simply load the package in your R session with:
+
+```{r docker, message=FALSE, warning=FALSE, eval = FALSE}
+library(sabinaHSBM)
+```
+
+**• Option B: Native UNIX installation**
+
+**Native UNIX users** can run *sabinaHSBM* locally **if** their system includes:
    - R (version $\leq$ 4.0.4) with all required R packages (listed below)
-   - Python $\leq$ 3.9.2 with the `graph-tool` library (version $\leq$ 2.45)
-
-- **All other users**, or those who prefer to avoid manual setup, can use the **ready-to-use Docker image**, which includes everything needed:
-  - All R and Python dependencies
-  - The *sabinaHSBM* package pre-installed and ready to use
-
-
-# Loading Required Libraries
-
-**Note**: 
-
-The following instructions are **only required for UNIX users** running *sabinaHSBM natively* (outside Docker). 
-
-These users must ensure their system includes the required dependencies before proceeding.
+   - Python $\leq$ with the `graph-tool` library (version $\leq$ 2.45)
 
 ```{r setup, message=FALSE, warning=FALSE, eval = FALSE}
-# If the package is not installed, install it from GitHub
+# If the package is not installed, install sabinaHSBM from GitHub
  if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
    library(remotes)
    remotes::install_github("h-lima/sabinaHSBM")
  }
 
-# Load the sabinaHSBM package
+# Load sabinaHSBM
 library(sabinaHSBM)
 ```
 
@@ -73,12 +74,6 @@ for (package in list.of.packages) {
 }
 ```
 
-If you're using the **Docker image** (see *Supporting Information S3*) **you do not need to install any packages**, simply start the container and load the package in your R session with:
-
-```{r docker, message=FALSE, warning=FALSE, eval = FALSE}
-library(sabinaHSBM)
-```
-
 ```{r load_env, include = FALSE}
 library(dplyr)
 library(kableExtra)
@@ -91,7 +86,7 @@ start_time <- Sys.time()
 ```
 
 
-# Load data
+# Load example data
 
 The dataset `dat2` is a binary bipartite matrix representing a hypothetical species interactions network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites), and links (values of `1`, in red) represent interactions between them while `0` (in black) represent lack of an observed interaction. These links are distributed in a structured pattern, with no missing information, to focus the example on identifying spurious links.
 
@@ -106,7 +101,7 @@ dat<- dat2
 plot_interaction_matrix(adj_mat = dat, order_mat = FALSE)
 ```
 
-To simulate spurious links and address the `full_reconstruction` method, we randomly add a small number of false positives (`1`) to the matrix. This controlled modification allows us to demonstrate how the method identifies both spurious links (observed but potentially erroneous interactions, false positives) and missing links (unobserved but likely interactions, false negatives).
+To simulate spurious links and address the `marginal_all` method, we randomly add a small number of false positives (`1`) to the matrix. This controlled modification allows us to demonstrate how the method can identify both spurious links (observed but potentially erroneous interactions, false positives) and missing links (unobserved but likely interactions, false negatives).
 
 ```{r add-spurious-links, echo=TRUE}
 # Add spurious links artificially
@@ -134,9 +129,9 @@ plot_interaction_matrix(dat, order_mat = FALSE)
 ```
 
 
-# Preparing Input data for HSBM
+# Prepare input data for HSBM
 
-The `hsbm.input` function pre-processes the dataset, creating cross-validation folds and edge lists required for modeling. Here, we use 5-fold cross-validation and the `full_reconstruction` method.
+The `hsbm.input` function cleans the dataset and creates cross-validation folds by temporarily holding out subsets of observed links. Internally, it ensures that each fold masks a representative sample. In our example, it randomly splits all observed links into five similar-sized subsets (because here we use 5-fold cross-validation), holding out one subset per fold to test the model’s ability to recover missing links. 
 
 ```{r prepare-input}
 # Prepare input data
@@ -149,7 +144,7 @@ myInput <- hsbm.input(
 )
 ```
 
-For the purposes of this example, artificial spurious links are labeled with the "spurious_edge" tag using the code below. This labeling allows for tracking these links throughout the analysis and network reconstruction process, although in typical use, such labeling would not be necessary.
+For the purposes of this example, the spurious links artificially added are labeled with the "spurious_edge" tag using the code below. This labeling allows for tracking these links throughout the analysis and network reconstruction process, although in typical use, such labeling would not be necessary.
 
 ```{r add-spur}
 myInput$edgelists <- lapply(myInput$edgelists,
@@ -178,10 +173,9 @@ summary(myInput)
 ```
 
 
-# Predict link probabilities
+# Predict link probabilities with "marginal_all"
 
-The `hsbm.predict` function applies the HSBM to predict probabilities of all links (observed and unobserved links). This step is crucial to identify spurious and missing links within the data, which are often present in incomplete or error-prone networks. The function works directly with the processed input created by `hsbm.input`.
-This step can be computationally intensive when working with large datasets or numerous folds. To improve performance, we use parallelized computation, distributing tasks across multiple cores.
+The `hsbm.predict` function applies the HSBM to predict marginal posterior probabilities of all links— both observed (`1s`) and unobserved (`0s`)—so you can identify spurious and missing links in one step. The function works directly with the processed input created by `hsbm.input`.vComputation can be intensive, but parallelization across cores is suppoted.
 
 ```{r parallel-prediction}
 # Define the number of cores to use
@@ -202,6 +196,8 @@ myPred <- hsbm.predict(
 ```
 
 Predicted link probabilities and group assignments are stored for each fold. Below, we extract the link probabilities (p) and groups assignments of links for fold 1.
+
+Below, we extract the link probabilities (p) for fold 1. For example, a high probability (p = 0.91) of an undocumented link between host 1 and parasite 2 would suggest that this interaction is likely real but was missed due to sampling limitations. Conversely, it may assign a low p (e.g., 0.12) to a recorded interaction between host and parasite, indicating it might be spurious. 
 
 ```{r prediction-probs}
 # View probabilities for fold 1
@@ -226,7 +222,7 @@ print(head(groups_fold1))
 
 Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1) nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4) these groups (or communities) are progressively aggregated, revealing broader patterns and relationships or communities.
 
-Next, we will explore how the model assigns specific probabilities to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0 (unless it could be a missing link), as the model should recognize them as false links (false negatives).
+Next, we will explore how the model assigns specific probabilities p to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0 (unless it could be a missing link), as the model should recognize them as false links (false negatives).
 
 ```{r view-spur}
 fold_res <- list()
