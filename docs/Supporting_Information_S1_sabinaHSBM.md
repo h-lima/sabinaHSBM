@@ -21,7 +21,7 @@ Download and install Docker Desktop for Windows from [https://www.docker.com/pro
 To download the pre-configured image from Docker Hub, run:
 
    ```bash
-   docker pull herlima/sabinahsbm:base
+   docker pull herlima/sabinahsbm
    ```
    
 3. **Create and start the container**
