@@ -46,7 +46,7 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
   RStudio Server is already installed in the image.
   
   A default user was created with username `test` and password `sabinahsbm`. But we recommend you to set your own.
-  Create a user and password (This step is only needed the first time) (replace `yourname` with your desired username):
+  Create a user and password (This step is only needed the first time) (replace `yourname` with your desired username and password):
 
      ```bash
      useradd -m yourname
@@ -60,7 +60,7 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
      ```
   In your browser, open: http://localhost:8787
   
-  Log in with the user and password you just created.
+  Log in with the user and password you just created, or use the default credentials.
   
   To work in your mounted project directory `/home/my_project` use in the R console `setwd("/home/my_project"`; or go to the `Files` pane (bottom-right), click `“...”` → `“Go to folder...”` and enter `/home/my_project`.
   
