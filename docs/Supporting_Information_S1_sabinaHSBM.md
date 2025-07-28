@@ -14,8 +14,7 @@ This guide will help Windows users run the ***sabinaHSBM*** package within a Lin
 ### Step-by-step setup
 1. **Install Docker Desktop**
 
-Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
-Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
+Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop). Registration and sign-in are required. Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
 
 2. **Pull the docker image**
 
