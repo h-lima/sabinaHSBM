@@ -16,7 +16,7 @@ plot_interaction_matrix(
 \item{adj_mat}{A \code{matrix} or \code{data.frame} representing the interaction data to be plotted.}
 
 \item{order_mat}{(\emph{optional, default} \code{TRUE}) \cr
-A \code{logical} value indicating whether the matrix should be reordered.}
+A \code{logical} value indicating whether the matrix should be order by row frequencies.}
 
 \item{y_title}{(\emph{optional, default} \code{"Rows"}) \cr
 A \code{character} string specifying the title for the y-axis.}

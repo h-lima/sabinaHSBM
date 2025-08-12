@@ -87,7 +87,7 @@ def hsbm_predict(g, elist, wait = 1000,
                  niter = 10, force_niter = 10000, rnd_seed = None,
                  n_default = 1, x_default = 0, alpha = 1, beta = 1,
                  all_missing = None,
-                 method = "binary_classifier", save_pickle = False):
+                 method = "conditional_missing", save_pickle = False):
 
     if rnd_seed:
         rnd_seed = int(rnd_seed)
@@ -114,7 +114,7 @@ def hsbm_predict(g, elist, wait = 1000,
     entropy = state.entropy()
     state_min_dl = state.copy()
 
-    if method == "binary_classifier":
+    if method == "conditional_missing":
         if all_missing == None:
             all_missing = get_missing_edges(df = elist, g = g)
 
@@ -125,20 +125,18 @@ def hsbm_predict(g, elist, wait = 1000,
             if s.entropy() < entropy:
                 entropy = s.entropy()
                 state_min_dl = s.copy()
-        print("using binary_classifier")
-    elif method == "full_reconstruction":
-        print("Computing full reconstruction")
+        print("Using conditional_missing")
+    elif method == "marginal_all":
+        print("Computing marginal_all")
         # Collecting marginal for network reconstruction
         u = None
-        i = 0
         def collect_marginals(s):
-            nonlocal u, i, entropy, state_min_dl
+            nonlocal u, entropy, state_min_dl
             u = s.collect_marginal(u)
             # Save min description length state
             if s.entropy() < entropy:
                 entropy = s.entropy()
                 state_min_dl = s.copy()
-            i += 1
 
     print("\tCollect marginals")
     mcmc_equilibrate(state, force_niter = force_niter,
@@ -146,7 +144,7 @@ def hsbm_predict(g, elist, wait = 1000,
                      callback = collect_marginals)
 
     print("\tGather data")
-    if method == "binary_classifier":
+    if method == "conditional_missing":
         ps = []
         for i in range(len(all_missing)):
             ps.append(logsumexp([ep[i] for ep in edges_prob]) - np.log(len(edges_prob)))
@@ -180,7 +178,7 @@ def hsbm_predict(g, elist, wait = 1000,
                     "state": state,
                     "state_min_dl": state_min_dl,
                     "pred_probs": df}
-    elif method == "full_reconstruction":
+    elif method == "marginal_all":
         res_dict = {"graph": g,
                     "state": state,
                     "state_min_dl": state_min_dl,

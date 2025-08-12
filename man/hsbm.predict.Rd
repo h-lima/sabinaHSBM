@@ -7,7 +7,7 @@
 hsbm.predict(
   hsbm_input,
   elist_i = NULL,
-  method = "binary_classifier",
+  method = "conditional_missing",
   iter = 10000,
   wait = 1000,
   rnd_seed = NULL,
@@ -24,8 +24,8 @@ hsbm.predict(
 \item{elist_i}{(\emph{optional, default} \code{NULL}) \cr
 A \code{numeric} value specifying the index of the edge list (fold) from an \code{hsbm.input}to run predictions on. If \code{NULL}, predictions are run for all edge lists.}
 
-\item{method}{(\emph{optional, default} \code{"binary_classifier"}) \cr
-A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.}
+\item{method}{(\emph{optional, default} \code{"conditional_missing"}) \cr
+A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"conditional_missing"} and \code{"marginal_all"}.}
 
 \item{iter}{A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.}
 
@@ -83,12 +83,12 @@ This function performs predictions based on the HSBM for a specified edge list (
 \item The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
 \item The \code{method} parameter determines the link prediction approach:
 \describe{
-\item{\code{"binary_classifier"}}{
+\item{\code{"conditional_missing"}}{
 Computes conditional probabilities for each unobserved/undocumented edges/links (\code{0s}), given the inferred block structure.
 The probability is computed as: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} P(A_{ij} = 1 \mid b^{(k)})}, where \eqn{b^{(k)}} is the block partition sampled at iteration \eqn{k}.
 This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks.
 }
-\item{\code{"full_reconstruction"}}{
+\item{\code{"marginal_all"}}{
 Estimates the marginal posterior probabilities for each links (\code{0s} and \code{1s}), by averaging over sampled network configurations.
 The probability is given by: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} A_{ij}^{(k)}}, where \eqn{A_{ij}^{(k)} = 1} if the link is present in sample \eqn{k}, and \eqn{0} otherwise.
 This method allows identifying both missing links (unobserved/undocumented edges/links likely to exist) and potentially spurious links (observed/documented edges/links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
@@ -113,7 +113,7 @@ myInput <- hsbm.input(data = dat,
 data(myInput, package = "sabinaHSBM")
 
 myPred <- hsbm.predict(hsbm_input = myInput,
-                      method = "binary_classifier", 
+                      method = "conditional_missing",
                       iter = 1000,
                       wait=1000)
 
