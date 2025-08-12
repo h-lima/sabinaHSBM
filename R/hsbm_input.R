@@ -76,7 +76,7 @@ hsbm.input <- function(data, n_folds = 5, folds = NULL,
     }
 
     if(is.null(folds)){
-        folds <- create_cv_folds(com = data, n = n_folds,
+        folds <- create_cv_folds(com = data, n_folds = n_folds,
                                  min_per_col = min_per_col, 
                                  min_per_row = min_per_row)
     }

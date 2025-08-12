@@ -10,7 +10,7 @@ hsbm.reconstructed(
   spurious_edges = FALSE,
   na_treatment = "na_to_0",
   threshold = "roc_youden",
-  new_matrix_method = "average_thresholded",
+  consistency_matrix = "average_thresholded",
   ensemble_threshold = NULL
 )
 }
@@ -26,12 +26,12 @@ A \code{character} string specifying how to handle \code{NA} values derived from
 \item{threshold}{(\emph{optional, default} \code{"prc_closest_topright"}) \cr
 A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.}
 
-\item{new_matrix_method}{(\emph{optional, default} \code{"average_thresholded"}) \cr
+\item{consistency_matrix}{(\emph{optional, default} \code{"average_thresholded"}) \cr
 A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.}
 
 \item{ensemble_threshold}{(\emph{optional, default} \code{NULL}) \cr
-A \code{numeric} value \code{(0-1)} for \code{new_matrix_method = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
-The behavior of \code{ensemble_threshold} depends on the value of \code{new_matrix_method}:
+A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
+The behavior of \code{ensemble_threshold} depends on the value of \code{consistency_matrix}:
 \itemize{
 \item If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
 \item If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\\% of the folds).
@@ -82,7 +82,7 @@ An object of class \code{hsbm.reconstructed} containing:
 \item \code{ERR}: The error rate of the model.
 \item \code{tss}: The True Skill Statistic (TSS).
 }
-\item \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{new_matrix_method}.
+\item \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{consistency_matrix}.
 \item \code{$threshold}: The method or value used to determine the binary classification threshold.
 }
 }
@@ -91,7 +91,7 @@ This function generates a reconstructed bipartite binary matrix based on the HSB
 }
 \details{
 \itemize{
-\item The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "binary_classifier""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "full_reconstruction""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
+\item The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "conditional_missing""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "marginal_all""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
 \item The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
 \itemize{
 \item \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
@@ -110,7 +110,7 @@ This function generates a reconstructed bipartite binary matrix based on the HSB
 \item \code{"prc_max_F1"}: Maximizes the F1 score.
 \item Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
 }
-\item The \code{new_matrix_method} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
+\item The \code{consistency_matrix} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
 \itemize{
 \item \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to transform the averaged probabilities into a final binary matrix. The threshold used is the average threshold calculated for each folds.
 \item \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds. Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds the \code{ensemble_threshold}. The default \code{ensemble_threshold} is \code{0.1} if not specified.
@@ -128,7 +128,7 @@ myInput <- hsbm.input(data = dat,
 
 # Run HSBM predictions
 myPred <- hsbm.predict(hsbm_input = myInput,
-                      method = "binary_classifier",
+                      method = "conditional_missing",
                       iter = 1000,
                       wait=1000)
 ## End(Not run)

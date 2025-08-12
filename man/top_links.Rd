@@ -26,7 +26,7 @@ Extracts the top \code{n} predicted links from the HSBM model, allowing for prio
 # Assuming `hsbm_reconstructed` is an object of class `hsbm.reconstructed`
 data(myReconst, package = "sabinaHSBM")
 
-top_10_links <- top_links(myPred, n = 10, edge_type = "undocumented")
+top_10_links <- top_links(myReconst, n = 10, edge_type = "undocumented")
 print(top_10_links)
 
 }

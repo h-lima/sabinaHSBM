@@ -6,8 +6,8 @@
 \usage{
 hsbm.input(
   data,
-  folds = NULL,
   n_folds = 5,
+  folds = NULL,
   min_per_col = 2,
   min_per_row = 2,
   add_spurious = FALSE,
@@ -17,15 +17,15 @@ hsbm.input(
 \arguments{
 \item{data}{A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/no link.}
 
-\item{folds}{(\emph{optional, default} \code{NULL}) \cr
-An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.}
-
 \item{n_folds}{(\emph{optional, default} \code{5}) \cr
 A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified, held-out links will not be computed. This is not recommended, as the main objective of the package is to predict missing links through cross-validation.}
 
-\item{min_per_col}{A \code{numeric} value specifying the minimum number of non-zero entries required per column to be included in the analysis. Default is 2.}
+\item{folds}{(\emph{optional, default} \code{NULL}) \cr
+An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.}
 
-\item{min_per_row}{A \code{numeric} value specifying the minimum number of non-zero entries required per row to be included in the analysis. Default is 2.
+\item{min_per_col}{A \code{numeric} value specifying the minimum number of non-zero entries required per column to be considered for removal. Default is 2.}
+
+\item{min_per_row}{A \code{numeric} value specifying the minimum number of non-zero entries required per row to be considered for removal. Default is 2.
 #@@JMB pendiente param add_spurious?? y no_heldout}
 }
 \value{

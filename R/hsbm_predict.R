@@ -7,8 +7,8 @@
 #' @param hsbm_input An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
 #' @param elist_i (\emph{optional, default} \code{NULL}) \cr
 #' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
-#' @param method (\emph{optional, default} \code{"binary_classifier"}) \cr
-#' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"binary_classifier"} and \code{"full_reconstruction"}.
+#' @param method (\emph{optional, default} \code{"conditional_missing"}) \cr
+#' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"conditional_missing"} and \code{"marginal_all"}.
 #' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
 #' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.
 #' @param rnd_seed A \code{numeric} value specifying a seed for the random number generator in graph-tool and numpy python modules. Default is \code{NULL} which does not set a random seed.
@@ -48,12 +48,12 @@
 #' - The \code{elist_i} parameter allows you to specify a particular edge list to run predictions on. If not specified, predictions are run on all edge lists.
 #' - The \code{method} parameter determines the link prediction approach:
 #'   \describe{
-#'     \item{\code{"binary_classifier"}}{
+#'     \item{\code{"conditional_missing"}}{
 #'       Computes conditional probabilities for each unobserved/undocumented edges/links (\code{0s}), given the inferred block structure. 
 #'       The probability is computed as: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} P(A_{ij} = 1 \mid b^{(k)})}, where \eqn{b^{(k)}} is the block partition sampled at iteration \eqn{k}.
 #'       This method is particularly useful for identifying missing links—unobserved links that are likely to exist in partially incomplete networks.
 #'     }
-#'     \item{\code{"full_reconstruction"}}{
+#'     \item{\code{"marginal_all"}}{
 #'       Estimates the marginal posterior probabilities for each links (\code{0s} and \code{1s}), by averaging over sampled network configurations. 
 #'       The probability is given by: \eqn{p_{ij} = \frac{1}{N} \sum_{k=1}^{N} A_{ij}^{(k)}}, where \eqn{A_{ij}^{(k)} = 1} if the link is present in sample \eqn{k}, and \eqn{0} otherwise.
 #'       This method allows identifying both missing links (unobserved/undocumented edges/links likely to exist) and potentially spurious links (observed/documented edges/links that might be erroneous). It is suitable for networks that may contain errors or require a more comprehensive assessment of link validity.
@@ -79,7 +79,7 @@
 #' data(myInput, package = "sabinaHSBM")
 #'
 #' myPred <- hsbm.predict(hsbm_input = myInput,
-#'                       method = "binary_classifier", 
+#'                       method = "conditional_missing",
 #'                       iter = 1000,
 #'                       wait=1000)
 #'
@@ -91,7 +91,7 @@
 #'
 #' @export
 hsbm.predict <- function(hsbm_input, elist_i = NULL, 
-                         method = "binary_classifier",
+                         method = "conditional_missing",
                          iter = 10000, wait = 1000,
                          rnd_seed = NULL,
                          verbose = TRUE, 
@@ -103,9 +103,9 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     if(!inherits(hsbm_input, "hsbm.input")){
         stop("Error: hsbm_input must be an object of hsbm.input class. Consider running hsbm.input() function.")
     }
-    if(!(method %in% c("binary_classifier", "full_reconstruction"))){
-        stop("Error: Unknown method. Method should be binary_classifier or",
-             " full_reconstruction")
+    if(!(method %in% c("conditional_missing", "marginal_all"))){
+        stop("Error: Unknown method. Method should be conditional_missing or",
+             " marginal_all")
     }
 
     hsbm_output <- list()

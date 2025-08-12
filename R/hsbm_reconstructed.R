@@ -11,11 +11,11 @@
 #' A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.
 #' @param threshold (\emph{optional, default} \code{"prc_closest_topright"}) \cr
 #' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.
-#' @param new_matrix_method (\emph{optional, default} \code{"average_thresholded"}) \cr
+#' @param consistency_matrix (\emph{optional, default} \code{"average_thresholded"}) \cr
 #' A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.
 #' @param ensemble_threshold (\emph{optional, default} \code{NULL}) \cr
-#' A \code{numeric} value \code{(0-1)} for \code{new_matrix_method = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
-#' The behavior of \code{ensemble_threshold} depends on the value of \code{new_matrix_method}:
+#' A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
+#' The behavior of \code{ensemble_threshold} depends on the value of \code{consistency_matrix}:
 #' - If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
 #' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds).
 #'
@@ -55,11 +55,11 @@
 #'   - \code{ACC}: The overall accuracy of the model.
 #'   - \code{ERR}: The error rate of the model.
 #'   - \code{tss}: The True Skill Statistic (TSS).
-#' - \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{new_matrix_method}.
+#' - \code{$new_mat}: The final reconstructed binary matrix, combining predictions across folds using the specified \code{consistency_matrix}.
 #' - \code{$threshold}: The method or value used to determine the binary classification threshold.
 #'
 #' @details
-#' - The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "binary_classifier""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "full_reconstruction""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
+#' - The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "conditional_missing""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "marginal_all""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
 #'
 #' - The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
 #'   - \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
@@ -77,7 +77,7 @@
 #'   - \code{"prc_max_F1"}: Maximizes the F1 score.
 #'   - Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
 #'
-#' - The \code{new_matrix_method} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
+#' - The \code{consistency_matrix} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
 #'   - \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to transform the averaged probabilities into a final binary matrix. The threshold used is the average threshold calculated for each folds.
 #'   - \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds. Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds the `ensemble_threshold`. The default `ensemble_threshold` is `0.1` if not specified.
 #'
@@ -95,7 +95,7 @@
 #'
 #' # Run HSBM predictions
 #' myPred <- hsbm.predict(hsbm_input = myInput,
-#'                       method = "binary_classifier",
+#'                       method = "conditional_missing",
 #'                       iter = 1000,
 #'                       wait=1000)
 #' ## End(Not run)
@@ -123,31 +123,31 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                                spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda, hay que poner en la docu
                                na_treatment = "na_to_0",
                                threshold = "roc_youden",
-                               new_matrix_method = "average_thresholded",
+                               consistency_matrix = "average_thresholded",
                                ensemble_threshold = NULL){
 
     if(!inherits(hsbm_out, "hsbm.predict")) {
         stop("Error: hsbm_out must be an object of hsbm.predict class. Consider running hsbm.predict() function.")
     }
 
-    if(!(new_matrix_method %in% c("average_thresholded", "ensemble_binary"))){
-        stop("\nError: Invalid value for `new_matrix_method`.",
+    if(!(consistency_matrix %in% c("average_thresholded", "ensemble_binary"))){
+        stop("\nError: Invalid value for `consistency_matrix`.",
              " It must be 'ensemble_binary' or 'average_thresholded'.\n")
     }
-    if(na_treatment != "na_to_0" & hsbm_out$method == "binary_classifier"){
-        stop("\nError: `na_treatment` cannot be set for `binary_classifier` method since there are no NAs.\n")
+    if(na_treatment != "na_to_0" & hsbm_out$method == "conditional_missing"){
+        stop("\nError: `na_treatment` cannot be set for `conditional_missing` method since there are no NAs.\n")
     }
-    if(rm_documented & hsbm_out$method == "full_reconstruction") {
-        warning("\`rm_documented` was set to TRUE for the `full_reconstruction` method. ",
+    if(rm_documented & hsbm_out$method == "marginal_all") {
+        warning("\`rm_documented` was set to TRUE for the `marginal_all` method. ",
                 "Documented links (original 1s) were removed for evaluation. ",
                 "Ensure this setting was appropriate for your analysis.\n")
     }
-    if(!rm_documented & hsbm_out$method == "binary_classifier") {
-        warning("\n`rm_documented` was set to FALSE for the `binary_classifier` method. ",
+    if(!rm_documented & hsbm_out$method == "conditional_missing") {
+        warning("\n`rm_documented` was set to FALSE for the `conditional_missing` method. ",
                 "Documented links (1s) were included in evaluation, even though no probabilities ",
                 "were computed for them. Ensure this setting was appropriate for your analysis.\n")
     }
-    if (new_matrix_method == "ensemble_binary" & is.null(ensemble_threshold)) {
+    if (consistency_matrix == "ensemble_binary" & is.null(ensemble_threshold)) {
         message("\nNo `ensemble_threshold` provided; defaulting to 0.1.\n")
     }
 
@@ -192,7 +192,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
     hsbm_reconstructed$stats <- tb_all
-    if(new_matrix_method == "ensemble_binary"){
+    if(consistency_matrix == "ensemble_binary"){
         ens_thresh <- if(is.null(ensemble_threshold)) 0.1 else ensemble_threshold
         hsbm_reconstructed$new_mat <- avg_mat(binary_mats,
                                               thresh = ens_thresh,
@@ -274,7 +274,7 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     }
 
     min_size_warning <- 0.5 * prod(dim(com))
-    if((hsbm_output$method == "full_reconstruction") && (nrow(folds_select) < min_size_warning)) {
+    if((hsbm_output$method == "marginal_all") && (nrow(folds_select) < min_size_warning)) {
         percentage <- 100 * (nrow(folds_select) / prod(dim(com)))
         warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage)) #@@@JMB which iterations? iter? wait?
     }
@@ -337,9 +337,9 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
     tss <- sens + spec - 1
 
     # Get documented values back
-    if(rm_documented & method == "binary_classifier"){
+    if(rm_documented & method == "conditional_missing"){
         com_fit[com_train == 1] <- 1
-    }else if(rm_documented & method == "full_reconstruction"){
+    }else if(rm_documented & method == "marginal_all"){
         com_fit[cbind(rows, cols)] <- ps
         com_fit[com_train == 1] <- 1
     }

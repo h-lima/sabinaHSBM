@@ -7,7 +7,7 @@
 #'   \item{data}{A \code{matrix} of binary values representing links in an original bipartite network.}
 #'   \item{folds}{A \code{matrix} specifying cross-validation fold assignments for held-out edges/links.}
 #'   \item{edgelist}{A \code{list} of edge lists generated for each fold, detailing the held-out links for validation.}
-#'   \item{method}{A \code{character} string indicating the method used for the HSBM analysis, in this case, \code{"binary_classifier"}.}
+#'   \item{method}{A \code{character} string indicating the method used for the HSBM analysis, in this case, \code{"conditional_missing"}.}
 #'   \item{iter}{An \code{integer} specifying the number of iterations used for the HSBM analysis.}
 #' }
 #'
