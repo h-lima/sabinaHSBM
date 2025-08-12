@@ -14,15 +14,14 @@ This guide will help Windows users run the ***sabinaHSBM*** package within a Lin
 ### Step-by-step setup
 1. **Install Docker Desktop**
 
-Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
-Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
+Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop). Registration and sign-in are required. Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
 
 2. **Pull the docker image**
 
 To download the pre-configured image from Docker Hub, run:
 
    ```bash
-   docker pull herlima/sabinahsbm:base
+   docker pull herlima/sabinahsbm
    ```
    
 3. **Create and start the container**
@@ -47,7 +46,7 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
   RStudio Server is already installed in the image.
   
   A default user was created with username `test` and password `sabinahsbm`. But we recommend you to set your own.
-  Create a user and password (This step is only needed the first time) (replace `yourname` with your desired username):
+  Create a user and password (This step is only needed the first time) (replace `yourname` with your desired username and password):
 
      ```bash
      useradd -m yourname
@@ -61,7 +60,7 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
      ```
   In your browser, open: http://localhost:8787
   
-  Log in with the user and password you just created.
+  Log in with the user and password you just created, or use the default credentials.
   
   To work in your mounted project directory `/home/my_project` use in the R console `setwd("/home/my_project"`; or go to the `Files` pane (bottom-right), click `“...”` → `“Go to folder...”` and enter `/home/my_project`.
   
@@ -98,7 +97,7 @@ Here’s an example to get started:
    # Generate link predictions
    myPred <- hsbm.predict(myInput,
                           iter = 1000,
-                          method = "binary_classifier"
+                          method = "conditional_missing"
    )
 
    # Reconstruct the network and evaluate
