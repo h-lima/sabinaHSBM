@@ -47,7 +47,7 @@ remotes::install_github("h-lima/sabinaHSBM")
 
 A research paper detailing the functions and methodologies of the ***sabinaHSBM*** package is in preparation. Until its publication, please cite the package as follows:
 
-> Lima, H., ... (2025). sabinaHSBM: an R package for Hierarchical Stochastic Block Model-based link prediction and binary network reconstruction.  
+> XX, X., ... (2025). sabinaHSBM: an R package for Hierarchical Stochastic Block Model-based link prediction and binary network reconstruction.  
 > doi -----
 
 
