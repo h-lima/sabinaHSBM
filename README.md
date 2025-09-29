@@ -37,7 +37,7 @@ To install ***sabinaHSBM*** directly from [GitHub](https://github.com), use the 
 
 ```r
 library(remotes)
-remotes::install_github("h-lima/sabinaHSBM")
+remotes::install_github("xxx/sabinaHSBM")
 ```
 
 **Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
