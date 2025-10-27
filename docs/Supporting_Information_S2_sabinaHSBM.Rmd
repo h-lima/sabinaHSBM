@@ -1,11 +1,11 @@
 ---
-title: "Using sabinaHSBM for link prediction and network reconstruction with "conditional_missing" method"
+title: 'Using sabinaHSBM for link prediction and network reconstruction with "conditional_missing" method'
 subtitle: ""
 output:
-  word_document: default
   pdf_document: 
     latex_engine: xelatex
     keep_tex: true
+  word_document: default
   html_document:
     toc: true
     toc_float: true

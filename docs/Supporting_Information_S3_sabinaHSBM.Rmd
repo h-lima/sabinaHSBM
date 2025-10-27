@@ -1,5 +1,5 @@
 ---
-title: "Using sabinaHSBM for link prediction and network reconstruction with "marginal_all" method
+title: 'Using sabinaHSBM for link prediction and network reconstruction with "marginal_all" method'
 subtitle: ""
 output:
   word_document: default
