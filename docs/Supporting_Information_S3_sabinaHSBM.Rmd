@@ -17,8 +17,6 @@ This guide shows how to use document demonstrates a simple use case based on the
 We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction.
 
 
-We use the example dataset `dat2` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction. 
-
 
 # Requirements and installation
 
@@ -175,7 +173,7 @@ summary(myInput)
 
 # Predict link probabilities with "marginal_all"
 
-The `hsbm.predict` function applies the HSBM to predict marginal posterior probabilities of all links— both observed (`1s`) and unobserved (`0s`)—so you can identify spurious and missing links in one step. The function works directly with the processed input created by `hsbm.input`.vComputation can be intensive, but parallelization across cores is suppoted.
+The `hsbm.predict` function applies the HSBM to predict marginal posterior probabilities of all links— both observed (`1s`) and unobserved (`0s`)—so you can identify spurious and missing links in one step. The function works directly with the processed input created by `hsbm.input`.Computation can be intensive, but parallelization across cores is supported.
 
 ```{r parallel-prediction}
 # Define the number of cores to use
@@ -195,7 +193,7 @@ myPred <- hsbm.predict(
 )
 ```
 
-Predicted link probabilities and group assignments are stored for each fold. Below, we extract the link probabilities (p) and groups assignments of links for fold 1.
+Predicted link probabilities and group assignments are stored for each fold.
 
 Below, we extract the link probabilities (p) for fold 1. For example, a high probability (p = 0.91) of an undocumented link between host 1 and parasite 2 would suggest that this interaction is likely real but was missed due to sampling limitations. Conversely, it may assign a low p (e.g., 0.12) to a recorded interaction between host and parasite, indicating it might be spurious. 
 
@@ -222,7 +220,7 @@ print(head(groups_fold1))
 
 Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across multiple levels. At the first level (G1) nodes are divided into specific groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4) these groups (or communities) are progressively aggregated, revealing broader patterns and relationships or communities.
 
-Next, we will explore how the model assigns specific probabilities p to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious edges, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0 (unless it could be a missing link), as the model should recognize them as false links (false negatives).
+Next, we will explore how the model assigns specific probabilities p to different types of links ("documented," "held out," and "spurious_edge") for each fold to evaluate HSBM ability to correctly identify them. Documented links, which are real observations (true positives), should have probabilities close to 1. Held-out links, which are real observations but transformed to 0s during training for validation, should also show high probabilities. In contrast, spurious links, artificially generated (initially unobserved links transformed to 1s), should have probabilities close to 0 (unless it could be a missing link), as the model should recognize them as false links (false negatives).
 
 ```{r view-spur}
 fold_res <- list()
@@ -298,10 +296,7 @@ top_links_missing <- top_links(myReconst,
 print(top_links_missing)
 ```
 
-If the task is to do network reconstruction by inserting the most plausible missing links, we can also use the 
-probabilities from the `marginal_all` method as 'scores' in a supervised binary classification. This is
-achieved by setting a discrimination threshold algorithm in `hsbm.reconstructed()` as it is done in 
-Supporting Information S1.
+If the task is to do network reconstruction by inserting the most plausible missing links, we can also use the probabilities from the `marginal_all` method as 'scores' in a supervised binary classification. This is achieved by setting a discrimination threshold algorithm in `hsbm.reconstructed()` as it is done in Supporting Information S1.
 
 This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. By applying the "marginal_all" method, we showcased how spurious and missing links can be effectively identified and addressed in complex networks.
 
