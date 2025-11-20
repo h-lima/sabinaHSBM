@@ -26,35 +26,6 @@ summary.hsbm.input <- function(object, ...){
     return(summary_mat)
 }
 
-#' @title Summary for hsbm.predict Objects
-#' @description Provides a summary for objects of class \code{hsbm.predict}.
-#' @param object An object of class \code{hsbm.predict}.
-#' @param ... Additional arguments (not used).
-#' @return A data frame containing:
-#' \describe{
-#'   \item{n_rows}{Number of rows (first set of nodes).}
-#'   \item{n_cols}{Number of columns (second set of nodes).}
-#'   \item{n_links}{Number of observed links in the binary input matrix.}
-#'   \item{rows_single_link}{Number of rows with only one link.}
-#'   \item{cols_single_link}{Number of columns with only one link.}
-#'   \item{possible_links}{Total number of possible links in the input matrix.}
-#' }
-#' @seealso \code{\link{hsbm.predict}}
-#' @export
-#' @method summary hsbm.predict
-summary.hsbm.predict <- function(object, ...){
-    mat <- as.matrix(object$data)
-
-    summary_mat <- data.frame(n_rows = nrow(mat),
-                            n_cols = ncol(mat),
-                            n_links = sum(mat),
-                            rows_single_link = sum(rowSums(mat) == 1),
-                            cols_single_link = sum(colSums(mat) == 1),
-                            possible_links = length(mat))
-
-    return(summary_mat)
-}
-
 #' @title Summary for hsbm.reconstructed Objects
 #' @description Provides a summary for objects of class \code{hsbm.reconstructed}.
 #' @param object An object of class \code{hsbm.reconstructed}.
@@ -67,6 +38,7 @@ summary.hsbm.predict <- function(object, ...){
 #'   \item{kept_links}{Number of links retained (unchanged) in the reconstructed matrix.}
 #'   \item{spurious_links}{Number of links removed (false positives) in the reconstructed matrix.}
 #'   \item{missing_links}{Number of new links added (false negatives) in the reconstructed matrix.}
+#'   \item{mean_RLF}{Mean Recovery Link Fraction (proportion of held-out links correctly predicted as missing links) across all folds.}
 #'   \item{mean_auc}{Mean AUC across all folds.}
 #'   \item{mean_aucpr}{Mean AUC-PR across all folds.}
 #'   \item{mean_yPRC}{Mean Precision-Recall Curve baseline across all folds.}
@@ -97,24 +69,27 @@ summary.hsbm.reconstructed <- function(object, ...){
    # Number of new links in matrix2
    missing_links <- sum(matrix1 == 0 & matrix2 == 1, na.rm = TRUE)
 
-   summary_mat <- data.frame(obs_links = obs_links,
+   summary_mat <- data.frame(
+                       obs_links = obs_links,
                        unobs_links = unobs_links,
                        pred_links = pred_links,
                        kept_links = kept_links,
                        spurious_links = spurious_links,
-                       missing_links = missing_links)
+                       missing_links = missing_links
+   )
 
- 
-   summary_eval <- data.frame(mean_RLR = mean(object$stats$pred_held_ones),
+   summary_eval <- data.frame(
+                       mean_RLF = mean(object$stats$pred_held_ones),
                        mean_auc = mean(object$stats$auc),
                        mean_aucpr = mean(object$stats$aucpr),
-		       mean_yPRC = mean(object$stats$yPRC),    
+                       mean_yPRC = mean(object$stats$yPRC),
                        mean_prec = mean(object$stats$precision),
-		       mean_sens = mean(object$stats$sens),
-		       mean_spec = mean(object$stats$spec),
-		       mean_ACC = mean(object$stats$ACC),
-		       mean_ERR = mean(object$stats$ERR),
-		       mean_tss = mean(object$stats$tss))
+                       mean_sens = mean(object$stats$sens),
+                       mean_spec = mean(object$stats$spec),
+                       mean_ACC = mean(object$stats$ACC),
+                       mean_ERR = mean(object$stats$ERR),
+                       mean_tss = mean(object$stats$tss)
+   )
 
   return(list(
         `Reconstructed Network Metrics` = summary_mat,

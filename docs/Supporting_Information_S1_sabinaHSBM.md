@@ -1,7 +1,10 @@
 # *sabinaHSBM* Docker Setup
 
+<!-- render with --highlight-style=tango -->
+
 ## Overview
 This guide will help Windows users run the ***sabinaHSBM*** package within a Linux-based Docker container.
+While this tutorial is tailored for Windows, similar instructions should be followed for Mac or Linux users.
 
 ### What's included in the Docker Image
 - **Linux operating system**: Ubuntu 24.04
@@ -11,12 +14,13 @@ This guide will help Windows users run the ***sabinaHSBM*** package within a Lin
 - **RStudio Server**: Installed and ready to use as a browser-based R interface (user creation recommended).
 - **Jupyter Notebook**: Pre-installed and ready to launch from the container for interactive coding and analysis.
 
-### Step-by-step setup
-1. **Install Docker Desktop**
+## Step-by-step setup
+
+### 1. **Install Docker Desktop**
 
 Download and install Docker Desktop for Windows from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop). Registration and sign-in are required. Once Docker Desktop is installed, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
 
-2. **Pull the docker image**
+### 2. **Pull the docker image**
 
 To download the pre-configured image from Docker Hub, run:
 
@@ -24,16 +28,19 @@ To download the pre-configured image from Docker Hub, run:
    docker pull herlima/sabinahsbm
    ```
    
-3. **Create and start the container**
+### 3. **Create and start the container**
 
 The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. The `-p` flags are optional and map ports `8787`, `8880` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server, respectively, if needed. The `-v` flag is also optional (but recommended) and establishes a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount. Unlike bind mounts, which link directly to local directory, volume are stored within a Docker filesystem.
 
    ```bash
-   docker run -it --name sabinahsbm_container -p 8787:8787 -p 8880:8880 -v "local/path/to/your/project:/home/my_project" sabinahsbm bash 
+   docker run -it --name sabinahsbm_container \
+       -p 8787:8787 -p 8880:8880 \
+       -v "local/path/to/your/project:/home/my_project" \
+       sabinahsbm bash 
    ```
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
 
-4. **Run R, RStudio Server or Jupyter Notebook**
+### 4. **Run R, RStudio Server or Jupyter Notebook**
 
 Once the docker container is running, you can interact with the ***sabinaHSBM*** package using different environments: through the R console, RStudio Server, or Jupyter Notebook.
 
@@ -56,8 +63,10 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
   Then launch RStudio Server:
 
      ```bash
-     /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 --www-port=8787 --www-address=0.0.0.0
+     /usr/lib/rstudio-server/bin/rserver --server-daemonize=0 \
+         --www-port=8787 --www-address=0.0.0.0
      ```
+
   In your browser, open: http://localhost:8787
   
   Log in with the user and password you just created, or use the default credentials.
@@ -71,11 +80,13 @@ Once the docker container is running, you can interact with the ***sabinaHSBM***
   You can also use a Jupyter Notebook. Launch it with:
  
      ```bash
-     jupyter notebook --allow-root --ip 0.0.0.0 --port=8880 --no-browser
+     jupyter notebook --allow-root --no-browser \
+         --ip 0.0.0.0 --port=8880 
      ```
-  The terminal will display a clickable URL. Simply click the provided link or paste it into your browser to acces the Jupyter interface, ideal for coding, data visualization, and interactive analysis.
 
-5. **Use the *sabinaHSBM* package**
+  The terminal will display a clickable URL. Simply click the provided link or paste it into your browser to access the Jupyter interface, ideal for coding, data visualization, and interactive analysis.
+
+### 5. **Use the *sabinaHSBM* package**
 
 Here’s an example to get started:
 
@@ -106,9 +117,6 @@ Here’s an example to get started:
                                    threshold = "prc_closest_topright")
    summary(myReconst)
 
-   # Save the HSBM reconstructed object
-   #saveRDS(myReconst, file="myReconst.RData")
-
    # Exit R
    q()
    ```
@@ -128,6 +136,7 @@ To stop the container:
    ```bash
    docker stop sabinahsbm_container
    ```
+
 To start the container again and access its shell, run:
 
    ```bash

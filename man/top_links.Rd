@@ -13,13 +13,40 @@ top_links(hsbm_reconstructed, n = 10, edge_type = "undocumented")
 An \code{integer} specifying the number of top links to extract.}
 
 \item{edge_type}{(\emph{optional, default} \code{"undocumented"}) \cr
-A \code{character} indicating the type of edge/link to extract and rank: "undocumented" or "documented", "spurious" or "missing".}
+A \code{character} indicating the type of edge/link to extract and
+rank: "undocumented" or "documented", "spurious" or "missing". See details for more information.}
 }
 \value{
-A \code{data.frame} with the top \code{n} predicted links (links with the highest probabilities), including the node names, predicted probabilities (\code{p}), and their standard deviations (\code{sd}) as a uncertainty measure.
+A \code{data.frame} with the top \code{n} predicted links ordered according to the
+edge_type argument. Includes the node names,
+predicted probabilities (\code{p}), and their standard deviations
+(\code{sd}) as a uncertainty measure.
 }
 \description{
-Extracts the top \code{n} predicted links from the HSBM model, allowing for prioritization of the links most likely to be false negatives or false positives. It ranks "undocumented" links (originally 0s) by descending probability, with higher probabilities indicating the most likely false negatives (links that were not observed but are likely true/present). Ranks "documented" links (originally 1s) by ascending probability, with lower probabilities suggesting the most likely false positives (links that were observed but are likely false/absent). Similarly, ranks identified "missing" links and "spurious" links.
+Extracts the top \code{n} predicted links from the HSBM model, allowing for prioritization of
+the links most likely to be false negatives or false positives.
+It ranks "undocumented" links (originally 0s) by descending probability,
+with higher probabilities indicating the most likely false negatives
+(links that were not observed but are likely true/present).
+Ranks "documented" links (originally 1s) by ascending probability,
+with lower probabilities suggesting the most likely false positives
+(links that were observed but are likely false/absent).
+Ranks identified "missing" (according to final binary reconstructed matrix) by descending probability.
+Ranks identified "spurious" (according to final binary reconstructed matrix) by ascending probability.
+}
+\details{
+The \code{edge_type} argument specifies the ranking type:
+\describe{
+\item{"undocumented"}{Ranking of non-recorded links (0s) by descending probability.}
+\item{"documented"}{Ranking of recorded links (1s) by ascending probability.}
+\item{"missing"}{Ranking of links identified as missing in the final reconstructed binary
+matrix. Ranked by descending probability.}
+\item{"spurious"}{Ranking of links identified as spurious in the final reconstructed
+binary matrix. Ranked by ascending probability}
+}
+
+To explore potential spurious links, we recommend using \code{edge_type = "documented"}
+to rank low-probability documented links.
 }
 \examples{
 # Load example HSBM prediction results

@@ -6,14 +6,14 @@
 #'
 #' @param hsbm_input An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.
 #' @param elist_i (\emph{optional, default} \code{NULL}) \cr
-#' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input`to run predictions on. If \code{NULL}, predictions are run for all edge lists.
+#' A \code{numeric} value specifying the index of the edge list (fold) from an `hsbm.input` object to run predictions on. If \code{NULL}, predictions are run for all edge lists.
 #' @param method (\emph{optional, default} \code{"conditional_missing"}) \cr
 #' A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"conditional_missing"} and \code{"marginal_all"}.
 #' @param iter A \code{numeric} value specifying the number of iterations for the HSBM analysis. Default is 10000.
 #' @param wait A \code{numeric} value specifying the number of iterations needed for MCMC equilibration. Default is 1000.
 #' @param rnd_seed A \code{numeric} value specifying a seed for the random number generator in graph-tool and numpy python modules. Default is \code{NULL} which does not set a random seed.
 #' @param verbose (\emph{optional, default} \code{TRUE}) \cr
-#' A \code{logical} value indicating whether to print progress messages during prediction.
+#' A \code{logical} value indicating whether to print progress messages during prediction. When n_cores > 1, progress can get scrambled to the multiple processes at the same time.
 #' @param save_blocks (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to save group assignments (blocks) for nodes in the network during the prediction process.
 #' @param save_pickle (\emph{optional, default} \code{FALSE}) \cr
@@ -25,7 +25,7 @@
 #'
 #' @return
 #' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
-#' - \code{$data} The binary bipartite \code{matrix} of input data.
+#' - \code{$data} The binary \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
 #' - \code{$method} The method used for the HSBM analysis, as specified by the user.
 #' - \code{$iter} The number of iterations used to extract link probabilities, as specified by the user. Default is 10000.
@@ -60,7 +60,18 @@
 #'     }
 #'   }
 #' - The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
-#' - The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index. The pickle object is a dictionary with 5 elements. enum..... #@@@
+#' - The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index.
+#' The pickle object is a dictionary with 5 elements for the \code{"conditional_missing"} method
+#' and 6 elements for the \code{"marginal_all"} method. The elements are:
+#' \describe{
+#'      \item{"graph"}{\code{graph_tool} graph object used for inference.}
+#'      \item{"state"}{Last sampled state during MCMC sampling.}
+#'      \item{"state_min_dl"}{State/solution with the minimum description length over all MCMC sampling.}
+#'      \item{"min_dl"}{Value of the minimum description length found in MCMC sampling. So it is the value of the description length of \code{state_min_dl}.}
+#'      \item{"pred_probs"}{A pandas dataframe with the predicted probabilites of each link and respective edge types, names and indices.}
+#'      \item{"pred_graph"}{Only \code{"marginal_all"} method. The marginal graph containing the marginal probabilities for each edge.}
+#' }
+#'
 #' - If \code{save_plots = TRUE}, hierarchical edge bundling plots are saved in the working directory as PDF files named \code{hsbm_plot_foldi.pdf}, where \code{i} refers to the fold index.
 #'
 #' @seealso \code{\link{hsbm.input}}
@@ -208,7 +219,6 @@ run_hsbm <- function(hsbm_input, hsbm_output, method, iter, wait, rnd_seed,
                                                 "rnd_seed = r.rnd_seed)"))
     reticulate::py_run_string("groups_df = get_groups(res_dict['state_min_dl'], res_dict['graph'])")
     if(save_pickle){
-        #reticulate::py_save_object(py$res_dict, str_glue("res_dict{i}.pkl"))
         reticulate::py_run_string(paste0("save_pickle(res_dict,", i,")"))
     }
     if(save_plots){

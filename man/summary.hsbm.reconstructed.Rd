@@ -20,6 +20,7 @@ A data frame containing the following summary statistics:
 \item{kept_links}{Number of links retained (unchanged) in the reconstructed matrix.}
 \item{spurious_links}{Number of links removed (false positives) in the reconstructed matrix.}
 \item{missing_links}{Number of new links added (false negatives) in the reconstructed matrix.}
+\item{mean_RLF}{Mean Recovery Link Fraction (proportion of held-out links correctly predicted as missing links) across all folds.}
 \item{mean_auc}{Mean AUC across all folds.}
 \item{mean_aucpr}{Mean AUC-PR across all folds.}
 \item{mean_yPRC}{Mean Precision-Recall Curve baseline across all folds.}

@@ -1,24 +1,13 @@
-hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
-                          no_heldout = FALSE){
+hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, no_heldout = FALSE,
+                          is_bipartite = TRUE){
     col_names <- c("row_names", "col_names", "value")
 
     if(!(is.matrix(adj_mat))) stop("adj_mat argument must be of type 'matrix'.")
-    # check values 0 and 1
-    # check any string
-    # check names
-
-    # Remove empty columns and rows
-    adj_mat <- adj_mat[rowSums(adj_mat) != 0,
-                       colSums(adj_mat) != 0]
-    if(!(is.matrix(adj_mat))) stop("Too many zero columns or rows in adj_mat.")
-
-    if(is.null(colnames(adj_mat))) colnames(adj_mat) <- paste0("col", 1:ncol(adj_mat))
-    if(is.null(rownames(adj_mat))) rownames(adj_mat) <- paste0("row", 1:nrow(adj_mat))
 
     adj_mat_train <- adj_mat
+    if(!is_bipartite) adj_mat_train[upper.tri(adj_mat_train)] <- 0
     if(!is.null(fold_id)){
         folds <- as.matrix(folds[which(folds[, 3] == fold_id), ])
-        adj_mat_train <- adj_mat
         adj_mat_train[folds[, c('row', 'col')]] <- 0
     }else if(!is.null(folds)){
         adj_mat_train[folds[, c('row', 'col')]] <- 0
@@ -44,59 +33,21 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, add_spurious = FALSE,
     long_mat$x <- 1
     if(!no_heldout){
         long_mat$x <- ifelse(long_mat$edge_type == "held_out", 0, long_mat$x)
+    }else{
+        long_mat$edge_type <- ifelse(long_mat$edge_type == "held_out", "documented",
+                                     long_mat$edge_type)
     }
 
-    long_mat$v1 <- as.numeric(factor(long_mat[[col_names[1]]])) - 1
-    long_mat$v2 <- as.numeric(factor(long_mat[[col_names[2]]])) + max(long_mat$v1)
-
-    long_mat <- dplyr::select(long_mat, v1, v2, value, col_names[1], 
-                              col_names[2], edge_type, n, x)
-
-    if(add_spurious){
-        long_mat <- add_spurious_edges(long_mat, adj_mat, col_names[1:2])
+    long_mat$v1 <- as.numeric(long_mat[[col_names[1]]]) - 1
+    if(is_bipartite){
+        long_mat$v2 <- as.numeric(long_mat[[col_names[2]]]) + max(long_mat$v1)
+    }else{
+        long_mat$v2 <- as.numeric(long_mat[[col_names[2]]]) - 1
     }
+
+    long_mat <- dplyr::select(long_mat, "v1", "v2", "value", col_names[1],
+                              col_names[2], "edge_type", "n", "x")
 
     return(long_mat)
 }
 
-add_spurious_edges <- function(long_mat, adj_mat, col_names, add_n_x = TRUE){
-
-    n_row = nrow(adj_mat)
-
-    v1_v2 <- paste0(long_mat$v1, "_", long_mat$v2)
-    spurious_v1 <- sample(unique(long_mat$v1),
-                          size = length(which(long_mat$edge_type == "held_out")),
-                          replace = TRUE)
-    spurious_v2 <- sample(unique(long_mat$v2),
-                          size = length(which(long_mat$edge_type == "held_out")),
-                          replace = TRUE)
-    spurious_v1_v2 <- paste0(spurious_v1, "_", spurious_v2)
-    for(i in 1:length(spurious_v1_v2)){
-        if(!(spurious_v1_v2[i] %in% v1_v2)){
-            next
-        }
-        while(spurious_v1_v2[i] %in% v1_v2){
-            spurious_v1_v2[i] <- paste0(sample(unique(long_mat$v1), size = 1),
-                                        "_",
-                                        sample(unique(long_mat$v2), size = 1))
-        }
-    }
-    spurious_mat <- stringr::str_match(spurious_v1_v2, "(\\d+)_(\\d+)")[, 2:3]
-    x_names <- rownames(adj_mat)[as.numeric(spurious_mat[, 1]) + 1]
-    y_names <- colnames(adj_mat)[as.numeric(spurious_mat[, 2]) - n_row + 1]
-    colnames(spurious_mat) <- c("v1", "v2")
-    spurious_mat <- cbind(spurious_mat, value = 1, x_names,
-                          y_names, edge_type = "spurious_edge")
-    colnames(spurious_mat)[4:5] <- col_names
-    if(add_n_x){
-        spurious_mat <- cbind(spurious_mat, n = 1, x = 0)
-    }
-
-    long_mat <- rbind(long_mat, spurious_mat)
-    long_mat <- dplyr::mutate_if(long_mat, is.factor, as.character)
-    long_mat <- dplyr::mutate_at(long_mat, c("v1", "v2", "value", "n", "x"),
-                                 as.numeric)
-
-    return(long_mat)
-
-}

@@ -2,12 +2,12 @@
 % Please edit documentation in R/hsbm_reconstructed.R
 \name{hsbm.reconstructed}
 \alias{hsbm.reconstructed}
-\title{Generate a reconstructed bipartite binary matrix from Hierarchical Stochastic Block Model (HSBM)}
+\title{Generate a reconstructed bipartite binary matrix from
+Hierarchical Stochastic Block Model (HSBM)}
 \usage{
 hsbm.reconstructed(
   hsbm_out,
   rm_documented = TRUE,
-  spurious_edges = FALSE,
   na_treatment = "na_to_0",
   threshold = "roc_youden",
   consistency_matrix = "average_thresholded",
@@ -15,22 +15,28 @@ hsbm.reconstructed(
 )
 }
 \arguments{
-\item{hsbm_out}{An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.}
+\item{hsbm_out}{An object of class \code{hsbm.output} containing the output
+from the HSBM analysis, including predictions and input data.}
 
 \item{rm_documented}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to remove documented entries (1s) from the evaluation.}
 
 \item{na_treatment}{(\emph{optional, default} \code{"na_to_0"}) \cr
-A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.}
+A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions.
+Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.}
 
 \item{threshold}{(\emph{optional, default} \code{"prc_closest_topright"}) \cr
-A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.}
+A \code{character} string or \code{numeric} value specifying the method to determine the threshold for
+binary classification of predictions. See Details for available options.}
 
 \item{consistency_matrix}{(\emph{optional, default} \code{"average_thresholded"}) \cr
-A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.}
+A \code{character} string specifying the method for creating the new reconstructed matrix.
+Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.}
 
 \item{ensemble_threshold}{(\emph{optional, default} \code{NULL}) \cr
-A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
+A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion
+of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default
+is \code{0.1} (for 10 folds it means at least one fold must predict presence).
 The behavior of \code{ensemble_threshold} depends on the value of \code{consistency_matrix}:
 \itemize{
 \item If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
@@ -42,15 +48,14 @@ An object of class \code{hsbm.reconstructed} containing:
 \itemize{
 \item \code{$data} The original binary input matrix.
 \item \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
-\item \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@JMB para qué queremos esto si ya está $tb?
 \item \code{$reconstructed_df}: A \code{list} with:
 \itemize{
-\item \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?
+\item \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. It is a cleaned version of the \code{$predictions$probs} component in \code{hsbm.predict}.
 \itemize{
 \item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
 \item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
 \item \code{p}: Predicted probabilities for each edge/link.
-\item \code{edge_type}: Type of edge: "documented" or "reconstructed".
+\item \code{edge_type}: Type of edge (e.g., "documented" or "reconstructed").
 }
 \item \code{res_averaged}: A \code{data.frame} summarizing predictions averaged across all folds, with columns:
 \itemize{
@@ -71,10 +76,10 @@ An object of class \code{hsbm.reconstructed} containing:
 \item \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
 \item \code{thresh}: The binary classification threshold value applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
 \item \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
-\item \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model. #@@JMB podemos llamarlo RLRR como en el otro artículo?
+\item \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
 \item \code{n_ones}: The total number of positive edges/links in the original data.
 \item \code{pred_tot_ones}: The proportion of positive edges/links in the original data that were correctly predicted as positive by the model.
-\item \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.  		#@@JMB estqo es así?
+\item \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.
 \item \code{precision}: The precision of the model, calculated as the ratio of true positives to the sum of true positives and false positives.
 \item \code{sens}: The sensitivity (or recall) of the model.
 \item \code{spec}: The specificity of the model.
@@ -87,16 +92,22 @@ An object of class \code{hsbm.reconstructed} containing:
 }
 }
 \description{
-This function generates a reconstructed bipartite binary matrix based on the HSBM model.
+This function generates a reconstructed bipartite binary
+matrix based on the HSBM model.
 }
 \details{
 \itemize{
-\item The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "conditional_missing""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "marginal_all""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
+\item The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and
+reconstruction process. When using \code{method = "conditional_missing"}, it is recommended to have \code{rm_documented = TRUE}
+to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them.
+Conversely, with \code{"method = "marginal_all""}, we recommend setting
+\code{rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
 \item The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
 \itemize{
-\item \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
-\item \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving the uncertainty.
-\item \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics.
+\item \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero.
+This assumes that \code{NA} indicates the absence of evidence for a link.
+\item \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics, treating them as missing data.
+\item \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving uncertainty.
 }
 \item The \code{threshold} parameter defines the method for determining the binary classification threshold. Available options include:
 \itemize{
@@ -112,8 +123,11 @@ This function generates a reconstructed bipartite binary matrix based on the HSB
 }
 \item The \code{consistency_matrix} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
 \itemize{
-\item \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to transform the averaged probabilities into a final binary matrix. The threshold used is the average threshold calculated for each folds.
-\item \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds. Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds the \code{ensemble_threshold}. The default \code{ensemble_threshold} is \code{0.1} if not specified.
+\item \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to
+transform the averaged probabilities into a final binary matrix. The threshold used is the average of the thresholds calculated for each fold.
+\item \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds.
+Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds
+the \code{ensemble_threshold}. The default \code{ensemble_threshold} is \code{0.1} if not specified.
 }
 }
 }
@@ -130,7 +144,7 @@ myInput <- hsbm.input(data = dat,
 myPred <- hsbm.predict(hsbm_input = myInput,
                       method = "conditional_missing",
                       iter = 1000,
-                      wait=1000)
+                      wait = 1000)
 ## End(Not run)
 
 # Load example HSBM reconstructed results
@@ -138,7 +152,7 @@ data(myPred, package = "sabinaHSBM")
 
 myReconst <- hsbm.reconstructed(myPred)
 
-# View the final reconstructed binary matrix
+# Get the final reconstructed binary matrix
 reconstructed_matrix <- myReconst$new_mat
 
 # Evaluation metrics

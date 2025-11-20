@@ -2,10 +2,15 @@ testing/*
 notes*
 docs/*docx
 docs/*tex
+docs/*bkp
+docs/*RData
 docs/carnivore*
 docs/*cache
 docs/*files
-docs/Supplementary_material*
+docs/Supporting_Information_S4*
+!docs/Supporting_Information_S4.pdf
 !docs/Supplementary_data_1.csv
 docs/ref.bib
 *lock*
+*Rplots.pdf
+*auctex*

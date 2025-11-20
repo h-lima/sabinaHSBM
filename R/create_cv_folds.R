@@ -1,35 +1,45 @@
-#' @title Create cross-validation folds with guaranteed connectivity and maximum link removal.
+#' @title Create cross-validation folds with guaranteed connectivity and "maximum" link removal.
 #'
-#' @description This function identifies the maximum number of removable links and partitions
+#' @description This function identifies the "maximum" number of removable links and partitions
 #' them into n_folds. It assigns links to folds to ensure that no
 #' node becomes disconnected (i.e., has a degree of zero) in the training
 #' matrix of any fold.
 #'
-#' @param com A binary (0/1) matrix.
-#' @param n_folds The number of folds to create. Defaults to 5.
-#' @param min_per_row The minimum degree a row node must have for any of its
+#' @param com A binary (0/1) \code{matrix}.
+#' @param n_folds (\emph{optional, default} \code{5}) \cr
+#' A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified,
+#' held-out links will not be computed. This is not recommended, as the main objective of the package is to predict
+#' missing links through cross-validation.
+#' @param min_per_row A code{numeric} specifying the minimum degree a row node must have for any of its
 #'   links to be considered for removal. Default is 2.
-#' @param min_per_col The minimum degree a column node must have for any of its
-#'   links to be considered for removal. Default is 2.
+#' @param min_per_col A code {numeric} specifying the minimum degree a column node
+#' must have for any of its links to be considered for removal. Default is 2.
+#' @param max_held_per_fold A code{numeric} specifying the maximum number
+#'   of held-out links to place in a fold. If a fold grows larger, its links will be
+#'   randomly subsampled to this size. Default is NULL (no limit).
+#' @param is_bipartite (\emph{optional, default} \code{TRUE}) \cr
+#' A \code{logical} indicating if interactions of node of same type (i.e. nodes in rows and nodes in columns) are to be removed from the inferred probabilities.
 #'
 #' @return A matrix with columns `row`, `col`, and `fold_id`, indicating
 #'   the removed links and their assigned fold for testing.
 #'
 #' @export
-create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2) {
+create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2,
+                            max_held_per_fold = NULL, is_bipartite = TRUE) {
 
     if(min_per_row < 2 || min_per_col < 2){
         stop("Error: min_per_row and min_per_col must be equal or greater than 2",
              " to guarantee only connected nodes.")
     }
     if(!is.matrix(com)) stop("Error: 'com' must be of type matrix.")
+    if(sum(com) ==  0) stop("Error: The provided matrix contains no links.")
     if(!all(com %in% c(0, 1))){
         com[com > 0] <- 1
         warning("Matrix was not binary and has been coerced to 0/1.")
     }
+    if(is_bipartite) com[upper.tri(com)] <- 0
 
     all_links <- which(com == 1, arr.ind = TRUE)
-    if(nrow(all_links) == 0) stop("Error: The provided matrix contains no links.")
 
     row_degrees <- rowSums(com)
     col_degrees <- colSums(com)
@@ -70,7 +80,8 @@ create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2) 
 
         if (length(valid_folds) == 0) {
             stop(paste("Could not find a valid fold for link", i,
-                       "(row=", r_node, ", col=", c_node, ")."))
+                       "(row=", r_node, ", col=", c_node, ").",
+                       " Re-run function or adjust arguments."))
         }
 
         # Choose smallest fold to keep them balanced
@@ -84,6 +95,27 @@ create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2) 
     }
 
     held_pairs <- cbind(shuffled_links, fold_id = fold_assignments)
+    held_pairs <- held_pairs[order(held_pairs[, 3]), ]
 
-    return(held_pairs[order(held_pairs[, 3]), ])
+    if(!is.null(max_held_per_fold)){
+        all_row_ind <- 1:nrow(held_pairs)
+        ind_by_fold <- split(all_row_ind, held_pairs[, 3])
+
+        subset_ind_lst <-
+            lapply(ind_by_fold,
+                function(row_ind) {
+                    if (length(row_ind) > max_held_per_fold) {
+                        return(sample(row_ind, max_held_per_fold))
+                    } else {
+                        return(row_indices)
+                    }
+                }
+            )
+
+        subset_ind <- unlist(subset_ind_lst, use.names = FALSE)
+        held_pairs <- held_pairs[subset_ind, , drop = FALSE]
+
+    }
+
+    return(held_pairs)
 }

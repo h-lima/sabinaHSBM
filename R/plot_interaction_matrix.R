@@ -1,10 +1,10 @@
 #' @name plot_interaction_matrix
 #'
-#' @title Plot binary bipartite Matrix
+#' @title Plot binary Matrix
 #'
-#' @description This function plots a (recontructed) binary bipartite matrix with options to reorder the matrix and customize the colors and axis titles.
+#' @description This function plots a (recontructed) binary matrix with options to reorder the matrix and customize the colors and axis titles.
 #'
-#' @param adj_mat A \code{matrix} or \code{data.frame} representing the interaction data to be plotted.
+#' @param adj_mat A \code{matrix} representing the interaction data to be plotted.
 #' @param order_mat (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether the matrix should be order by row frequencies.
 #' @param y_title (\emph{optional, default} \code{"Rows"}) \cr
@@ -14,7 +14,14 @@
 #' @param ... Further arguments for \code{image} R native function
 #'
 #' @details
-#' The \code{order_mat} argument indicates whether the interaction matrix should be iteratively reordered to enhance the grouping of links for improved visualization.
+#' The \code{order_mat} argument indicates whether the interaction matrix should
+#' be iteratively reordered to enhance the grouping of links for improved
+#' visualization.
+#'
+#' The default colors for the matrix are "white" for 0s and "red4" for 1s.
+#' If a single col is provided it will change the value for the 1s color. If two or more colors
+#' are provided in a vector, it will fallback to the behavior of the \code{image} function
+#' \code{col} argument.
 #'
 #' @return
 #' A plot of the interaction matrix.
@@ -30,6 +37,10 @@
 #' # data(myReconst, package = "sabinaHSBM")
 #' # plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 #'
+#' @seealso [graphics::image()]
+#'
+#' @importFrom graphics box image
+#'
 #' @export
 plot_interaction_matrix <- function(adj_mat, order_mat = TRUE,
                                     y_title = "Rows", x_title = "Columns", ...){
@@ -44,7 +55,9 @@ plot_interaction_matrix <- function(adj_mat, order_mat = TRUE,
         col <- c("white", col)
     }
     if(order_mat){
-        adj_mat <- order_com(adj_mat)
+        order_ij <- order_com(adj_mat, get_orders = TRUE)
+        adj_mat <- adj_mat[order(order_ij$i),
+                           order(order_ij$j)]
     }
     adj_mat <- t(adj_mat[nrow(adj_mat):1, ])
 
@@ -60,16 +73,22 @@ plot_interaction_matrix <- function(adj_mat, order_mat = TRUE,
 
 }
 
+#' @title Plot binary matrix from \code{hsbm.input} objects
+#'
+#' @description Use \code{plot_interaction_matrix} to plots a binary
+#' matrix from a \code{hsbm.input} object.
+#'
+#' @seealso \code{\link{plot_interaction_matrix}}
 #' @export
-plot.hsbm.input <- function(hsbm_input, col = "red4", order_mat = TRUE){
+plot.hsbm.input <- function(hsbm_input, col = "red4", order_mat = TRUE, ...){
 
     mat <- hsbm_input$data
-    plot_interaction_matrix(mat, col = col, order_mat = order_mat)
+    plot_interaction_matrix(mat, col = col, order_mat = order_mat, ...)
 
 }
 
 # This is a almost straight copy of a section
-# of nestedtemp function in vegan package (GPL2 Licensed)
+# of nestedtemp non-exported function in vegan package (GPL2 Licensed)
 order_com <- function(comm, get_orders = FALSE){
     colpack <- function(x, rr)
     {

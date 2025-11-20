@@ -125,9 +125,9 @@ def hsbm_predict(g, elist, wait = 1000,
             if s.entropy() < entropy:
                 entropy = s.entropy()
                 state_min_dl = s.copy()
-        print("Using conditional_missing")
+        print("Using conditional_missing...")
     elif method == "marginal_all":
-        print("Computing marginal_all")
+        print("Computing marginal_all...")
         # Collecting marginal for network reconstruction
         u = None
         def collect_marginals(s):
@@ -138,12 +138,12 @@ def hsbm_predict(g, elist, wait = 1000,
                 entropy = s.entropy()
                 state_min_dl = s.copy()
 
-    print("\tCollect marginals")
+    print("\tCollecting edge probabilities...")
     mcmc_equilibrate(state, force_niter = force_niter,
                      mcmc_args=dict(niter = niter),
                      callback = collect_marginals)
 
-    print("\tGather data")
+    print("\tGathering data...")
     if method == "conditional_missing":
         ps = []
         for i in range(len(all_missing)):
@@ -192,7 +192,8 @@ def hsbm_predict(g, elist, wait = 1000,
 
 
 get_groups <- function(){
-    return('def get_groups(state, g, name = None, save_path = None):
+    return('
+def get_groups(state, g, name = None, save_path = None):
     dl = state.entropy()
     nested_state = state.get_block_state()
     bstack = nested_state.get_bstack()
@@ -203,14 +204,14 @@ get_groups <- function(){
         # Get node ids from first projected partition
         if i == 0:
             nodes = np.arange(0, len(projected_partition))
-            levels = {"nodes": nodes}
-            col_names = ["nodes"]
+            levels = {"node": nodes}
+            col_names = ["node"]
 
         col_names.append(f"G{i + 1}")
         levels[col_names[i + 1]] = projected_partition
 
-    col_names.append("names")
-    levels["names"] = list(g.vp.names)
+    col_names.append("name")
+    levels["name"] = list(g.vp.names)
 
     df = pd.DataFrame(data = levels, columns = col_names)
 
@@ -233,8 +234,7 @@ def get_predicted_network(res_dict):
     g = res_dict["graph"]
     not_estimated = not_estimated_edges(g, u)
     if len(not_estimated) > 0:
-        print(f"\tA total of {len(not_estimated)} defined edges not estimated")
-        #print("\t\t", not_estimated)
+        print(f"\tA total of {len(not_estimated)} defined edges not found on marginal graph.")
 
     pred_dict = {"v1": [], "v2": [], "p": [],
                  "v1_names": [], "v2_names": [],
@@ -284,7 +284,7 @@ def save_pickle(res_dict, i):
     pkl_file = f"hsbm_res_fold{i}.pkl"
     with open(pkl_file, "wb") as pkl:
         pickle.dump(res_dict, pkl)
-    print(f"\tPython pickle save as {pkl_file}.")
+    print(f"\tPython pickle saved as {pkl_file}.")
     return(0)
 ')
 
@@ -296,7 +296,7 @@ save_plot <- function(){
 def save_plot(nested_state, i):
     plt_name = f"hierarchical_plot_fold{i}.pdf"
     nested_state.get_block_state().draw(output = plt_name)
-    print(f"\tHierarchical edge bundling plot saved {plt_name}.")
+    print(f"\tHierarchical edge bundling plot saved as {plt_name}.")
     return(0)
     ')
 }

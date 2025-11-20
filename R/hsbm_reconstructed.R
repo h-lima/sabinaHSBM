@@ -1,38 +1,47 @@
 #' @name hsbm.reconstructed
 #'
-#' @title Generate a reconstructed bipartite binary matrix from Hierarchical Stochastic Block Model (HSBM)
+#' @title Generate a reconstructed binary matrix from
+#' Hierarchical Stochastic Block Model (HSBM)
 #'
-#' @description This function generates a reconstructed bipartite binary matrix based on the HSBM model.
+#' @description This function generates a reconstructed binary
+#' matrix based on the HSBM model.
 #'
-#' @param hsbm_out An object of class \code{hsbm.output} containing the output from the HSBM analysis, including predictions and input data.
+#' @param hsbm_out An object of class \code{hsbm.output} containing the output
+#' from the HSBM analysis, including predictions and input data.
 #' @param rm_documented (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} value indicating whether to remove documented entries (1s) from the evaluation.
 #' @param na_treatment (\emph{optional, default} \code{"na_to_0"}) \cr
-#' A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions. Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.
+#' A \code{character} string specifying how to handle \code{NA} values derived from HSBM predictions.
+#' Options include \code{"na_to_0"}, \code{"ignore_na"}, and \code{"keep_na"}. See Details for available options.
 #' @param threshold (\emph{optional, default} \code{"prc_closest_topright"}) \cr
-#' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for binary classification of predictions. See Details for available options.
+#' A \code{character} string or \code{numeric} value specifying the method to determine the threshold for
+#' binary classification of predictions. See Details for available options.
 #' @param consistency_matrix (\emph{optional, default} \code{"average_thresholded"}) \cr
-#' A \code{character} string specifying the method for creating the new reconstructed matrix. Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.
+#' A \code{character} string specifying the method for creating the new reconstructed matrix.
+#' Options include \code{"average_thresholded"} and \code{"ensemble_binary"}. See Details for available options.
 #' @param ensemble_threshold (\emph{optional, default} \code{NULL}) \cr
-#' A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default is \code{0.1} (at least one fold must predict presence).
+#' A \code{numeric} value \code{(0-1)} for \code{consistency_matrix = "ensemble_binary"} specifying the minimum proportion
+#' of folds that must predict a link as present \code{(1)} for it to be included in the final binary matrix. Default
+#' is \code{0.1} (for 10 folds it means at least one fold must predict presence).
 #' The behavior of \code{ensemble_threshold} depends on the value of \code{consistency_matrix}:
 #' - If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
 #' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds).
+#' @param is_bipartite (\emph{optional, default} \code{TRUE}) \cr
+#' A \code{logical} indicating if interactions of node of same type (i.e. nodes in rows and nodes in columns) are to be removed from the inferred probabilities.
 #'
 #' @return
 #' An object of class \code{hsbm.reconstructed} containing:
 #' - \code{$data} The original binary input matrix.
 #' - \code{$pred_mats} A \code{list} of matrices with predicted probabilities for each fold.
-#' - \code{$reconstructed_stats}: A \code{list} containing evaluation statistics for each fold. #@@@JMB para qué queremos esto si ya está $tb?
 #' - \code{$reconstructed_df}: A \code{list} with:
-#'   - \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. Columns include:  #@@@ qué diferencia hay con $predictions$probs de hsbm.predict y con $reconstructed_df$pred_mats de hsbm.reconstructed? Se puede dejar solo los data.frame?
-#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
-#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+#'   - \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. It is a cleaned version of the \code{$predictions$probs} component in \code{hsbm.predict}.
+#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) of nodes.
+#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) of nodes.
 #'     - \code{p}: Predicted probabilities for each edge/link.
-#'     - \code{edge_type}: Type of edge: "documented" or "reconstructed".
+#'     - \code{edge_type}: Type of edge (e.g., "documented" or "reconstructed").
 #'   - \code{res_averaged}: A \code{data.frame} summarizing predictions averaged across all folds, with columns:
-#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
-#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+#'     - \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) of nodes.
+#'     - \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) of nodes.
 #'     - \code{p}: Average predicted probabilities for each edge/link.
 #'     - \code{sd}: Standard deviation of predicted probabilities across folds.
 #'     - \code{range}: Range of predicted probabilities across folds.
@@ -45,10 +54,10 @@
 #'   - \code{yPRC}: The baseline of Precision-Recall Curve for the fold.
 #'   - \code{thresh}: The binary classification threshold value applied to the predicted probabilities to convert them into binary classifications (0 or 1) for the fold.
 #'   - \code{n_heldout}: The number of edges/links in the held-out set of the cross-validation fold, i.e., the edges that were excluded from the model training and used for evaluation.
-#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model. #@@@JMB podemos llamarlo RLRR como en el otro artículo?
+#'   - \code{pred_held_ones}: The proportion of held-out edges/links that were correctly predicted as 1s by the model.
 #'   - \code{n_ones}: The total number of positive edges/links in the original data.
 #'   - \code{pred_tot_ones}: The proportion of positive edges/links in the original data that were correctly predicted as positive by the model.
-#'   - \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.  		#@@@JMB estqo es así?
+#'   - \code{total_pred_ones}: The total number of positive edges/links predicted by the model in the reconstructed matrix.
 #'   - \code{precision}: The precision of the model, calculated as the ratio of true positives to the sum of true positives and false positives.
 #'   - \code{sens}: The sensitivity (or recall) of the model.
 #'   - \code{spec}: The specificity of the model.
@@ -59,12 +68,17 @@
 #' - \code{$threshold}: The method or value used to determine the binary classification threshold.
 #'
 #' @details
-#' - The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and recosntruction process. When using \code{"method = "conditional_missing""}, set \code{"rm_documented = TRUE} to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them. Conversely, with \code{"method = "marginal_all""}, set \code{"rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
+#' - The \code{rm_documented} parameter determines whether observed/documented edges/links (1s) are considered in the evaluation and
+#' reconstruction process. When using \code{method = "conditional_missing"}, it is recommended to have \code{rm_documented = TRUE}
+#' to exclude observed/documented links (1s) from evaluation and network reconstruction, as no probabilities are computed for them.
+#' Conversely, with \code{"method = "marginal_all""}, we recommend setting
+#' \code{rm_documented = FALSE} to include observed/documented edges/links in the evaluation and reconstruction process.
 #'
 #' - The \code{na_treatment} parameter specifies how to handle \code{NA} values in the predictions. Available options are:
-#'   - \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero. This assumes that \code{NA} indicates the absence of evidence for a link.
-#'   - \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving the uncertainty.
-#'   - \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics.
+#'   - \code{"na_to_0"}: Interprets \code{NA} values as no evidence for an existing link and assigns them a value of zero.
+#' This assumes that \code{NA} indicates the absence of evidence for a link.
+#'   - \code{"ignore_na"}: Ignores \code{NA} values when calculating averages and other metrics, treating them as missing data.
+#'   - \code{"keep_na"}: Retains \code{NA} values in the output when at least one fold predicts an \code{NA}, preserving uncertainty.
 #'
 #' - The \code{threshold} parameter defines the method for determining the binary classification threshold. Available options include:
 #'   - \code{"roc_youden"}: Maximizes the Youden's J statistic (sensitivity + specificity - 1).
@@ -78,8 +92,11 @@
 #'   - Alternatively, a numeric value between 0 and 1 can be provided as a custom threshold.
 #'
 #' - The \code{consistency_matrix} parameter specifies the method used to generate the new reconstructed matrix. Valid options are:
-#'   - \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to transform the averaged probabilities into a final binary matrix. The threshold used is the average threshold calculated for each folds.
-#'   - \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds. Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds the `ensemble_threshold`. The default `ensemble_threshold` is `0.1` if not specified.
+#'   - \code{"average_thresholded"}: This method averages the predicted probability matrices across all folds and applies a threshold to
+#' transform the averaged probabilities into a final binary matrix. The threshold used is the average of the thresholds calculated for each fold.
+#'   - \code{"ensemble_binary"}: This method first transform predicted probability matrices into binary matrices using fold-specific thresholds.
+#' Then, an \code{ensemble_threshold} is applied to aggregate these binary matrices into a final binary matrix, setting an entry to 1 if it exceeds
+#' the `ensemble_threshold`. The default `ensemble_threshold` is `0.1` if not specified.
 #'
 #'
 #' @seealso \code{\link{hsbm.predict}}
@@ -97,7 +114,7 @@
 #' myPred <- hsbm.predict(hsbm_input = myInput,
 #'                       method = "conditional_missing",
 #'                       iter = 1000,
-#'                       wait=1000)
+#'                       wait = 1000)
 #' ## End(Not run)
 #'
 #' # Load example HSBM reconstructed results
@@ -105,7 +122,7 @@
 #'
 #' myReconst <- hsbm.reconstructed(myPred)
 #'
-#' # View the final reconstructed binary matrix
+#' # Get the final reconstructed binary matrix
 #' reconstructed_matrix <- myReconst$new_mat
 #'
 #' # Evaluation metrics
@@ -120,11 +137,11 @@
 #'
 #' @export
 hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
-                               spurious_edges = FALSE,  #@@@JMB pensar si al final entra o no. SI se queda, hay que poner en la docu
                                na_treatment = "na_to_0",
                                threshold = "roc_youden",
                                consistency_matrix = "average_thresholded",
-                               ensemble_threshold = NULL){
+                               ensemble_threshold = NULL,
+                               is_bipartite = TRUE){
 
     if(!inherits(hsbm_out, "hsbm.predict")) {
         stop("Error: hsbm_out must be an object of hsbm.predict class. Consider running hsbm.predict() function.")
@@ -140,12 +157,12 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
     if(rm_documented & hsbm_out$method == "marginal_all") {
         warning("\`rm_documented` was set to TRUE for the `marginal_all` method. ",
                 "Documented links (original 1s) were removed for evaluation. ",
-                "Ensure this setting was appropriate for your analysis.\n")
+                "Ensure this setting is appropriate for your analysis.\n")
     }
     if(!rm_documented & hsbm_out$method == "conditional_missing") {
         warning("\n`rm_documented` was set to FALSE for the `conditional_missing` method. ",
                 "Documented links (1s) were included in evaluation, even though no probabilities ",
-                "were computed for them. Ensure this setting was appropriate for your analysis.\n")
+                "were computed for them. Ensure this setting is appropriate for your analysis.\n")
     }
     if (consistency_matrix == "ensemble_binary" & is.null(ensemble_threshold)) {
         message("\nNo `ensemble_threshold` provided; defaulting to 0.1.\n")
@@ -160,7 +177,8 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
 
     hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out,
                                                             input_names = TRUE,
-                                                            na_treatment = na_treatment)
+                                                            na_treatment = na_treatment,
+                                                            is_bipartite = is_bipartite)
     n_folds <- length(hsbm_out$probs)
     for(i in 1:n_folds){
         reconstruction_i <- get_reconstruction(hsbm_reconstructed$reconstructed_df$res_folds,
@@ -169,25 +187,20 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                                                folds = hsbm_out$folds,
                                                method = hsbm_out$method,
                                                rm_documented = rm_documented,
-                                               spurious_edges = spurious_edges,
                                                na_treatment = na_treatment,
-                                               threshold = threshold)
+                                               threshold = threshold,
+                                               is_bipartite = is_bipartite)
         hsbm_reconstructed$pred_mats[[i]] <- reconstruction_i$pred_mat
         reconstructed_stats[[i]] <- reconstruction_i$stats
         binary_mats[[i]] <- reconstruction_i$new_bin_mat
     }
 
-    if(spurious_edges){
-        spurious_name <- "spurious_ones"
-    }else{
-        spurious_name <- NULL
-    }
     tb_all <- do.call(rbind, reconstructed_stats)
     tb_all <- data.frame(cbind(1:n_folds, tb_all))
     #yPRC is the baseline of Precision-Recall Curve
     colnames(tb_all) <- c("folds", "auc",
                           "aucpr", "yPRC", "thresh",
-                          "n_heldout", "pred_held_ones", spurious_name,
+                          "n_heldout", "pred_held_ones",
                           "n_ones", "pred_tot_ones", "total_pred_ones",
                           "precision", "sens", "spec", "ACC", "ERR","tss")
 
@@ -211,7 +224,9 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
     return(hsbm_reconstructed)
 }
 
-get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na_to_0"){
+get_hsbm_results <- function(hsbm_output, input_names = TRUE,
+                             na_treatment = "na_to_0",
+                             is_bipartite = TRUE){
 
     if(!inherits(hsbm_output, "hsbm.predict")){
         stop("Error: hsbm_output argument must be an hsbm.predict object.")
@@ -220,9 +235,11 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     com <- hsbm_output$data
     n_v1 <- nrow(hsbm_output$data)
     folds_res_list <- lapply(hsbm_output$probs,
-                             function(x){
-                                 df <- tidy_hsbm_results(x, n_v1)
-                                 return(df)
+                            function(x){
+                                df <- tidy_hsbm_results(gt_df = x,
+                                                        n_v1 = n_v1,
+                                                        is_bipartite = is_bipartite)
+                                return(df)
                               })
 
     # Join all fold results
@@ -233,7 +250,8 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     nr_na <- apply(folds_res_all[, p_cols], 1, function(x) sum(is.na(x)))
     if(na_treatment == "na_to_0"){
         na_rm <- TRUE
-        folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols, ~tidyr::replace_na(.,0))
+        folds_res_all <- dplyr::mutate_if(folds_res_all, p_cols,
+                                          ~tidyr::replace_na(.,0))
     }else if(na_treatment == "ignore_na"){
         na_rm <- TRUE
     }else if(na_treatment == "keep_na"){
@@ -241,10 +259,13 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
     }else{
         stop("Error: Unkown na_treatment argument.")
     }
-    folds_res_all$p <- rowMeans(folds_res_all[, p_cols], na.rm = na_rm)
-    folds_res_all$sd <- apply(folds_res_all[, p_cols], 1, function(x) sd(x, na.rm = na_rm))
-    folds_res_all$range <- apply(folds_res_all[, p_cols], 1,
-                                 function(x) max(x, na.rm = na_rm) - min(x, na.rm = na_rm))
+    all_p <- rowMeans(folds_res_all[, p_cols], na.rm = na_rm)
+    all_sd <- apply(folds_res_all[, p_cols], 1, function(x) stats::sd(x, na.rm = na_rm))
+    all_range <- apply(folds_res_all[, p_cols], 1,
+                       function(x) max(x, na.rm = na_rm) - min(x, na.rm = na_rm))
+    folds_res_all$p <- all_p
+    folds_res_all$sd <- all_sd
+    folds_res_all$range <- all_range
     folds_res_all$nr_na <- nr_na
     edge_type_cols <- stringr::str_detect(colnames(folds_res_all), "edge_type\\.")
 
@@ -254,42 +275,51 @@ get_hsbm_results <- function(hsbm_output, input_names = TRUE, na_treatment = "na
                           if("documented" %in% edge_types){
                               return("documented")
                           }else if("spurious_edge" %in% edge_types){
-                              return("reconstructed")
-                          }else{
-                              return(paste0(stringr::str_replace_na(edge_types, replacement=""),
+                              return("spurious_edge")
+                         }else{
+                              return(paste0(stringr::str_replace_na(edge_types,
+                                                                    replacement=""),
                                             collapse = ""))
                           }
                   })
 
     folds_res_all$edge_type <- et
-    folds_select <- dplyr::select(folds_res_all, v1, v2,
-                                  v1_names = v1_names.x,
-                                  v2_names = v2_names.x,
-                                  p, sd, range, edge_type, nr_na)
+    folds_select <- dplyr::select(folds_res_all, "v1", "v2",
+                                  v1_names = "v1_names.x",
+                                  v2_names = "v2_names.x",
+                                  "p", "sd", "range", "edge_type", "nr_na")
     if(input_names){
         v1_row <- folds_select$v1 + 1
-        v2_col <- folds_select$v2 - n_v1 + 1
         folds_select$v1_names <- rownames(com)[v1_row]
-        folds_select$v2_names <- colnames(com)[v2_col]
+        if(is_bipartite){
+            v2_col <- folds_select$v2 - n_v1 + 1
+            folds_select$v2_names <- colnames(com)[v2_col]
+        }else{
+            v2_col <- folds_select$v2 + 1
+            folds_select$v2_names <- colnames(com)[v2_col]
+        }
     }
 
-    min_size_warning <- 0.5 * prod(dim(com))
+    min_size_warning <- 0.25 * prod(dim(com))
     if((hsbm_output$method == "marginal_all") && (nrow(folds_select) < min_size_warning)) {
         percentage <- 100 * (nrow(folds_select) / prod(dim(com)))
-        warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations.", percentage)) #@@@JMB which iterations? iter? wait?
+        warning(sprintf("Predictions obtained for %.2f%% of the links. Consider increasing the number of iterations (iter argument in hsbm.predict()).", percentage))
     }
 
     return(list(res_folds = folds_res_list, res_averaged = folds_select))
 
 }
 
-
 get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold,
                                na_treatment, rm_documented = FALSE,
-                               spurious_edges = FALSE){
+                               spurious_edges = FALSE, is_bipartite = TRUE){
     df <- res_folds[[fold_id]]
     rows <- as.numeric(df$v1) + 1
-    cols <- as.numeric(df$v2) - nrow(com) + 1
+    if(is_bipartite){
+        cols <- as.numeric(df$v2) - nrow(com) + 1
+    }else{
+        cols <- as.numeric(df$v2) + 1
+    }
     ps <- df$p
     com_train <- com
     com_i <- com
@@ -314,7 +344,7 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
     perf <- ROCR::performance(pred, measure = "tpr", x.measure = "fpr")
     perf2 <- ROCR::performance(pred, "prec", "rec")
 
-    thresh <-sel_thresh(threshold, perf, perf2, f)
+    thresh <-sel_thresh(threshold, perf, perf2, f, pred)
 
     perf_prec <- ROCR::performance(pred, measure = "prec")
     perf_sens <- ROCR::performance(pred, measure = "sens")
@@ -349,7 +379,12 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
         com_fit[cbind(rows, cols)] <- ps
     }
 
-    com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
+    # Make sure threshold 0.5 does not give missing links
+    if(thresh == 0.5){
+        com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
+    }else{
+        com_fit_bin <- ifelse(com_fit >= thresh, 1, 0)
+    }
     n_heldout <- nrow(row_col)
     documented_ones <- sum(com)
     pred_tot_ones <- sum((com + com_fit_bin) == 2, na.rm = TRUE)/ sum(com)
@@ -358,7 +393,8 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
 
     spurious_ones <- NULL
     if(spurious_edges){
-        spurious <- dplyr::filter(df, edge_type == "spurious_edge")
+        cond <- (df$edge_type == "spurious_edge")
+        spurious <- dplyr::filter(df, cond)
         spurious_ones <- sum(spurious$p > thresh)
     }
 
@@ -391,7 +427,8 @@ avg_mat <- function(reconstructed_mats_list, thresh, na_treatment, method = "ave
     }else{
         na_rm <- TRUE
     }
-    mat_avg <- apply(simplify2array(reconstructed_mats_list), 1:2, mean, na.rm = na_rm)
+    mat_avg <- apply(simplify2array(reconstructed_mats_list), 1:2, mean,
+                     na.rm = na_rm)
 
     mat_avg_bin <- 1*(mat_avg >= thresh)
 
@@ -401,15 +438,30 @@ avg_mat <- function(reconstructed_mats_list, thresh, na_treatment, method = "ave
 
 
 # First column is v1 and second is v2
-tidy_hsbm_results <- function(gt_df, n_v1 = 447){
+tidy_hsbm_results <- function(gt_df, n_v1 = 447, is_bipartite = TRUE){
+
+    if(!is_bipartite){
+        gt_df <- dplyr::mutate(gt_df,
+                               new_v1 = pmin(as.character(v1), as.character(v2)),
+                               new_v2 = pmax(as.character(v1), as.character(v2))) %>%
+                     dplyr::group_by(new_v1, new_v2) %>%
+                     dplyr::summarise(p = mean(p),
+                                      v1_names = dplyr::first(v1_names),
+                                      v2_names = dplyr::first(v2_names),
+                                      edge_type = dplyr::first(edge_type),
+                                      .groups = 'drop')
+        gt_df <- dplyr::mutate_at(gt_df, c("new_v1", "new_v2"), as.numeric)
+        colnames(gt_df)[1:2] <- c("v1", "v2")
+        return(gt_df)
+    }
+
     last_v1_v <- n_v1 - 1
     # Remove v2 to v2 and v1 to v1 links
-    # (this can be aranged by flag the graph as bipartite)
     v2_v2_link <- apply(gt_df[, 1:2], 1,
-                          function(x) x[1] > last_v1_v & x[2] > last_v1_v)
+                        function(x) x[1] > last_v1_v & x[2] > last_v1_v)
     gt_df <- gt_df[!v2_v2_link, ]
     v1_v1_link <- apply(gt_df[, 1:2], 1,
-                           function(x) x[1] <= last_v1_v & x[2] <= last_v1_v)
+                        function(x) x[1] <= last_v1_v & x[2] <= last_v1_v)
     gt_df <- gt_df[!v1_v1_link, ]
 
     #Swap links where v1 is v2 and v2 v1
@@ -427,8 +479,7 @@ tidy_hsbm_results <- function(gt_df, n_v1 = 447){
     return(gt_df)
 }
 
-
-sel_thresh<- function(threshold, perf, perf2, f) {
+sel_thresh<- function(threshold, perf, perf2, f, pred) {
 	 THRESH_names<-c("roc_youden",
 			  "roc_closest_topleft",
 			  "roc_equal_sens_spec",

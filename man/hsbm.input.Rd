@@ -10,7 +10,7 @@ hsbm.input(
   folds = NULL,
   min_per_col = 2,
   min_per_row = 2,
-  add_spurious = FALSE,
+  max_held_per_fold = NULL,
   no_heldout = FALSE
 )
 }
@@ -23,10 +23,20 @@ A \code{numeric} value specifying the number of cross-validation folds to genera
 \item{folds}{(\emph{optional, default} \code{NULL}) \cr
 An optional \code{matrix} of precomputed cross-validation folds for the input data \code{data}. If \code{NULL} (default), folds are generated internally using \code{create_cv_folds()}.}
 
-\item{min_per_col}{A \code{numeric} value specifying the minimum number of non-zero entries required per column to be considered for removal. Default is 2.}
+\item{min_per_col}{A code {numeric} specifying the minimum degree a column node must have for any of its
+links to be considered for removal. Default is 2.}
 
-\item{min_per_row}{A \code{numeric} value specifying the minimum number of non-zero entries required per row to be considered for removal. Default is 2.
-#@@JMB pendiente param add_spurious?? y no_heldout}
+\item{min_per_row}{A code{numeric} specifying the minimum degree a row node must have for any of its
+links to be considered for removal. Default is 2.}
+
+\item{max_held_per_fold}{(\emph{optional, default} \code{NULL}) \cr
+An optional code{numeric} specifying the maximum number
+of held-out links to place in a fold. If a fold grows larger, its links will be
+randomly subsampled to this size. Default is NULL (no limit).}
+
+\item{no_heldout}{(\emph{optional, default} \code{FALSE}) \cr
+A \code{logical} value, that when \code{TRUE} does not encode removed links in
+cross-validation as held-outs.}
 }
 \value{
 An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
@@ -42,7 +52,7 @@ An object of class \code{hsbm.input} containing the organized input data, the cr
 \item \code{col_names} Names of the nodes corresponding to the columns in the original bipartite matrix, representing the second type of nodes.
 \item \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
 \item \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
-\item \code{x} The observed values for each node pair (i, j), where \( x_{ij} \in \{0, 1\} \) represents the reported matrix \( A \). Here, \( x_{ij} = 1 \) indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
+\item \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \( D \). Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
 }
 }
 }
@@ -52,15 +62,15 @@ This function prepares the input data necessary for running the \bold{Hierarchic
 \details{
 \itemize{
 \item The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction/link between the nodes represented by rows and columns.
-\item The \code{folds} parameter, if provided, should be a \code{matrix} containing pairs of indices (row, column) representing held-out edges/links during cross-validation.
+\item The \code{folds} parameter, if provided, should be a \code{matrix} containing three columns. The first two columns should be pairs of indices (row, column) representing held-out edges/links during cross-validation.
 It typically contains columns:
 \describe{
 \item{row}{Indices of rows where edges/links are held out.}
 \item{col}{Indices of columns where edges/links are held out.}
-\item{gr}{Group identifier indicating which cross-validation fold the edge/link pair belongs to.}
+\item{fold_id}{Fold identifier indicating which cross-validation fold the edge/link pair belongs to.}
 }
 \item If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
-\item The \code{edgelists} are created using the \code{hsbm_edgelist} function for each fold, incorporating information on the number of observations per row and column.
+\item The \code{edgelists} are created for each fold, incorporating information on the number of observations per row and column.
 }
 }
 \examples{

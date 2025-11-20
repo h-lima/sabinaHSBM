@@ -13,7 +13,7 @@ plot_interaction_matrix(
 )
 }
 \arguments{
-\item{adj_mat}{A \code{matrix} or \code{data.frame} representing the interaction data to be plotted.}
+\item{adj_mat}{A \code{matrix} representing the interaction data to be plotted.}
 
 \item{order_mat}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether the matrix should be order by row frequencies.}
@@ -33,7 +33,14 @@ A plot of the interaction matrix.
 This function plots a (recontructed) binary bipartite matrix with options to reorder the matrix and customize the colors and axis titles.
 }
 \details{
-The \code{order_mat} argument indicates whether the interaction matrix should be iteratively reordered to enhance the grouping of links for improved visualization.
+The \code{order_mat} argument indicates whether the interaction matrix should
+be iteratively reordered to enhance the grouping of links for improved
+visualization.
+
+The default colors for the bipartite matrix are "white" for 0s and "red4" for 1s.
+If a single col is provided it will change the value for the 1s color. If two or more colors
+are provided in a vector, it will fallback to the behavior of the \code{image} function
+\code{col} argument.
 }
 \examples{
 # Load example HSBM prediction results
@@ -46,4 +53,7 @@ plot_interaction_matrix(dat)
 # data(myReconst, package = "sabinaHSBM")
 # plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 
+}
+\seealso{
+\code{\link[graphics:image]{graphics::image()}}
 }

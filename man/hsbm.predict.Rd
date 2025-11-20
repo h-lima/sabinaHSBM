@@ -22,7 +22,7 @@ hsbm.predict(
 \item{hsbm_input}{An object of class \code{hsbm.input} containing the necessary data and configurations for running the HSBM analysis.}
 
 \item{elist_i}{(\emph{optional, default} \code{NULL}) \cr
-A \code{numeric} value specifying the index of the edge list (fold) from an \code{hsbm.input}to run predictions on. If \code{NULL}, predictions are run for all edge lists.}
+A \code{numeric} value specifying the index of the edge list (fold) from an \code{hsbm.input} object to run predictions on. If \code{NULL}, predictions are run for all edge lists.}
 
 \item{method}{(\emph{optional, default} \code{"conditional_missing"}) \cr
 A \code{character} string specifying the method used for the HSBM prediction. Options include \code{"conditional_missing"} and \code{"marginal_all"}.}
@@ -34,7 +34,7 @@ A \code{character} string specifying the method used for the HSBM prediction. Op
 \item{rnd_seed}{A \code{numeric} value specifying a seed for the random number generator in graph-tool and numpy python modules. Default is \code{NULL} which does not set a random seed.}
 
 \item{verbose}{(\emph{optional, default} \code{TRUE}) \cr
-A \code{logical} value indicating whether to print progress messages during prediction.}
+A \code{logical} value indicating whether to print progress messages during prediction. When n_cores > 1, progress can get scrambled to the multiple processes at the same time.}
 
 \item{save_blocks}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} value indicating whether to save group assignments (blocks) for nodes in the network during the prediction process.}
@@ -95,7 +95,17 @@ This method allows identifying both missing links (unobserved/undocumented edges
 }
 }
 \item The \code{save_blocks} parameter determines whether group assignments (blocks) for nodes are saved during prediction. Set this to \code{FALSE} to skip saving block information.
-\item The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index. The pickle object is a dictionary with 5 elements. enum..... #@@
+\item The \code{save_pickle} parameter, when \code{TRUE}, saves the model results as Python pickle file. Files are saved in the working directory named as \code{hsbm_res_fold<i>.pkl}, where \code{i} corresponds to the fold index.
+The pickle object is a dictionary with 5 elements for the \code{"conditional_missing"} method
+and 6 elements for the \code{"marginal_all"} method. The elements are:
+\describe{
+\item{"graph"}{\code{graph_tool} graph object used for inference.}
+\item{"state"}{Last sampled state during MCMC sampling.}
+\item{"state_min_dl"}{State/solution with the minimum description length over all MCMC sampling.}
+\item{"min_dl"}{Value of the minimum description length found in MCMC sampling. So it is the value of the description length of \code{state_min_dl}.}
+\item{"pred_probs"}{A pandas dataframe with the predicted probabilites of each link and respective edge types, names and indices.}
+\item{"pred_graph"}{Only \code{"marginal_all"} method. The marginal graph containing the marginal probabilities for each edge.}
+}
 \item If \code{save_plots = TRUE}, hierarchical edge bundling plots are saved in the working directory as PDF files named \code{hsbm_plot_foldi.pdf}, where \code{i} refers to the fold index.
 }
 }

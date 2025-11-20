@@ -2,27 +2,40 @@
 % Please edit documentation in R/create_cv_folds.R
 \name{create_cv_folds}
 \alias{create_cv_folds}
-\title{Create cross-validation folds with guaranteed connectivity and maximum link removal.}
+\title{Create cross-validation folds with guaranteed connectivity and "maximum" link removal.}
 \usage{
-create_cv_folds(com, n_folds = 5, min_per_row = 2, min_per_col = 2)
+create_cv_folds(
+  com,
+  n_folds = 5,
+  min_per_row = 2,
+  min_per_col = 2,
+  max_held_per_fold = NULL
+)
 }
 \arguments{
-\item{com}{A binary (0/1) matrix.}
+\item{com}{A binary (0/1) \code{matrix}.}
 
-\item{n_folds}{The number of folds to create. Defaults to 5.}
+\item{n_folds}{(\emph{optional, default} \code{5}) \cr
+A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified,
+held-out links will not be computed. This is not recommended, as the main objective of the package is to predict
+missing links through cross-validation.}
 
-\item{min_per_row}{The minimum degree a row node must have for any of its
+\item{min_per_row}{A code{numeric} specifying the minimum degree a row node must have for any of its
 links to be considered for removal. Default is 2.}
 
-\item{min_per_col}{The minimum degree a column node must have for any of its
-links to be considered for removal. Default is 2.}
+\item{min_per_col}{A code {numeric} specifying the minimum degree a column node
+must have for any of its links to be considered for removal. Default is 2.}
+
+\item{max_held_per_fold}{A code{numeric} specifying the maximum number
+of held-out links to place in a fold. If a fold grows larger, its links will be
+randomly subsampled to this size. Default is NULL (no limit).}
 }
 \value{
 A matrix with columns \code{row}, \code{col}, and \code{fold_id}, indicating
 the removed links and their assigned fold for testing.
 }
 \description{
-This function identifies the maximum number of removable links and partitions
+This function identifies the "maximum" number of removable links and partitions
 them into n_folds. It assigns links to folds to ensure that no
 node becomes disconnected (i.e., has a degree of zero) in the training
 matrix of any fold.
