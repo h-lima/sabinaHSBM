@@ -42,7 +42,7 @@ cross-validation as held-outs.}
 \item{is_bipartite}{(\emph{optional, default} \code{TRUE}) \cr
 A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
 If \code{FALSE} the matrix is taken as unipartite.
-If the matrix is unipartite, only the lower diagonal (diagonal included) to generate the edgelist and subsequent predictions.}
+If the matrix is unipartite, only the lower triangular (diagonal included) is used to generate the edgelist and subsequent predictions.}
 }
 \value{
 An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:

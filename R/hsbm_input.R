@@ -23,7 +23,7 @@
 #' @param is_bipartite (\emph{optional, default} \code{TRUE}) \cr
 #' A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
 #' If \code{FALSE} the matrix is taken as unipartite.
-#' If the matrix is unipartite, only the lower diagonal (diagonal included) to generate the edgelist and subsequent predictions.
+#' If the matrix is unipartite, only the lower triangular (diagonal included) is used to generate the edgelist and subsequent predictions.
 #'
 #' @return
 #' An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
@@ -37,7 +37,7 @@
 #'   - \code{col_names} Names of the nodes corresponding to the columns in the original matrix.
 #'   - \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
 #'   - \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
-#'   - \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \( D \). Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
+#'   - \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \eqn{D}. Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \eqn{x_{ij} = 0} indicates that there is no edge/link.
 #'
 #' @details
 #' - The \code{data} parameter should be a \code{matrix} or \code{data.frame} where each entry represents the presence of interaction/link between the nodes represented by rows and columns.
