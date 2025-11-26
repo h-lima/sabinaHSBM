@@ -9,7 +9,8 @@ create_cv_folds(
   n_folds = 5,
   min_per_row = 2,
   min_per_col = 2,
-  max_held_per_fold = NULL
+  max_held_per_fold = NULL,
+  is_bipartite = TRUE
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ must have for any of its links to be considered for removal. Default is 2.}
 \item{max_held_per_fold}{A code{numeric} specifying the maximum number
 of held-out links to place in a fold. If a fold grows larger, its links will be
 randomly subsampled to this size. Default is NULL (no limit).}
+
+\item{is_bipartite}{(\emph{optional, default} \code{TRUE}) \cr
+A \code{logical} indicating if interactions of node of same type (i.e. nodes in rows and nodes in columns) are to be removed from the inferred probabilities.}
 }
 \value{
 A matrix with columns \code{row}, \code{col}, and \code{fold_id}, indicating

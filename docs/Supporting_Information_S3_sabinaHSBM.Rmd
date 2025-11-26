@@ -5,8 +5,10 @@ output:
     latex_engine: xelatex
 ---
 
-```{r load_pkg, include = TRUE}
+```{r load_pkg, include = FALSE, echo = TRUE, message = FALSE, warning = FALSE, results='hide'}
+library(dplyr)
 library(ggplot2)
+library(reshape2)
 library(RColorBrewer)
 ```
 
@@ -21,10 +23,10 @@ including data preparation, link prediction, and network reconstruction.
 
 There are **two ways** to use the package:
 
-## Option A: Docker (recommended)
+## Option A: Docker 
 
 **Non-native UNIX users** or those who prefer to avoid manual dependency installation can 
-use the provided **ready-to-use Docker image** (includes R, Python, all dependencies, and
+use the provided **ready-to-use Docker image** which includes R, Python, all dependencies, and
 *sabinaHSBM* pre-installed (see Supporting Information S1 for Docker container setup).
 
 Once the container is running, simply load the package in your R session with:
@@ -36,21 +38,22 @@ library(sabinaHSBM)
 ## Option B: Native UNIX installation
 
 **Native UNIX users** can run *sabinaHSBM* locally **if** their system includes:
-   - R (version $\leq$ 4.0.4) with all required R packages (listed below)
-   - Python $\leq$ with the `graph-tool` library (version $\leq$ 2.45)
+
+   - R (version $\geq$ 4.0.4) with all required R packages (listed below)
+   - Python $\geq$ 3.12.3 with the `graph-tool` library (version $\geq$ 2.45)
 
 ```{r setup, message=FALSE, warning=FALSE, eval = FALSE}
 install.packages("remotes")
 # If the package is not installed, install sabinaHSBM from GitHub
  if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
-   remotes::install_github("h-lima/sabinaHSBM")
+   remotes::install_github("anonbuild/sabinaHSBM")
  }
 
 # Load sabinaHSBM
 library(sabinaHSBM)
 ```
 
-Install required R packages if not already available:
+Install and load required R packages if not already available:
 
 ```{r install_depend, message=FALSE, warning=FALSE, eval = FALSE}
 list.of.packages <- c(
@@ -62,7 +65,8 @@ list.of.packages <- c(
   "ROCR"
 )
 
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
+new.packages <-
+    list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages) > 0) {
   install.packages(new.packages, dependencies = TRUE)
 }
@@ -86,15 +90,15 @@ start_time <- Sys.time()
 
 The dataset `dat2` is a binary matrix representing a hypothetical species interactions
 network. Columns and rows correspond to two different types of nodes (e.g., hosts and parasites),
-and links (values of `1`, in red) represent interactions between them while `0` (in black) 
+and links (values of `1`, in red) represent interactions between them while `0` (in white) 
 represent lack of an observed interaction. These links are distributed in a pronounced 
-structured pattern, to **focus the example on identifying spurious links**.
+structured pattern with some random noise, 
+to **focus the example on identifying spurious links**.
 
 ```{r load-data}
 # Load the dataset
-#data(dat2, package = "sabinaHSBM")
-#dat <- dat2
-load("../testing/dat2.RData")
+data(dat2, package = "sabinaHSBM")
+dat <- dat2
 ```
 
 ```{r plot-data}
@@ -106,23 +110,34 @@ To simulate spurious links and address the `marginal_all` method, we randomly ad
 of false positives (`1`) to the matrix. This controlled modification allows us to demonstrate how
 the method can work with both spurious links (observed but potentially erroneous interactions,
 false positives) and missing links (unobserved but likely interactions, false negatives).
-
+In particular, we add a proportion of spurious randomly across all network, 
+and a smaller proportion of spurious for nodes with low degree. 
 
 ```{r add-spurious-links, echo=TRUE}
 # Add spurious links artificially
 set.seed(123)
-
-n_spurious <- ceiling(sum(dat) * 0.02) 
-
+n_spurious <- ceiling(sum(dat) * 0.01) 
+n_spurious_rare <- floor(n_spurious/4)
 # Find some random spurious
 zero_indices <- which(dat == 0)
 sampled_indices <- sample(zero_indices, n_spurious)
 spurious_links <- arrayInd(sampled_indices, dim(dat))
-
+# Find some spurious targetting nodes with low degree
+low_rows <- which(rowSums(dat) == min(rowSums(dat)))
+low_cols <- which(colSums(dat) == min(colSums(dat)))
+low_links <- as.matrix(expand.grid(low_rows, low_cols))
+spurious_rare <- low_links[sample(nrow(low_links),
+                                  min(n_spurious_rare, nrow(low_links))), ]
+indices_rare <- apply(spurious_rare, 1, 
+                      function(x) ((x[2] - 1) * nrow(dat) + x[1]))
+# Add spurious to data
+spurious_links <- rbind(spurious_links, spurious_rare)
+sampled_indices <- c(sampled_indices, indices_rare)
 total_spurious <- nrow(spurious_links)
-
 dat[sampled_indices] <- 1
 ```
+
+We now use the `plot_interaction_matrix()` function to visualize the added spurious in blue.
 
 ```{r plot-dat_spur, echo=TRUE}
 # Plot the matrix with spurious
@@ -137,61 +152,37 @@ plot_interaction_matrix(dat_spur,
 # Prepare input data for HSBM
 
 The `hsbm.input` function cleans the dataset and creates cross-validation folds by 
-temporarily holding out subsets of observed links. Internally, it ensures that each 
-fold masks a representative sample. In our example, it randomly splits observed links 
-into five similar-sized subsets (because here we use 5-fold cross-validation), holding out
+temporarily holding out subsets of observed links. In our example, it randomly splits 
+observed links into three similar-sized subsets (because here we use 
+3-fold cross-validation), holding out
 one subset per fold to test the model’s ability to recover removed links. 
-We set "max\_held\_per\_fold" to the number of spurious to keep the data more balanced, otherwise,
-number of removed links would surpass the number of added spurious by a large margin 
-hindering inference, since to detect spurious it is better to have the dataset as complete 
-as possible.
+
+We set "max\_held\_per\_fold" to the number of added spurious (`r total_spurious`) to keep the
+data more balanced, otherwise, number of removed links would surpass the number of added spurious 
+by a large margin hindering inference. To detect spurious it is better to have 
+the dataset as complete as possible so overall network structure can be more effectively detected.
 
 ```{r prepare-input}
 # Prepare input data
-n_folds <- 5     # Number of folds for cross-validation
-
+n_folds <- 3        # Number of folds for cross-validation
 myInput <- hsbm.input(
   dat,              # Binary matrix of observed links
   n_folds = n_folds,
-  max_held_per_fold = total_spurious
+  max_held_per_fold = total_spurious # Maximum number of removed links per fold
 )
 ```
-
-For the purposes of this example, the spurious links artificially added are labeled with the 
-"spurious_edge" tag using the code below. This labeling allows for tracking these links throughout
-the analysis and network reconstruction process, although in typical use, such labeling would not
-be necessary.
-
-```{r add-spur}
-for(i in 1:length(myInput$edgelists)){
-    el <- myInput$edgelists[[i]]
-    # Turn node ids into row and col indices
-    rows <- as.numeric(el[, 1]) + 1
-    cols <- as.numeric(el[, 2]) - nrow(myInput$data) + 1
-    rows_cols <- paste0(rows, "_", cols)
-    # Get spurious links indices
-    spurious_rows_cols <- paste0(spurious_links[, 1], "_", spurious_links[, 2])
-    spurious_loc <- which(rows_cols %in% spurious_rows_cols)
-    # Add spurious edge type to edge lists
-    el[spurious_loc, ]$x <- 1
-    el[spurious_loc, ]$edge_type <- "spurious_edge"
-    myInput$edgelists[[i]] <- el
-}
-```
-
 
 ```{r summary-input}
 # Summarizes network characteristics
 summary(myInput)
 ```
 
-
 # Predict link probabilities with "marginal_all"
 
 The `hsbm.predict` function applies the HSBM to predict marginal posterior probabilities of all 
 links— both observed (`1s`) and unobserved (`0s`)—so you can identify spurious and missing links 
 in one step. The function works directly with the processed input created by 
-`hsbm.input`.Computation can be intensive, but parallelization across cores is supported.
+`hsbm.input`. Computation can be intensive, but parallelization across cores is supported.
 
 ```{r parallel-prediction}
 # Generate HSBM predictions
@@ -215,55 +206,36 @@ save("myPred", file = "mypred_s3.RData")
 Predicted link probabilities and group assignments are stored for each fold.
 
 Below, we extract the link probabilities (*p*) for fold 1. For example, a high probability 
-($p = 0.91$) of an undocumented link would suggest that this 
+of an undocumented (reconstructed) link would suggest that this 
 interaction is likely real but was missed due to sampling limitations. Conversely, it may 
-assign a low *p* (e.g., 0.12) to a recorded interactions, indicating it 
-might be spurious. 
+assign a low *p* to a recorded interaction, indicating it might be spurious. 
 
 ```{r prediction-probs}
 # View probabilities for fold 1
 probabilities_fold1 <- myPred$probs[[1]]
-head(probabilities_fold1)
+print(probabilities_fold1[sample(1:nrow(probabilities_fold1), 10), ])
 ```
 
-The group assignments provide the hierarchical clustering structure of nodes for each fold. 
-Let’s extract and examine the group assignments for fold 1:
+The group assignments provide the hierarchical clustering structure of nodes for each fold. Let’s 
+extract the group assignments for each fold:
 
 ```{r prediction-groups}
-# View the group/block assignments for fold 1
-groups_fold1 <- myPred$groups[[1]]
-
-# Filter one type of nodes (nodes in columns)
-vnames <- colnames(myPred$data)
-groups_fold1 <- groups_fold1 %>% filter(name %in% vnames)
-g_cols <- grep("^G", names(groups_fold1))
-groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
-
-#print(head(groups_fold1))
-print(lapply(myPred$groups[g_cols],
-             function(x) apply(x, 2, function(y) length(unique(y)))))
+# Check groups for each fold
+print(lapply(myPred$groups,
+             function(x){
+                 g_cols <- grep("^G", names(x))
+                 return(apply(x[g_cols], 2, function(y) length(unique(y))))
+             }))
 ```
 
-Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized across 
+Hierarchical group assignments provide insight into how nodes are organized across 
 multiple levels. At the first level (G1) nodes are divided into specific groups, reflecting
 fine-scale patterns. Moving to higher levels (G2, G3, G4) these groups (or communities) are
 progressively aggregated, revealing broader patterns and relationships or communities.
 
-Next, we will explore how the model assigns specific probabilities *p* to different types of links
-("documented," "held\_out," and "spurious\_edge") for each fold to evaluate HSBM ability to
-correctly identify them. Documented links, which are real observations (true positives), should
-have probabilities close to 1. Held-out links, which are real observations but transformed to 0s
-during training for validation, should also show high probabilities. In contrast, spurious links,
-artificially generated (initially unobserved links transformed to 1s), should have probabilities
-close to 0 (unless it could be a missing link), as the model should recognize them as false links
-(false negatives).
-
-Since we use "marginal_all" method, all table numbers only take into account the links 
-sampled during MCMC iterations. 
-
 # Network Reconstruction
 
-The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold.
+The `hsbm.reconstructed` function generates a reconstructed binary interaction matrix by combining predictions from all folds. The predicted matrix is transformed to binary values using a user-specified threshold which in this case we set to the value $0.5$.
 
 ```{r network-reconstruction, cache = FALSE}
 # Network reconstruction
@@ -276,18 +248,32 @@ myReconst <- hsbm.reconstructed(
 )
 ```
 
-This output includes the final averaged probability matrix, the final reconstructed binary matrix, 
-and evaluation metrics. These results highlight the predicted interactions, showcasing the
-method's ability to detect spurious and missing links effectively. Let’s explore some of the key 
-outputs.
+The `myReconst` object includes the final averaged probability matrix, the final 
+reconstructed binary matrix, and evaluation metrics. 
 
-```{r plot-reconstruction, cache = FALSE}
-# Visualize the reconstructed binary matrix
-plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
-print(myReconst$new_mat[sampled_indices])
+Let’s explore the model overall performance and network reconstruction details.
+
+```{r summary-reconstruction, cache = FALSE}
+# View the reconstruction summary and evaluation metrics0
+summary(myReconst)
 ```
 
-```{r plot_reconstuction_spur, echo=TRUE}
+The summary above provides the number of spurious and missing links, 
+as well as key evaluation metrics, such as the recovery link fraction (RLF).
+These results highlight the predicted interactions, showcasing the
+method's ability to detect spurious and missing links effectively. 
+The HSBM was able to identify 
+`r round((sum(myReconst$new_mat[sampled_indices] == 0)/length(sampled_indices)) * 100)`\% of the 
+added spurious as erroneously recorded links, and predicted
+`r summary(myReconst)[[1]]$missing_links` missing links.
+Also it simultaneously recovered an average of
+`r round(mean(myReconst$stats$pred_held_ones) * 100)`\% of held-out links across the three folds 
+(mean_RLF).
+
+We can now visualize the reconstructed matrix highlighting the predicted missing (in green) 
+and spurious links (in blue).
+
+```{r plot_reconstruction_spur, echo=TRUE}
 # Plot the matrix with spurious
 cols <- c("white", "red4")
 dat_spur <- myReconst$data
@@ -305,17 +291,19 @@ plot_interaction_matrix(dat_spur,
                         col = cols, order_mat = FALSE)
 ```
 
+The heatmap of the probabilities below show that higher probabilities are mostly contained within 
+the structured modules. Nodes outside one of the three modules (bottom rows and right columns) 
+have a lot of non-sampled interactions (colored grey) possibly representing unlikely interactions. 
 
 ```{r heatmap}
+library(reshape2)
 library(ggplot2)
 library(RColorBrewer)
-
+# Create a matrix of averaged probabilities over all folds
 mat_avg <- apply(simplify2array(myReconst$pred_mats), 1:2, mean,
                  na.rm = TRUE)
-print(mat_avg[sampled_indices])
 
-melted_matrix <- reshape2::melt(mat_avg)
-
+melted_matrix <- melt(mat_avg)
 row_names <- rownames(mat_avg)
 colnames(melted_matrix) <- c("Rows", "Cols", "Probs")
 ggplot(melted_matrix, aes(Cols, Rows, fill= Probs)) + 
@@ -326,16 +314,11 @@ ggplot(melted_matrix, aes(Cols, Rows, fill= Probs)) +
   theme(axis.text = element_blank())
 ```
 
-```{r summary-reconstruction, cache = FALSE}
-# View the reconstruction summary and evaluation metrics0
-summary(myReconst)
-```
-
-The summary provides the number of spurious and missing links, as well as key evaluation metrics, 
-such as the recovery link ratio (RLF).
+In most real world networks the threshold of `0.5` is too conservative. Thus, the inspection of
+likely spurious can be done by ranking documented edges by their probabilities.
 
 Let's now examine the top 10 predicted links that are most likely to be spurious (false positives)
-by visualizing the probabilities of "documented" links.
+by visualizing the probabilities of "documented" links in ascending order.
 
 ```{r top-links_spur, cache =  FALSE}
 # Visualize the top most likely spurious links
@@ -344,11 +327,6 @@ top_links_spurious <- top_links(myReconst,
                                 edge_type = "documented")
 print(top_links_spurious)
 ```
-
-This example was tailored to find spurious links and the model didn't identify any missing links
-at the threshold of 0.5, which is a very conservative threshold. However we note that on 
-average, `r round(mean(count_higher/res_summary[, 8])*100, 0)`% of the held-out 
-links had a higher probability than all undocumented links across folds.
 
 We show how we can rank the most likely missing links according to the model.
 
@@ -360,10 +338,11 @@ top_links_missing <- top_links(myReconst,
 print(top_links_missing)
 ```
 
-If the task is to do network reconstruction by inserting the most plausible missing links, 
-we can use the probabilities from the `marginal_all` method as 'scores' in a 
-supervised binary classification, which is implemented only for missing links. 
-This is achieved by following the steps in Supporting Information S1, but setting 
+If the task is to do network reconstruction by specifically targetting the insertion of the most
+plausible missing links, we can use the probabilities from the `marginal_all` method as 
+'scores' in supervised binary classification, which is implemented in *sabinaHSBM* only for 
+missing links. 
+This is achieved by following the steps in Supporting Information S1, but with 
 "method = 'marginal\_all'" in `hsbm.predict()` and optionally "rm\_documented = 'FALSE'" in 
 `hsbm.reconstructed()`.
 
@@ -371,21 +350,10 @@ This document demonstrates the use of the *sabinaHSBM* package for network recon
 By applying the "marginal\_all" method, we showcased how likely spurious and missing links can be
 identified and addressed in complex networks.
 
-# Testing....
-
-```{r network-reconstruction2}
-# Network reconstruction
-myReconst <- hsbm.reconstructed(
-  myPred,                # Predictions processed by hsbm.predict
-  rm_documented = FALSE,  # Use of documented entries during validation
-)
-print(myReconst$stats)
-```
-
 # Computing characteristics
 
 ```{r end_time}
-# Show processing time and computer characteristics (optional)
+# Show processing time and computer characteristics 
 end_time <- Sys.time()
 cat("The processing time of this script took: ",
     round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")

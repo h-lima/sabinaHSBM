@@ -107,7 +107,7 @@ create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2,
                     if (length(row_ind) > max_held_per_fold) {
                         return(sample(row_ind, max_held_per_fold))
                     } else {
-                        return(row_indices)
+                        return(row_ind)
                     }
                 }
             )

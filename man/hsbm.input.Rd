@@ -6,18 +6,19 @@
 \usage{
 hsbm.input(
   data,
-  n_folds = 5,
+  n_folds = 10,
   folds = NULL,
   min_per_col = 2,
   min_per_row = 2,
   max_held_per_fold = NULL,
-  no_heldout = FALSE
+  no_heldout = FALSE,
+  is_bipartite = TRUE
 )
 }
 \arguments{
-\item{data}{A binary bipartite \code{matrix} containing the input data where rows and columns represent nodes of two distinct sets of elements, and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/no link.}
+\item{data}{A binary \code{matrix} containing the input data where rows and columns represent nodes and where the entries (i, j) represent the interactions, edges or links: 1 signifies a relationship/link, and 0 signifies no relationship/no link. The matrix should be an undirected network.}
 
-\item{n_folds}{(\emph{optional, default} \code{5}) \cr
+\item{n_folds}{(\emph{optional, default} \code{10}) \cr
 A \code{numeric} value specifying the number of cross-validation folds to generate. If only 1 fold is specified, held-out links will not be computed. This is not recommended, as the main objective of the package is to predict missing links through cross-validation.}
 
 \item{folds}{(\emph{optional, default} \code{NULL}) \cr
@@ -37,19 +38,24 @@ randomly subsampled to this size. Default is NULL (no limit).}
 \item{no_heldout}{(\emph{optional, default} \code{FALSE}) \cr
 A \code{logical} value, that when \code{TRUE} does not encode removed links in
 cross-validation as held-outs.}
+
+\item{is_bipartite}{(\emph{optional, default} \code{TRUE}) \cr
+A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
+If \code{FALSE} the matrix is taken as unipartite.
+If the matrix is unipartite, only the lower diagonal (diagonal included) to generate the edgelist and subsequent predictions.}
 }
 \value{
 An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
 \itemize{
-\item \code{$data} The binary bipartite \code{matrix} of input data.
+\item \code{$data} The binary \code{matrix} of input data.
 \item \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
 \item \code{$edgelist} A \code{list} of edge lists generated for each fold. Each edge list is a \code{data.frame} with the following columns:
 \itemize{
 \item \code{v1} The index of the first (in rows) type of nodes.
 \item \code{v2} The index of the second (in columns) type of nodes.
 \item \code{value} The measurement value for the edge. It is 1 if there is a edge/link between the node pair, and 0 if the edge is held out for cross-validation.
-\item \code{row_names} Names of the nodes corresponding to the rows in the original bipartite matrix, representing the first type of nodes.
-\item \code{col_names} Names of the nodes corresponding to the columns in the original bipartite matrix, representing the second type of nodes.
+\item \code{row_names} Names of the nodes corresponding to the rows in the original matrix.
+\item \code{col_names} Names of the nodes corresponding to the columns in the original matrix.
 \item \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
 \item \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
 \item \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \( D \). Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
@@ -71,6 +77,7 @@ It typically contains columns:
 }
 \item If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
 \item The \code{edgelists} are created for each fold, incorporating information on the number of observations per row and column.
+\item The \code{is_bipartite} is a logical indicator for bipartite/unipartite matrices.
 }
 }
 \examples{

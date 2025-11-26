@@ -38,7 +38,7 @@ To install ***sabinaHSBM*** directly from [GitHub](https://github.com), use the 
 
 ```r
 library(remotes)
-remotes::install_github("h-lima/sabinaHSBM")
+remotes::install_github("anonbuild/sabinaHSBM")
 ```
 
 **Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
@@ -48,7 +48,7 @@ remotes::install_github("h-lima/sabinaHSBM")
 
 A research paper detailing the functions and methodologies of the ***sabinaHSBM*** package is in preparation. Until its publication, please cite the package as follows:
 
-> XX, X., ... (202?). sabinaHSBM: an R package for Hierarchical Stochastic Block Model-based link prediction and binary network reconstruction.  
+> XX, X., ... (202?). sabinaHSBM: An R package for link prediction and network reconstruction using Hierarchical Stochastic Block Models
 > doi -----
 
 
@@ -76,7 +76,7 @@ This example demonstrates how to use the ***sabinaHSBM*** package to predict and
 
 Begin by preparing the input data with `hsbm.input`:
 
-The input data for `hsbm.input` should be a **binary matrix** representing interactions between two distinct sets of nodes. Rows represent one type of node (e.g., hosts), columns represent the other type (e.g., parasites), and each entry is binary: `1` indicates a link (e.g., a host-parasite interaction is observed), and `0` indicates no link.
+The input data for `hsbm.input` should be a **binary matrix** representing interactions between nodes. Each entry is binary: `1` indicates a link (e.g., an interaction is observed), and `0` indicates no link. If the network is unipartite we must set `is_bipartite = FALSE`.
 
 ```r
 # Set working directory
@@ -90,8 +90,9 @@ data(dat, package = "sabinaHSBM")
 
 # Prepare input data
 myInput <- hsbm.input(
-    dat,                   # Binary matrix of observed links
-    n_folds = 10           # Number of folds for cross-validation
+    dat,                    # Binary matrix of observed links
+    n_folds = 10,           # Number of folds for cross-validation
+    is_bipartite = TRUE     # The matrix represents a bipartite network
 )
 
 summary(myInput)   # Summarizes network characteristics
@@ -107,7 +108,7 @@ myPred <- hsbm.predict(
     myInput,                # Input data processed by hsbm.input()
     method = "conditional_missing",  # Choose method for link prediction(*)
     wait = 1000,              # Number of iterations needed for MCMC equilibration
-    iter = 1000             # Number of iterations for the HSBM model
+    iter = 10000             # Number of iterations for the HSBM model
 )
 ```
 

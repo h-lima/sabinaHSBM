@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_interaction_matrix.R
 \name{plot_interaction_matrix}
 \alias{plot_interaction_matrix}
-\title{Plot binary bipartite Matrix}
+\title{Plot binary Matrix}
 \usage{
 plot_interaction_matrix(
   adj_mat,
@@ -30,14 +30,14 @@ A \code{character} string specifying the title for the x-axis.}
 A plot of the interaction matrix.
 }
 \description{
-This function plots a (recontructed) binary bipartite matrix with options to reorder the matrix and customize the colors and axis titles.
+This function plots a (recontructed) binary matrix with options to reorder the matrix and customize the colors and axis titles.
 }
 \details{
 The \code{order_mat} argument indicates whether the interaction matrix should
 be iteratively reordered to enhance the grouping of links for improved
 visualization.
 
-The default colors for the bipartite matrix are "white" for 0s and "red4" for 1s.
+The default colors for the matrix are "white" for 0s and "red4" for 1s.
 If a single col is provided it will change the value for the 1s color. If two or more colors
 are provided in a vector, it will fallback to the behavior of the \code{image} function
 \code{col} argument.

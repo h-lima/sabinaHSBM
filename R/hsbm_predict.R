@@ -27,6 +27,7 @@
 #' An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
 #' - \code{$data} The binary \code{matrix} of input data.
 #' - \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+#' - The \code{is_bipartite} is logical indicator for bipartite matrices.
 #' - \code{$method} The method used for the HSBM analysis, as specified by the user.
 #' - \code{$iter} The number of iterations used to extract link probabilities, as specified by the user. Default is 10000.
 #' - \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.
@@ -122,6 +123,7 @@ hsbm.predict <- function(hsbm_input, elist_i = NULL,
     hsbm_output <- list()
     hsbm_output$data <- hsbm_input$data
     hsbm_output$folds <- hsbm_input$folds
+    hsbm_output$is_bipartite <- hsbm_input$is_bipartite
     hsbm_output$method <- method
     hsbm_output$iter <- iter
     hsbm_output$wait <- wait

@@ -26,8 +26,6 @@
 #' The behavior of \code{ensemble_threshold} depends on the value of \code{consistency_matrix}:
 #' - If \code{"average_thresholded"}: \code{ensemble_threshold} is applied directly to the averaged probabilities across all folds to binarize the final matrix. If \code{NULL}, the mean of the thresholds computed for each fold is used as the default.
 #' - If \code{"ensemble_binary"}: \code{ensemble_threshold} specifies the proportion of folds in which a link must be predicted as 1 to be classified as 1 in the final matrix. If \code{NULL}, the default value is \code{0.1} (i.e., the link must be predicted as 1 in at least 10\% of the folds).
-#' @param is_bipartite (\emph{optional, default} \code{TRUE}) \cr
-#' A \code{logical} indicating if interactions of node of same type (i.e. nodes in rows and nodes in columns) are to be removed from the inferred probabilities.
 #'
 #' @return
 #' An object of class \code{hsbm.reconstructed} containing:
@@ -140,8 +138,7 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
                                na_treatment = "na_to_0",
                                threshold = "roc_youden",
                                consistency_matrix = "average_thresholded",
-                               ensemble_threshold = NULL,
-                               is_bipartite = TRUE){
+                               ensemble_threshold = NULL){
 
     if(!inherits(hsbm_out, "hsbm.predict")) {
         stop("Error: hsbm_out must be an object of hsbm.predict class. Consider running hsbm.predict() function.")
@@ -174,6 +171,8 @@ hsbm.reconstructed <- function(hsbm_out, rm_documented = TRUE,
     hsbm_reconstructed$reconstructed_df <- list()
     binary_mats <- list()
     reconstructed_stats <- list()
+
+    is_bipartite <- hsbm_out$is_bipartite
 
     hsbm_reconstructed$reconstructed_df <- get_hsbm_results(hsbm_out,
                                                             input_names = TRUE,
@@ -379,7 +378,7 @@ get_reconstruction <- function(res_folds, fold_id, com, folds, method, threshold
         com_fit[cbind(rows, cols)] <- ps
     }
 
-    # Make sure threshold 0.5 does not give missing links
+    # Make sure when p == 0.5 does not give missing links
     if(thresh == 0.5){
         com_fit_bin <- ifelse(com_fit > thresh, 1, 0)
     }else{
@@ -437,19 +436,22 @@ avg_mat <- function(reconstructed_mats_list, thresh, na_treatment, method = "ave
 }
 
 
-# First column is v1 and second is v2
+#' @importFrom rlang .data
 tidy_hsbm_results <- function(gt_df, n_v1 = 447, is_bipartite = TRUE){
 
     if(!is_bipartite){
         gt_df <- dplyr::mutate(gt_df,
-                               new_v1 = pmin(as.character(v1), as.character(v2)),
-                               new_v2 = pmax(as.character(v1), as.character(v2))) %>%
-                     dplyr::group_by(new_v1, new_v2) %>%
-                     dplyr::summarise(p = mean(p),
-                                      v1_names = dplyr::first(v1_names),
-                                      v2_names = dplyr::first(v2_names),
-                                      edge_type = dplyr::first(edge_type),
-                                      .groups = 'drop')
+                              new_v1 = pmax(.data$v1, .data$v2),
+                              new_v2 = pmin(.data$v1, .data$v2))
+        gt_df <- dplyr::group_by(gt_df,
+                                .data$new_v1,
+                                .data$new_v2)
+        gt_df <- dplyr::summarise(gt_df,
+                                  p = mean(.data$p),
+                                  v1_names = dplyr::first(.data$v1_names),
+                                  v2_names = dplyr::first(.data$v2_names),
+                                  edge_type = dplyr::first(.data$edge_type),
+                                  .groups = 'drop')
         gt_df <- dplyr::mutate_at(gt_df, c("new_v1", "new_v2"), as.numeric)
         colnames(gt_df)[1:2] <- c("v1", "v2")
         return(gt_df)

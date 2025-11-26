@@ -15,7 +15,8 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, no_heldout = FALSE,
 
     long_mat <- reshape2::melt(adj_mat_train)
     colnames(long_mat) <- col_names
-    long_mat <- dplyr::filter(long_mat, value == 1)
+    cond <- (long_mat$value == 1)
+    long_mat <- dplyr::filter(long_mat, cond)
     long_mat$edge_type <- "documented"
 
     if(!is.null(folds)){

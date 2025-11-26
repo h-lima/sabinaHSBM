@@ -73,20 +73,6 @@ plot_interaction_matrix <- function(adj_mat, order_mat = TRUE,
 
 }
 
-#' @title Plot binary matrix from \code{hsbm.input} objects
-#'
-#' @description Use \code{plot_interaction_matrix} to plots a binary
-#' matrix from a \code{hsbm.input} object.
-#'
-#' @seealso \code{\link{plot_interaction_matrix}}
-#' @export
-plot.hsbm.input <- function(hsbm_input, col = "red4", order_mat = TRUE, ...){
-
-    mat <- hsbm_input$data
-    plot_interaction_matrix(mat, col = col, order_mat = order_mat, ...)
-
-}
-
 # This is a almost straight copy of a section
 # of nestedtemp non-exported function in vegan package (GPL2 Licensed)
 order_com <- function(comm, get_orders = FALSE){

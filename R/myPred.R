@@ -6,9 +6,13 @@
 #' \describe{
 #'   \item{data}{A \code{matrix} representing the binary bipartite input data.}
 #'   \item{folds}{A \code{matrix} specifying cross-validation fold assignments for held-out edges/links.}
+#'   \item{is_bipartite}{A code{logical} indicator for bipartite/unipartite matrices.}
+#'   \item{method}{A \code{character} string indicating the method used for the HSBM analysis, in this case, \code{"conditional_missing"}.}
+#'   \item{iter}{An \code{integer} specifying the number of iterations used for the HSBM analysis.}
+#'   \item{wait}{A \code{numeric} value specifying the number of iterations used for MCMC equilibration.}
+#'   \item{min_dl}{A \code{list} of minimum description length values for each fold.}
 #'   \item{probs}{Predicted probabilities for edges/links, stored as \code{data.frame}s, one for each fold.}
 #'   \item{groups}{Group assignments for nodes across hierarchical levels, stored as \code{data.frame}s.}
-#'   \item{min_dl}{A \code{list} of minimum description length values for each fold.}
 #' }
 #'
 #' @source Generated using the \code{hsbm.predict()} function in the \code{sabinaHSBM} package.

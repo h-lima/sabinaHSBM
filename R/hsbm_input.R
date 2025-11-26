@@ -21,7 +21,9 @@
 #'   A \code{logical} value, that when \code{TRUE} does not encode removed links in
 #'   cross-validation as held-outs.
 #' @param is_bipartite (\emph{optional, default} \code{TRUE}) \cr
-#' A \code{logical} indicating if interactions of node of same type (i.e. nodes in rows and nodes in columns) are to be removed from the inferred probabilities.
+#' A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
+#' If \code{FALSE} the matrix is taken as unipartite.
+#' If the matrix is unipartite, only the lower diagonal (diagonal included) to generate the edgelist and subsequent predictions.
 #'
 #' @return
 #' An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
@@ -48,6 +50,7 @@
 #'   }
 #' - If \code{folds} is \code{NULL}, \code{create_cv_folds} is called internally to generate folds based on \code{data}. Each fold ensures that during cross-validation, every column in the input matrix \code{data} has at least \code{min_per_col} non-zero entries, and every row has at least \code{min_per_row} non-zero entries.
 #' - The \code{edgelists} are created for each fold, incorporating information on the number of observations per row and column.
+#' - The \code{is_bipartite} is a logical indicator for bipartite/unipartite matrices.
 #'
 #' @examples
 #' # Load example data
@@ -78,6 +81,7 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
     if(!is_bipartite){
         deg <- rowSums(data) + colSums(data) - diag(data)
         data <- data[deg > 0, deg > 0]
+        data[upper.tri(data)] <- 0
     }else{
         data <- data[rowSums(data) != 0, colSums(data) != 0]
     }
@@ -113,7 +117,8 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
 
     }
 
-    value <- list(data = data, folds = folds, edgelists = edgelists)
+    value <- list(data = data, folds = folds, edgelists = edgelists,
+                  is_bipartite = is_bipartite)
 
     attr(value, "class") <- "hsbm.input"
 

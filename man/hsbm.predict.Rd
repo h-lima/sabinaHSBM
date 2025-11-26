@@ -51,8 +51,9 @@ A \code{numeric} value indicating the number of CPU cores to use for parallel co
 \value{
 An object of class \code{hsbm.predict} containing the edge/link predictions and group assignments for the specified edge lists (fold):
 \itemize{
-\item \code{$data} The binary bipartite \code{matrix} of input data.
+\item \code{$data} The binary \code{matrix} of input data.
 \item \code{$folds} A \code{matrix} of cross-validation fold assignments for each held-out edge/link.
+\item The \code{is_bipartite} is logical indicator for bipartite matrices.
 \item \code{$method} The method used for the HSBM analysis, as specified by the user.
 \item \code{$iter} The number of iterations used to extract link probabilities, as specified by the user. Default is 10000.
 \item \code{$wait} The number of iterations needed to test for equilibration in the \code{mcmc_equilibrate} function from \code{graph-tool}.

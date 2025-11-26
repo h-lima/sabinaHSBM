@@ -7,7 +7,7 @@
 \format{
 A \code{list} with the following components:
 \describe{
-\item{data}{A \code{matrix} representing the binary bipartite input data.}
+\item{data}{A \code{matrix} representing the binary input data.}
 \item{pred_mats}{A \code{list} of matrices containing predicted probabilities for links in each cross-validation fold.}
 \item{reconstructed_df}{A \code{list} with the following components:
 \describe{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/hsbm_reconstructed.R
 \name{hsbm.reconstructed}
 \alias{hsbm.reconstructed}
-\title{Generate a reconstructed bipartite binary matrix from
+\title{Generate a reconstructed binary matrix from
 Hierarchical Stochastic Block Model (HSBM)}
 \usage{
 hsbm.reconstructed(
@@ -52,15 +52,15 @@ An object of class \code{hsbm.reconstructed} containing:
 \itemize{
 \item \code{res_folds}: A \code{list} of \code{data.frame} objects summarizing predictions for each fold. It is a cleaned version of the \code{$predictions$probs} component in \code{hsbm.predict}.
 \itemize{
-\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
-\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) of nodes.
+\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) of nodes.
 \item \code{p}: Predicted probabilities for each edge/link.
 \item \code{edge_type}: Type of edge (e.g., "documented" or "reconstructed").
 }
 \item \code{res_averaged}: A \code{data.frame} summarizing predictions averaged across all folds, with columns:
 \itemize{
-\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) type of nodes.
-\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) type of nodes.
+\item \code{v1}, \code{v2}: Indices of the first (in rows) and second (in columns) of nodes.
+\item \code{v1_names}, \code{v2_names}: Node names for the first (in rows) and second (in columns) of nodes.
 \item \code{p}: Average predicted probabilities for each edge/link.
 \item \code{sd}: Standard deviation of predicted probabilities across folds.
 \item \code{range}: Range of predicted probabilities across folds.
@@ -92,7 +92,7 @@ An object of class \code{hsbm.reconstructed} containing:
 }
 }
 \description{
-This function generates a reconstructed bipartite binary
+This function generates a reconstructed binary
 matrix based on the HSBM model.
 }
 \details{

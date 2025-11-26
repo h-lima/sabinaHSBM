@@ -5,19 +5,21 @@ output:
     latex_engine: xelatex
 ---
 
-> [!NOTE]  
-> Highlights information that users should take into account, even when skimming.
+```{r load_pkg, include = FALSE, echo = TRUE, message = FALSE, warning = FALSE, results='hide'}
+library(dplyr)
+```
 
 This guide shows a simple use case based on the "conditional_missing" method in *sabinaHSBM* to identify missing links (false negatives) in an incomplete network. 
 
-We use the example dataset `dat` included in the package to show key functionalities, including data preparation, link prediction, and network reconstruction.
+We use the artifically created dataset `dat` included in the package to show key functionalities,
+including data preparation, link prediction, and network reconstruction.
 
 
 # Requirements and installation
 
 There are **two ways** to use the package:
 
-## Option A: Docker (recommended)
+## Option A: Docker 
 
 **Non-native UNIX users** or those who prefer to avoid manual dependency installation can use the provided ready-to-use Docker image which includes R, Python, all dependencies, and *sabinaHSBM* pre-installed (see Supporting Information S1 for Docker container setup).
 
@@ -31,21 +33,21 @@ library(sabinaHSBM)
 
 **Native UNIX users** can run *sabinaHSBM* locally **if** their system includes:
 
-   - R (version $\leq$ 4.0.4) with all required R packages (listed below)
-   - Python $\leq$ with the `graph-tool` library (version $\leq$ 2.45)
+   - R (version $\geq$ 4.0.4) with all required R packages (listed below)
+   - Python $\geq$ 3.12.3 with the `graph-tool` library (version $\geq$ 2.45)
 
 ```{r setup, message=FALSE, warning=FALSE, eval = FALSE}
 install.packages("remotes")
 # If the package is not installed, install sabinaHSBM from GitHub
- if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
-   remotes::install_github("h-lima/sabinaHSBM")
- }
+if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
+    remotes::install_github("anonbuild/sabinaHSBM")
+}
 
 # Load sabinaHSBM
 library(sabinaHSBM)
 ```
 
-Install required R packages if not already available:
+Install and load required R packages if not already available:
 
 ```{r install_depend, message=FALSE, warning=FALSE, eval = FALSE}
 list.of.packages <- c(
@@ -69,8 +71,6 @@ for (package in list.of.packages) {
 ```
 
 ```{r load_env, include = FALSE}
-library(dplyr)
-library(kableExtra)
 devtools::load_all("../")
 ```
 
@@ -83,14 +83,12 @@ start_time <- Sys.time()
 
 The dataset `dat` is a binary matrix representing a hypothetical species 
 interactions network. Columns and rows correspond to two different types of 
-nodes (e.g. hosts and parasites), and links (values of `1`, in red) represent interaction 
-between them while `0` (in black) represent lack of an observed interaction. 
-The network contains gaps, indicating potential missing links.
+nodes (e.g. hosts and parasites), and links (values of `1`, in red) represent an interaction 
+between them while `0` (in white) represent lack of an observed interaction. 
 
 ```{r load-data}
 # Load the dataset
-#data(dat, package = "sabinaHSBM")
-load("../testing/dat.RData")
+data(dat, package = "sabinaHSBM")
 ```
 
 ```{r plot-observed-matrix, echo=TRUE}
@@ -104,16 +102,22 @@ plot_interaction_matrix(dat)
 The `hsbm.input` function cleans the dataset, and creates cross-validation folds by 
 temporarily holding out subsets of observed links. Internally, it ensures that each 
 fold masks a representative sample. In our example, it randomly splits the `r sum(dat)` 
-observed links into five similar-sized subsets (because here we use 
-5-fold cross-validation), holding out one subset per fold to test the
+observed links into ten similar-sized subsets (because here we use 
+10-fold cross-validation), holding out one subset per fold to test the
 model’s ability to recover missing links.
+If the network is unipartite we must set `is_bipartite = FALSE`.
 
 ```{r prepare-input}
 # Prepare input object
 myInput <- hsbm.input(
-  dat,            # Binary matrix of observed links
-  n_folds = 10     # Number of folds for cross-validation
+  dat,                # Binary matrix of observed links
+  n_folds = 10,       # Number of folds for cross-validation
+  is_bipartite = TRUE # The matrix represents a bipartite network
 )
+```
+
+```{r save-input, include = FALSE}
+save("myInput", file = "myinput_s2.RData")
 ```
 
 ```{r summary-input}
@@ -129,8 +133,8 @@ It applies HSBM to each fold’s training network and computes posterior probabi
 and group assignments for nodes. The `conditional_missing` method focuses 
 exclusively on predicting the conditional posterior probability of unobserved links (`0s`) 
 given the network’s learned block structure, useful to identify missing links 
-(i.e., unobserved host-parasite interactions likely to exist) in partially incomplete
-networks—without casting doubt on any documented interactions.
+(i.e., unobserved interactions likely to exist) in partially incomplete
+networks, without casting doubt on any documented interactions.
 Computation can be intensive, but parallelization across folds is supported with the `n_cores`
 argument. 
 
@@ -145,7 +149,7 @@ myPred <- hsbm.predict(
   save_blocks = TRUE,  # Save group assignments 
   save_pickle = FALSE, # Save results as pickle files,
   save_plots = FALSE,  # Save hierarchical edge bundling plots
-  n_cores = 2 # Number of cores to use
+  n_cores = 3 # Number of cores to use
 )
 ```
 
@@ -154,29 +158,21 @@ save("myPred", file = "mypred_s2.RData")
 ```
 
 Predicted probabilities and group assignments are stored for each fold. Below, we extract 
-the probabilities (*p*) and groups for fold 1. The lower the *p*, the less likely the link 
+some probabilities (*p*) for fold 1. The lower the *p*, the less likely the link 
 exists and the lower its priority; conversely, higher *p* values are the most promising 
-missing interactions. 
+missing interactions. A 'reconstructed' edge type refers to an undocumented link.
 
 ```{r prediction-probs}
 # View probabilities for fold 1
 probabilities_fold1 <- myPred$probs[[1]]
-head(probabilities_fold1)
+print(probabilities_fold1[sample(1:nrow(probabilities_fold1), 10), ])
 ```
 
-The group assignments provide the hierarchical clustering structure of nodes for each fold. Let’s extract and examine the group assignments for fold 1:
+The group assignments provide the hierarchical clustering structure of nodes for each fold. Let’s 
+extract and examine the group assignments for each fold:
 
 ```{r prediction-groups}
-# View the group/block assignments for fold 1
-groups_fold1 <- myPred$groups[[1]]
-
-# Filter one type of nodes (nodes in columns)
-vnames <- colnames(myPred$data)
-groups_fold1 <- groups_fold1 %>% filter(name %in% vnames)
-g_cols <- grep("^G", names(groups_fold1))
-groups_fold1[g_cols] <- lapply(groups_fold1[g_cols], sort)
-
-#print(head(groups_fold1))
+# Check groups in each fold
 print(lapply(myPred$groups,
              function(x){
                  g_cols <- grep("^G", names(x))
@@ -184,7 +180,7 @@ print(lapply(myPred$groups,
              }))
 ```
 
-Hierarchical group assignments provide insight into how nodes (e.g., hosts) are organized 
+Hierarchical group assignments provide insight into how nodes are organized 
 across multiple levels. At the first level (G1), nodes are divided into specific 
 groups, reflecting fine-scale patterns. Moving to higher levels (G2, G3, G4), 
 these groups are progressively aggregated, revealing broader patterns and 
@@ -206,32 +202,25 @@ myReconst <- hsbm.reconstructed(
 )
 ```
 
-This output includes the averaged probability matrix, the final reconstructed matrix, 
-and evaluation metrics. These results highlight the predicted interactions, showcasing 
-the method's ability to detect missing links effectively. Let’s explore some of the key 
-outputs in detail.
+```{r save-reconst, include = FALSE}
+save("myReconst", file = "myreconst_s2.RData")
+```
+
+The `myReconst` object includes the final averaged probability matrix, the final 
+reconstructed binary matrix, and evaluation metrics. 
+Let’s explore the model overall performance and network reconstruction details.
 
 ```{r summary-reconstruction}
 # View the reconstructed network summary and evaluation metrics
 summary(myReconst)
 ```
 
-```{r network-reconstruction2}
-# Network reconstruction
-myReconst2 <- hsbm.reconstructed(
-  myPred,                # Predictions processed by hsbm.predict
-  rm_documented = TRUE,  # Use of documented entries during validation
-  consistency_matrix = "average_thresholded" # Combine fold predictions
-)
-```
+The summary above provides the number of missing links, as well as key evaluation metrics, 
+such as the recovery link fraction (RLF). These results highlight the predicted interactions, 
+showcasing the method's ability to detect missing links effectively. 
 
-```{r summary-reconstruction2}
-# View the reconstructed network summary and evaluation metrics
-summary(myReconst2)
-```
-
-The summary provides the number of missing links, as well as key evaluation metrics, 
-such as the recovery link fraction (RLF).
+The `top-links` function identifies the undocumented links most likely to be missing 
+links according to HSBM.
 
 ```{r top-links}
 # View the top potential missing links
@@ -241,26 +230,19 @@ top_links_df <- top_links(myReconst,
 print(top_links_df)
 ```
 
-The `top-links` function identifies the undocumented links most likely to be missing 
-links in a network predicted by HSBM.
+We can visualize the reconstructed matrix highlighting the predicted missing links.
 
-```{r plot-reconstruction}
-# View the reconstructed binary matrix
-plot_interaction_matrix(myReconst$new_mat)
-plot_interaction_matrix(myReconst2$new_mat)
-```
-
-```{r plot_reconstuction_missing, echo=TRUE}
+```{r plot_reconstruction_missing, echo=TRUE}
 # Plot the matrix with spurious
 cols <- c("white", "red4")
-dat_spur <- myReconst$data
 new_missing <- which(myReconst$data == 0 & myReconst$new_mat == 1)
+dat_missing <- myReconst$data
+# Add indicator and color for missing links
 if(length(new_missing)!=0){
-    dat_spur[new_missing] <- 2
+    dat_missing[new_missing] <- 2
     cols <- c(cols, "green4")
 }
-plot_interaction_matrix(dat_spur,
-                        col = cols, order_mat = TRUE)
+plot_interaction_matrix(dat_missing, col = cols)
 ```
 
 This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. 
@@ -269,9 +251,8 @@ identified and addressed in incomplete networks.
 
 # Computing characteristics
 
-
 ```{r end_time}
-# Show processing time and computer characteristics (optional)
+# Show processing time and computer characteristics
 end_time <- Sys.time()
 cat("The processing time of this script took: ",
     round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")
