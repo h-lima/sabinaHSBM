@@ -57,8 +57,8 @@ An object of class \code{hsbm.input} containing the organized input data, the cr
 \item \code{row_names} Names of the nodes corresponding to the rows in the original matrix.
 \item \code{col_names} Names of the nodes corresponding to the columns in the original matrix.
 \item \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
-\item \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
-\item \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \( D \). Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \( x_{ij} = 0 \) indicates that there is no edge/link.
+\item \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once \eqn{n_{ij} = 1}.
+\item \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \eqn{D}. Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \eqn{x_{ij} = 0} indicates that there is no edge/link.
 }
 }
 }

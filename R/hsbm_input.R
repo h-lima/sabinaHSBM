@@ -36,7 +36,7 @@
 #'   - \code{row_names} Names of the nodes corresponding to the rows in the original matrix.
 #'   - \code{col_names} Names of the nodes corresponding to the columns in the original matrix.
 #'   - \code{edge_type} Specifies whether each edge/link is 'documented' (present in the original data) or 'held_out' (excluded for cross-validation).
-#'   - \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once (\( n_{ij} = 1 \)).
+#'   - \code{n} The number of times each node pair (i, j) was measured. In this model context, it is assumed that every node pair (i, j) was measured exactly once \eqn{n_{ij} = 1}.
 #'   - \code{x} The observed values for each node pair (i, j), where \eqn{x_{ij} \in \{0, 1\}} represents the reported matrix \eqn{D}. Here, \eqn{x_{ij} = 1} indicates that there is an edge/link between nodes i and j, while \eqn{x_{ij} = 0} indicates that there is no edge/link.
 #'
 #' @details
