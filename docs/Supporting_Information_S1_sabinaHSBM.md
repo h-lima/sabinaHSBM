@@ -48,9 +48,9 @@ The following command creates and runs a new Docker container named `sabinahsbm_
 
 ```bash
 docker run -it --name sabinahsbm_container \
--p 8787:8787 -p 8880:8880 \
--v "local/path/to/your/project:/home/my_project" \
-sabinahsbm bash 
+    -p 8787:8787 -p 8880:8880 \
+    -v "local/path/to/your/project:/home/my_project" \
+    sabinahsbm bash 
 ```
 
 ### For macOS with Apple Silicon

@@ -230,7 +230,8 @@ top_links_df <- top_links(myReconst,
 print(top_links_df)
 ```
 
-We can visualize the reconstructed matrix highlighting the predicted missing links.
+We can visualize the reconstructed matrix highlighting the 
+predicted missing links (colored green).
 
 ```{r plot_reconstruction_missing, echo=TRUE}
 # Plot the matrix with spurious
