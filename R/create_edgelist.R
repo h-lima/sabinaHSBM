@@ -1,5 +1,5 @@
 hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, no_heldout = FALSE,
-                          is_bipartite = TRUE){
+                          is_bipartite = TRUE, custom_nx = NULL){
     col_names <- c("row_names", "col_names", "value")
 
     if(!(is.matrix(adj_mat))) stop("adj_mat argument must be of type 'matrix'.")
@@ -32,23 +32,41 @@ hsbm_edgelist <- function(adj_mat, folds, fold_id = NULL, no_heldout = FALSE,
 
     long_mat$n <- 1
     long_mat$x <- 1
+    long_mat$is_custom <- FALSE
+    
+    if(!is.null(custom_nx)){
+        long_mat <- dplyr::left_join(long_mat, custom_nx, 
+                                     by = c("row_names" = "row", 
+                                            "col_names" = "col"),
+                                     suffix = c("", "_custom"))
+        
+        long_mat$is_custom <- !is.na(long_mat$n_custom) | !is.na(long_mat$x_custom)
+        
+        long_mat$n <- ifelse(!is.na(long_mat$n_custom), 
+                             long_mat$n_custom, long_mat$n)
+        long_mat$x <- ifelse(!is.na(long_mat$x_custom), 
+                             long_mat$x_custom, long_mat$x)
+    }
     if(!no_heldout){
-        long_mat$x <- ifelse(long_mat$edge_type == "held_out", 0, long_mat$x)
+        long_mat$x <- ifelse(long_mat$edge_type == "held_out", 
+                             0, long_mat$x)
+        long_mat$n <- ifelse(long_mat$edge_type == "held_out", 
+                             1, long_mat$n)
     }else{
-        long_mat$edge_type <- ifelse(long_mat$edge_type == "held_out", "documented",
-                                     long_mat$edge_type)
+        long_mat$edge_type <- ifelse(long_mat$edge_type == "held_out", 
+                                     "documented", long_mat$edge_type)
     }
 
-    long_mat$v1 <- as.numeric(long_mat[[col_names[1]]]) - 1
+    long_mat$v1 <- match(long_mat[[col_names[1]]], rownames(adj_mat)) - 1
     if(is_bipartite){
-        long_mat$v2 <- as.numeric(long_mat[[col_names[2]]]) + max(long_mat$v1)
+        long_mat$v2 <- match(long_mat[[col_names[2]]], 
+                             colnames(adj_mat)) + max(long_mat$v1, na.rm = TRUE)
     }else{
-        long_mat$v2 <- as.numeric(long_mat[[col_names[2]]]) - 1
+        long_mat$v2 <- match(long_mat[[col_names[2]]], 
+                             colnames(adj_mat)) - 1
     }
-
     long_mat <- dplyr::select(long_mat, "v1", "v2", "value", col_names[1],
                               col_names[2], "edge_type", "n", "x")
 
     return(long_mat)
 }
-

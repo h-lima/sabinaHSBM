@@ -24,6 +24,11 @@
 #' A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
 #' If \code{FALSE} the matrix is taken as unipartite.
 #' If the matrix is unipartite, only the lower triangular (diagonal included) is used to generate the edgelist and subsequent predictions.
+#' @param custom_nx (\emph{optional, default} \code{NULL}) \cr
+#' A `data.frame` to override default n and x values for 
+#' specific edges. If provided, it must contain exactly four columns #' named: `"row"`, `"col"`, `"n"`, and `"x"`. The `"row"` and `"col"` values must match the 
+#' `rownames` and `colnames` of the input `data` matrix. 
+#' Only the edges defined in this dataframe will be updated; all other edges default to `n = 1` and `x = 1`.
 #'
 #' @return
 #' An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:
@@ -71,11 +76,33 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
                        min_per_col = 2, min_per_row = 2,
                        max_held_per_fold = NULL,
                        no_heldout = FALSE,
-                       is_bipartite = TRUE){
+                       is_bipartite = TRUE,
+                       custom_nx = NULL){
 
     if(!is.matrix(data)){
         warning("Argument data should be of type matrix. Converting to matrix.")
         data <- as.matrix(data)
+    }
+    if(!is.null(custom_nx)){
+        if(!is.data.frame(custom_nx)) stop("custom_nx must be a data.frame")
+        req_cols <- c("row", "col", "n", "x")
+        if(!all(req_cols %in% colnames(custom_nx))){
+            stop("custom_nx must contain columns: 'row', 'col', 'n', 'x'")
+        }
+        if(any(custom_nx$x > custom_nx$n)){
+            stop("x values must be less than or equal to n. Check your custom_nx dataframe to ensure correctness.")
+        }
+        custom_nx$row <- as.character(custom_nx$row)
+        custom_nx$col <- as.character(custom_nx$col)
+        
+        # Remove duplicated entries for unipartite
+        if(!is_bipartite){
+            custom_nx_rev <- custom_nx
+            custom_nx_rev$row <- custom_nx$col
+            custom_nx_rev$col <- custom_nx$row
+            custom_nx <- rbind(custom_nx, custom_nx_rev)
+            custom_nx <- custom_nx[!duplicated(custom_nx[, c("row", "col")]), ]
+        }
     }
     # Remove possible upper diagonal entries to avoid edge multiplicities
     if(!is_bipartite){
@@ -95,7 +122,8 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
     if(n_folds == 1){
         edgelists[[1]] <- hsbm_edgelist(data, folds = NULL, 
                                         no_heldout = no_heldout,
-                                        is_bipartite = is_bipartite)
+                                        is_bipartite = is_bipartite,
+                                        custom_nx = custom_nx)
         value <- list(data = data, folds = folds, edgelists = edgelists)
         attr(value, "class") <- "hsbm.input"
         return(value)
@@ -113,7 +141,8 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
     for(i in 1:nr_folds){
         edgelists[[i]] <- hsbm_edgelist(data, folds, fold_id = i, 
                                         no_heldout = no_heldout,
-                                        is_bipartite = is_bipartite)
+                                        is_bipartite = is_bipartite,
+                                        custom_nx = custom_nx)
 
     }
 
@@ -125,3 +154,4 @@ hsbm.input <- function(data, n_folds = 10, folds = NULL,
     return(value)
 
 }
+
