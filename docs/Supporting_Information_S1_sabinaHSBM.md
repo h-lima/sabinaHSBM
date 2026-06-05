@@ -41,7 +41,7 @@ Docker Desktop enables platform emulation by default. However, in
 some cases, the emulation can cause resource heavy applications like 
 RStudio Server to have performance issues.
 If you face performance issues, you can try to solve them  
-by enabling Rosetta 2 emulation:
+by enabling Rosetta emulation:
 
 > Settings > General > Select "Apple Virtualization Framework" > Check the box for "Use Rosetta for x86/amd64 emulation on Apple Silicon".
 

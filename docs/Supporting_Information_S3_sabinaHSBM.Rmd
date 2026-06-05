@@ -63,7 +63,7 @@ list.of.packages <- c(
   "stringr",
   "tidyr",
   "ROCR",
-   # These packages below are not need 
+   # These packages below are not needed 
    # for sabinaHSBM, however we 
    # add them to run this script
   "ggplot2",
