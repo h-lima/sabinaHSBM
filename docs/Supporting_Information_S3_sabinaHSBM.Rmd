@@ -62,8 +62,14 @@ list.of.packages <- c(
   "reticulate",
   "stringr",
   "tidyr",
-  "ROCR"
+  "ROCR",
+   # These packages below are not need 
+   # for sabinaHSBM, however we 
+   # add them to run this script
+  "ggplot2",
+  "RColorBrewer"
 )
+
 
 new.packages <-
     list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]

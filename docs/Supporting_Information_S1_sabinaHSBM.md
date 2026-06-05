@@ -19,7 +19,7 @@ This guide will help users run the ***sabinaHSBM*** package within a Linux-based
 Download and install Docker Desktop from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop). Registration and sign-in are required. 
 
 - **Windows users:** After installation, you can open it and run the following commands either from its integrated terminal (`>_ Terminal` button) or from the Windows Command Prompt (CMD) or PowerShell.
-- **Mac or Linux users:** After installation, just open the terminal and run the given commands below.
+- **Mac or Linux users:** After installation, open the application by clicking the icon. Then, just open the terminal and run the given commands below.
 
 ## 2. **Pull the docker image**
 
@@ -31,26 +31,41 @@ docker pull anonrev/sabinahsbm
 
 ### Important for macOS with Apple Silicon CPUs 
 
-Macs with arm64 CPUs need to specify the amd64 platform to enable QEMU emulation because the image is built for amd64:
+Macs with M-series CPUs (arm64 architecture) need to specify the amd64 platform to enable platform emulation because the image is built for amd64 architectures:
 
 ```bash
 docker pull --platform linux/amd64 anonrev/sabinahsbm
 ```
 
-Docker Desktop enables QEMU emulation by default so no extra setup is needed.
+Docker Desktop enables platform emulation by default. However, in 
+some cases, the emulation can cause resource heavy applications like 
+RStudio Server to have performance issues.
+If you face performance issues, you can try to solve them  
+by enabling Rosetta 2 emulation:
+
+> Settings > General > Select "Apple Virtualization Framework" > Check the box for "Use Rosetta for x86/amd64 emulation on Apple Silicon".
+
+Also you should ensure that enough RAM is allocated by heading to:
+
+> Settings > Resources and select at least 4GB RAM, but more is better.
+
+Additionally, we note that macOS is a Unix system and thus native installation of *graph-tool* python module is supported and installation instructions are available at <https://graph-tool.skewed.de/installation.html>. By installing *graph-tool* locally, users could then install *sabinaHSBM* without the need for a docker container.
 
 ## 3. **Create and start the container**
 
 The following command creates and runs a new Docker container named `sabinahsbm_container` using the `sabinahsbm` image. 
 
-- The `-p` flags are optional and map ports `8787`, `8880` from the container to the host machine, enabling access to Jupyter Notebook or RStudio Server, respectively, if needed. 
-- The `-v` flag is also optional (but recommended) and establishes a bind mount between your local directory `(/local/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount. Unlike bind mounts, which link directly to local directory, volume are stored within a Docker filesystem.
+- The `-p` flags are optional and map ports `8787`, `8880` from the container to the host machine, enabling access to RStudio Server and Jupyter Notebook, respectively, if needed. 
+- The `-v` flag is also optional (but recommended) and establishes a bind mount between your local directory `(/absolute/path/to/your/project)` and the container's bind-mounted directory `(/home/my_project)`, allowing seamless file synchronization. The path on your local machine must be an absolute path (e.g., /Users/yourname/Documents/project or C:/Users/yourname/Documents/project). Files created or modified in the bind-mounted directory will be directly accessible on your local machine. Alternatively, you can use a Docker volume instead of a bind mount. Unlike bind mounts, which link directly to local directory, volumes are stored within a Docker filesystem.
+
+**Note for Windows Users:** The command below uses a backslash (\\) to split the code across multiple lines for readability. This works in Mac/Linux terminals. However, if you are using Windows PowerShell, you must replace the backslash (\\) with a backtick (\`). If you are using the Windows Command Prompt (CMD), replace it with a caret (^). Alternatively, you can paste the entire command as a single continuous line without any slashes.
+
 
 ```bash
 docker run -it --name sabinahsbm_container \
     -p 8787:8787 -p 8880:8880 \
-    -v "local/path/to/your/project:/home/my_project" \
-    sabinahsbm bash 
+    -v "/absolute/path/to/your/project:/home/my_project" \
+    anonrev/sabinahsbm bash 
 ```
 
 ### For macOS with Apple Silicon
@@ -61,8 +76,8 @@ Use the `--platform` flag to run the container under amd64 emulation.
 docker run --platform linux/amd64 -it \
     --name sabinahsbm_container \
     -p 8787:8787 -p 8880:8880 \
-    -v "local/path/to/your/project:/home/my_project" \
-    sabinahsbm bash 
+    -v "/absolute/path/to/your/project:/home/my_project" \
+    anonrev/sabinahsbm bash 
 ```
 
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
@@ -104,6 +119,12 @@ To work in your mounted project directory `/home/my_project` use in the R consol
 click `“...”` → `“Go to folder...”` and enter `/home/my_project`.
 
 *Note: RStudio Server runs in the foreground. Keep the terminal open while working.*
+
+Troubleshooting for Apple Silicon Users: 
+
+> If RStudio Server times out or freezes indefinitely on the loading screen, your Mac is likely struggling with unoptimized emulation. Try to enable "Rosetta emulation" and ensure that Docker has at least "4GB of RAM" allocated in your Docker Desktop settings. Check Step 2 of this tutorial for more details. 
+> 
+> *Workaround:* If RStudio still refuses to load, you can bypass it entirely by using the standard R terminal (type `R` in the console) or launching the Jupyter Notebook (detailed below). Both are lightweight and should run perfectly under emulation.
 
 ### **Use Jupyter Notebook** *(optional)*
 
@@ -172,7 +193,7 @@ docker stop sabinahsbm_container
 To start the container again and access its shell, run:
 
 ```bash
-docker start -ai sabinahsbm_container
+docker start sabinahsbm_container
 docker exec -it sabinahsbm_container bash
 ```
 
