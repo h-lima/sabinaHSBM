@@ -12,7 +12,8 @@ hsbm.input(
   min_per_row = 2,
   max_held_per_fold = NULL,
   no_heldout = FALSE,
-  is_bipartite = TRUE
+  is_bipartite = TRUE,
+  custom_nx = NULL
 )
 }
 \arguments{
@@ -43,6 +44,13 @@ cross-validation as held-outs.}
 A \code{logical} indicating if the \code{data} argument is a bipartite matrix (i.e. rows and cols correspond to different types of nodes).
 If \code{FALSE} the matrix is taken as unipartite.
 If the matrix is unipartite, only the lower triangular (diagonal included) is used to generate the edgelist and subsequent predictions.}
+
+\item{custom_nx}{(\emph{optional, default} \code{NULL}) \cr
+A \code{data.frame} to override default n and x values for
+specific edges. If provided, it must contain exactly four columns
+named: \code{"row"}, \code{"col"}, \code{"n"}, and \code{"x"}. The \code{"row"} and \code{"col"} values must match the
+\code{rownames} and \code{colnames} of the input \code{data} matrix.
+Only the edges defined in this dataframe will be updated; all other edges default to \code{n = 1} and \code{x = 1}.}
 }
 \value{
 An object of class \code{hsbm.input} containing the organized input data, the cross-validation fold assignment for each held-out edge/link, and a list of the corresponding edge lists generated for each fold for HSBM analysis:

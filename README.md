@@ -34,15 +34,14 @@ Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto
 
 **Dependencies**: Requires R (>= 4.0.4)
 
+**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
+
 To install ***sabinaHSBM*** directly from [GitHub](https://github.com), use the following commands:
 
 ```r
 library(remotes)
 remotes::install_github("anonbuild/sabinaHSBM")
 ```
-
-**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
-
 
 ### Citing *sabinaHSBM* package
 

@@ -26,7 +26,8 @@
 #' If the matrix is unipartite, only the lower triangular (diagonal included) is used to generate the edgelist and subsequent predictions.
 #' @param custom_nx (\emph{optional, default} \code{NULL}) \cr
 #' A `data.frame` to override default n and x values for 
-#' specific edges. If provided, it must contain exactly four columns #' named: `"row"`, `"col"`, `"n"`, and `"x"`. The `"row"` and `"col"` values must match the 
+#' specific edges. If provided, it must contain exactly four columns 
+#' named: `"row"`, `"col"`, `"n"`, and `"x"`. The `"row"` and `"col"` values must match the 
 #' `rownames` and `colnames` of the input `data` matrix. 
 #' Only the edges defined in this dataframe will be updated; all other edges default to `n = 1` and `x = 1`.
 #'
