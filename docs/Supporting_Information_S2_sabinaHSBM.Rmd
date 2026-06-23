@@ -40,7 +40,7 @@ library(sabinaHSBM)
 install.packages("remotes")
 # If the package is not installed, install sabinaHSBM from GitHub
 if (!requireNamespace("sabinaHSBM", quietly = TRUE)) {
-    remotes::install_github("anonbuild/sabinaHSBM")
+    remotes::install_github("h-lima/sabinaHSBM")
 }
 
 # Load sabinaHSBM
