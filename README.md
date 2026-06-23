@@ -18,7 +18,7 @@ With ***sabinaHSBM***, users can:
 
 This package provides an R-native environment to explore and validate link predictions, making HSBM-based network reconstruction more accessible.
 
-Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto, 2014](https://doi.org/10.6084/m9.figshare.1164194)), which is Unix-only, we have made HSBM’s capabilities accessible to all R users by offering a pre-configured Docker container. This container includes all necessary dependencies, enabling seamless use on Windows, so researchers on any platform can leverage the power of ***sabinaHSBM*** without compatibility concerns.
+Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto, 2014](https://doi.org/10.6084/m9.figshare.1164194)), which is Unix-only, we have made HSBM’s capabilities accessible to all R users by offering a pre-configured Docker container. This container includes all necessary dependencies, facilitating use on Windows, so researchers on any platform can leverage the power of ***sabinaHSBM*** with fewer compatibility concerns.
 
 
 ## Key Features of ***sabinaHSBM***:
@@ -28,28 +28,74 @@ Although ***sabinaHSBM*** relies on the  Python's `graph-tool` library ([Peixoto
 - Uncertainty quantification.
 - Customizable reconstruction: Reconstructs the full network with flexible threshold criteria and binary matrix generation.
 - Parallel processing.
-- Cross-platform compatibility.
 
 ## Installation
 
-**Dependencies**: Requires R (>= 4.0.4)
+Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This makes it easier for users on Windows to run the package. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
 
-**Note:** Since ***sabinaHSBM*** relies on the Unix-only `graph-tool` library, we provide a ready-to-use Docker container that includes all dependencies. This allows users on Windows to run the package smoothly. For setup details, refer to the [Docker setup guide](docs/Supporting_Information_S1_sabinaHSBM.md).
+Alternatively, if you have a Unix system and want to install ***sabinaHSBM*** directly from [GitHub](https://github.com), first make sure you have the following dependencies: 
 
-To install ***sabinaHSBM*** directly from [GitHub](https://github.com), use the following commands:
+R (>= 4.0.4) with the following packages:
+- dplyr >= 1.1.4
+- reshape2 >= 1.4.4
+- reticulate >= 1.35.0
+- ROCR >= 1.0.11
+- stringr >= 1.5.1
+- tidyr >= 1.3.1
+
+Python (>= 3.12) with the following packages:
+- graph-tool >= 2.59
+- pandas >= 2.1.4 
+
+Then use the following command to get the latest version:
 
 ```r
 library(remotes)
-remotes::install_github("anonbuild/sabinaHSBM")
+remotes::install_github("h-lima/sabinaHSBM")
 ```
 
 ### Citing *sabinaHSBM* package
 
-A research paper detailing the functions and methodologies of the ***sabinaHSBM*** package is in preparation. Until its publication, please cite the package as follows:
+If you use *sabinaHSBM* in your research, please cite the package publication:
+```
+@article{lima2026sabinahsbm,
 
-> XX, X., ... (202?). sabinaHSBM: An R package for link prediction and network reconstruction using Hierarchical Stochastic Block Models
-> doi -----
 
+
+}
+```
+
+Because *sabinaHSBM* builds upon the hierarchical stochastic block model framework developed by Tiago P. Peixoto and relies on the *graph-tool* library for model inference, we also encourage citing the following references when appropriate:
+
+The *graph-tool* package:
+```
+@article{peixoto_graph-tool_2014,
+         title = {The graph-tool python library},
+         url = {http://figshare.com/articles/graph_tool/1164194},
+         doi = {10.6084/m9.figshare.1164194},
+         urldate = {2014-09-10},
+         journal = {figshare},
+         author = {Peixoto, Tiago P.},
+         year = {2014}
+```
+
+The framework used for network reconstruction:
+```
+@article{peixoto2018reconstructing,
+  title = {Reconstructing Networks with Unknown and Heterogeneous Errors},
+  author = {Peixoto, Tiago P.},
+  journal = {Phys. Rev. X},
+  volume = {8},
+  issue = {4},
+  pages = {041011},
+  numpages = {28},
+  year = {2018},
+  month = {Oct},
+  publisher = {American Physical Society},
+  doi = {10.1103/PhysRevX.8.041011},
+  url = {https://link.aps.org/doi/10.1103/PhysRevX.8.041011}
+};
+```
 
 ## Core Functions in *sabinaHSBM*
 
@@ -152,9 +198,14 @@ plot_interaction_matrix(myReconst$new_mat, order_mat = FALSE)
 ```
 
 ## Tutorials
+
+- Installation steps for the Docker image [View PDF](docs/Supporting_Information_S1_sabinaHSBM.pdf)
 - Tutorial on using `conditional_missing` method to identify missing links. [View PDF](docs/Supporting_Information_S2_sabinaHSBM.pdf)
 - Tutorial on `marginal_all` method to identify both missing and spurious links. [View PDF](docs/Supporting_Information_S3_sabinaHSBM.pdf)
 
+## Additional information
+
+Additional information on the HSBM framework used in *sabinaHSBM*, notes on packages decisions and some discussion on common researcher concerns. [View PDF](docs/Supporting_Information_S4_sabinaHSBM.pdf)
 
 ## Contributions
 

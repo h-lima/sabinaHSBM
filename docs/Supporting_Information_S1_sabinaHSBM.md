@@ -26,7 +26,7 @@ Download and install Docker Desktop from [https://www.docker.com/products/docker
 To download the pre-configured image from Docker Hub, run:
 
 ```bash
-docker pull anonrev/sabinahsbm
+docker pull herlima/sabinahsbm
 ```
 
 ### Important for macOS with Apple Silicon CPUs 
@@ -34,7 +34,7 @@ docker pull anonrev/sabinahsbm
 Macs with M-series CPUs (arm64 architecture) need to specify the amd64 platform to enable platform emulation because the image is built for amd64 architectures:
 
 ```bash
-docker pull --platform linux/amd64 anonrev/sabinahsbm
+docker pull --platform linux/amd64 herlima/sabinahsbm
 ```
 
 Docker Desktop enables platform emulation by default. However, in 
@@ -65,7 +65,7 @@ The following command creates and runs a new Docker container named `sabinahsbm_
 docker run -it --name sabinahsbm_container \
     -p 8787:8787 -p 8880:8880 \
     -v "/absolute/path/to/your/project:/home/my_project" \
-    anonrev/sabinahsbm bash 
+    herlima/sabinahsbm bash 
 ```
 
 ### For macOS with Apple Silicon
@@ -77,7 +77,7 @@ docker run --platform linux/amd64 -it \
     --name sabinahsbm_container \
     -p 8787:8787 -p 8880:8880 \
     -v "/absolute/path/to/your/project:/home/my_project" \
-    anonrev/sabinahsbm bash 
+    herlima/sabinahsbm bash 
 ```
 
 After executing this command, you will enter an interactive shell, providing direct access to the container's command line.
