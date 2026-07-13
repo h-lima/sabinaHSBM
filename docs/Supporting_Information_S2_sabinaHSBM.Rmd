@@ -11,7 +11,7 @@ library(dplyr)
 
 This guide shows a simple use case based on the "conditional_missing" method in *sabinaHSBM* to identify missing links (false negatives) in an incomplete network. 
 
-We use the artifically created dataset `dat` included in the package to show key functionalities,
+We use the artificially created dataset `dat` included in the package to show key functionalities,
 including data preparation, link prediction, and network reconstruction.
 
 
@@ -234,7 +234,7 @@ We can visualize the reconstructed matrix highlighting the
 predicted missing links (colored green).
 
 ```{r plot_reconstruction_missing, echo=TRUE}
-# Plot the matrix with spurious
+# Plot the matrix with missing links
 cols <- c("white", "red4")
 new_missing <- which(myReconst$data == 0 & myReconst$new_mat == 1)
 dat_missing <- myReconst$data
@@ -256,7 +256,7 @@ identified and addressed in incomplete networks.
 # Show processing time and computer characteristics
 end_time <- Sys.time()
 cat("The processing time of this script took: ",
-    round(as.numeric(difftime(end_time, start_time, units = "mins", 1))), "minutes\n")
+    round(as.numeric(difftime(end_time, start_time, units = "mins")),1), "minutes\n")
 ```
 
 This analysis was performed on a Dell Inspiron notebook with the following

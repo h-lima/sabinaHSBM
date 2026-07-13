@@ -37,7 +37,7 @@ create_cv_folds <- function(com, n_folds = 5, min_per_row = 2, min_per_col = 2,
         com[com > 0] <- 1
         warning("Matrix was not binary and has been coerced to 0/1.")
     }
-    if(is_bipartite) com[upper.tri(com)] <- 0
+    if(!is_bipartite) com[upper.tri(com)] <- 0
 
     all_links <- which(com == 1, arr.ind = TRUE)
 

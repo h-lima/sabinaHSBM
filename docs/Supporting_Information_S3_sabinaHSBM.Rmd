@@ -5,7 +5,7 @@ output:
     latex_engine: xelatex
 ---
 
-```{r load_pkg, include = FALSE, echo = TRUE, message = FALSE, warning = FALSE, results='hide'}
+```{r load_pkg, include = FALSE, cache = FALSE, echo = TRUE, message = FALSE, warning = FALSE, results='hide'}
 library(dplyr)
 library(ggplot2)
 library(reshape2)
@@ -247,7 +247,7 @@ The `hsbm.reconstructed` function generates a reconstructed binary interaction m
 # Network reconstruction
 myReconst <- hsbm.reconstructed(
   myPred,                 # Predictions processed by hsbm.predict
-  rm_documented=FALSE,    # Remove documented links during validation
+  rm_documented=FALSE,    # Keep documented links during validation
   na_treatment = "ignore_na", # Handle NA values in predictions
   threshold = 0.5,            # Binarization threshold
   consistency_matrix = "average_thresholded" # Combine fold predictions
@@ -260,7 +260,7 @@ reconstructed binary matrix, and evaluation metrics.
 Let’s explore the model overall performance and network reconstruction details.
 
 ```{r summary-reconstruction, cache = FALSE}
-# View the reconstruction summary and evaluation metrics0
+# View the reconstruction summary and evaluation metrics
 summary(myReconst)
 ```
 
@@ -337,19 +337,19 @@ print(top_links_spurious)
 We show how we can rank the most likely missing links according to the model.
 
 ```{r top-links_missing, cache =  FALSE}
-# Visualize the top most likely spurious links
+# Visualize the top most likely missing links
 top_links_missing <- top_links(myReconst, 
                                n = 10, 
                                edge_type = "undocumented")
 print(top_links_missing)
 ```
 
-If the task is to do network reconstruction by specifically targetting the insertion of the most
+If the task is to do network reconstruction by specifically targeting the insertion of the most
 plausible missing links, we can use the probabilities from the `marginal_all` method as 
 'scores' in supervised binary classification, which is implemented in *sabinaHSBM* only for 
 missing links. 
-This is achieved by following the steps in Supporting Information S1, but with 
-"method = 'marginal\_all'" in `hsbm.predict()` and optionally "rm\_documented = 'FALSE'" in 
+This is achieved by following the steps in Supporting Information S2, but with 
+"method = 'marginal\_all'" in `hsbm.predict()` and optionally "rm\_documented = FALSE" in 
 `hsbm.reconstructed()`.
 
 This document demonstrates the use of the *sabinaHSBM* package for network reconstruction. 
